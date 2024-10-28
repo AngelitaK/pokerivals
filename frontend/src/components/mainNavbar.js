@@ -59,6 +59,8 @@ export default function MainNavbar() {
   const router = useRouter();
   const toast = useToast();
 
+    // Retrieve username from LocalStorage
+    const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
 
     // Logout function
     const handleLogout = async () => {
@@ -79,6 +81,8 @@ export default function MainNavbar() {
         // set the response as text
         const message = await response.text();
         console.log(message.message)
+
+        localStorage.removeItem("username");
 
         toast({
           title: "Logout Successful",
@@ -137,7 +141,7 @@ export default function MainNavbar() {
                   minW={0}
                   _hover={{ textDecoration: 'none' }}>
                   <Flex alignItems="center" flexDirection="row">
-                    <Text color={'black'} mr={'10px'}>{'Marco'|| 'Name'}</Text>
+                    <Text color={'black'} mr={'10px'}>{username|| 'Name'}</Text>
                     <Avatar
                       size={'sm'}
                       src={'https://avatars.dicebear.com/api/male/username.svg'}

@@ -70,6 +70,8 @@ export default function Login() {
             const data = response.data;
             console.log("Login successful:", data);
 
+            localStorage.setItem("username", data.username);
+
             // Show success toast
             toast({
                 title: "Login Success",

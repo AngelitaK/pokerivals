@@ -1,6 +1,6 @@
   "use client";
 
-  import { useState, useContext, useEffect } from "react";
+  import { useState, useEffect } from "react";
   import {
     Avatar,
     Box,
