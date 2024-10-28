@@ -25,8 +25,6 @@ import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import Link from 'next/link';
 import Image from 'next/image';
 import PokeBall from '../../public/PokeBall.png';
-import { useContext } from 'react';
-import { UserContext } from '../app/Providers.js';
 
 const Logo = () => {
   return <Image src={PokeBall} alt="PokeBall" height={40} />;
@@ -60,7 +58,6 @@ export default function MainNavbar() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const router = useRouter();
   const toast = useToast();
-  const { userData } = useContext(UserContext);
 
 
     // Logout function
@@ -140,7 +137,7 @@ export default function MainNavbar() {
                   minW={0}
                   _hover={{ textDecoration: 'none' }}>
                   <Flex alignItems="center" flexDirection="row">
-                    <Text color={'black'} mr={'10px'}>{userData?.username || 'Name'}</Text>
+                    <Text color={'black'} mr={'10px'}>{'Marco'|| 'Name'}</Text>
                     <Avatar
                       size={'sm'}
                       src={'https://avatars.dicebear.com/api/male/username.svg'}

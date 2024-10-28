@@ -13,8 +13,6 @@ import {
   Image
 } from "@chakra-ui/react";
 
-import FindTournament from './../../components/findTournament';
-
 const FindTournamentPage = () => {  
    
   return (
@@ -45,10 +43,7 @@ const FindTournamentPage = () => {
             <Text ml={40} mr={20} fontSize="xl">Time</Text> 
             <Text ml={10} fontSize="xl">Min. Rating</Text> 
             <Text ml={10} fontSize="xl">Max.Rating</Text> 
-          </Flex>
-
-          <FindTournament/>
-                
+          </Flex>                
            
         </Box>
       </Flex>

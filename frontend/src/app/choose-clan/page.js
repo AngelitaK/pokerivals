@@ -17,7 +17,6 @@ const teams = [
 const TeamSelectionPage = () => {
   const router = useRouter();
   const toast = useToast();
-  const { userData, setUserData } = useContext(UserContext);
 
   // Function to handle the "Join Team" button click
   const handleJoinTeam = async (teamName) => {
@@ -40,10 +39,10 @@ const TeamSelectionPage = () => {
       const data = await response.json();
 
       // Update the UserContext with the new clan
-      setUserData((prevData) => ({
-        ...prevData,
-        clan: { name: teamName }, 
-      }));
+      // setUserData((prevData) => ({
+      //   ...prevData,
+      //   clan: { name: teamName }, 
+      // }));
       
       // Show a success message
       toast({
