@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { useRouter } from "next/navigation";
+import axios from "../../config/axiosInstance"; 
 import {
   Box,
   Flex,
@@ -58,9 +59,17 @@ export default function MainNavbar() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const router = useRouter();
   const toast = useToast();
+  const [username, setUsername] = useState("Guest");
 
     // Retrieve username from LocalStorage
-    const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
+    // const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
+    useEffect(() => {
+      // This runs only on the client
+      const storedUsername = localStorage.getItem("username");
+      if (storedUsername) {
+        setUsername(storedUsername); // Update with the actual username
+      }
+    }, []);
     console.log("Username:", username);
 
     // Logout function
@@ -68,20 +77,14 @@ export default function MainNavbar() {
       console.log("Logging out");
     
       try {
-        const response = await fetch('http://localhost:8080/auth/logout', {
-          method: 'GET', 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-    
-        if (!response.ok) {
+        const response = await axios.get('/auth/logout');
+        if (response.status !== 200) {
           throw new Error(`Logout failed: ${response.statusText}`);
         }
-    
+
         // set the response as text
-        const message = await response.text();
-        console.log(message.message)
+        const message = response.data;
+        console.log(message.message);
 
         localStorage.removeItem("username");
 
