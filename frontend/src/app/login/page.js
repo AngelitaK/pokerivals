@@ -29,12 +29,13 @@ import {
 export default function Login() {
     const toast = useToast();
     const router = useRouter();
-    const [isNewUser, setIsNewUser] = useState(false); // To control the modal visibility
+    const [isNewUser, setIsNewUser] = useState(false); // To control the modal visibility for registration
     const [userName, setUserName] = useState(""); // To store the username input
     const [description, setDescription] = useState(""); // To store the description input
     const [idToken, setIdToken] = useState(""); // Store the Google credentials
     const { isOpen, onOpen, onClose } = useDisclosure(); // Modal control
 
+    // for local storage
     const [user, setUser] = useState({ username: null, role: null, isAuthenticated: false });
 
     // Fetch User Data based on the username
@@ -81,6 +82,8 @@ export default function Login() {
                 duration: 2000,
                 isClosable: true,
             });
+
+            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
             // Fetch user data after login
             await fetchUserData(data.username);

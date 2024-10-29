@@ -61,6 +61,7 @@ export default function MainNavbar() {
 
     // Retrieve username from LocalStorage
     const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
+    console.log("Username:", username);
 
     // Logout function
     const handleLogout = async () => {

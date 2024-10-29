@@ -19,7 +19,7 @@ export default function AdminHome() {
         setLoading(true); // Show loading overlay
 
         //  verify session with an API call
-        const response = await axios.get("http://localhost:8080/test", {
+        const response = await axios.get("http://localhost:8080/me", {
           withCredentials: true,
           headers: {
             "Content-Type": "application/json",
