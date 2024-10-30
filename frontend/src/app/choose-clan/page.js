@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useMemo} from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
 import LoadingOverlay from "../../components/loadingOverlay";
@@ -29,7 +29,8 @@ const TeamSelectionPage = () => {
   const toast = useToast();
 
   // Check authentication
-  const { isAuthenticated, user, loading } = useAuth(["PLAYER", "ADMIN"]);
+  const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
+  const { isAuthenticated, user, loading } = useAuth(roles);
   console.log(isAuthenticated, user, loading);
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;

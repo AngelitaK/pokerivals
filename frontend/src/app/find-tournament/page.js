@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useMemo } from "react";
 import {
   Center,
   Flex,
@@ -22,7 +22,8 @@ const FindTournamentPage = () => {
   const router = useRouter();
 
   // Check authentication
-  const { isAuthenticated, user, loading } = useAuth(["PLAYER", "ADMIN"]);
+  const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
+  const { isAuthenticated, user, loading } = useAuth(roles);
   console.log(isAuthenticated, user, loading);
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;

@@ -143,7 +143,7 @@ export default function MainNavbar() {
                   minW={0}
                   _hover={{ textDecoration: 'none' }}>
                   <Flex alignItems="center" flexDirection="row">
-                    <Text color={'black'} mr={'10px'}>{username|| 'Name'}</Text>
+                    <Text color={'black'} mr={'10px'}>{username || 'Name'}</Text>
                     <Avatar
                       size={'sm'}
                       src={'https://avatars.dicebear.com/api/male/username.svg'}
@@ -156,6 +156,7 @@ export default function MainNavbar() {
                     <Avatar
                       size={'2xl'}
                       src={'https://avatars.dicebear.com/api/male/username.svg'}
+                      onClick={() => router.push('/profile')}
                     />
                   </Center>
                   <br />
@@ -165,8 +166,8 @@ export default function MainNavbar() {
                   <br />
                   <MenuDivider />
                   <MenuItem color="black" onClick={handleLogout}>
-                  Logout
-                </MenuItem>
+                    Logout
+                  </MenuItem>
                 </MenuList>
               </Menu>
             </Stack>
