@@ -33,7 +33,7 @@ const Logo = () => {
 
 const Links = [
   { text: 'Build Team', route: '#' },
-  { text: 'Tournament', route: '#' },
+  { text: 'Tournament', route: '/find-tournament' },
   { text: 'Leaderboard', route: '#' }
 ];
 

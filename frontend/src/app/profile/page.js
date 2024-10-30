@@ -15,11 +15,10 @@ import {
   Heading,
   Text,
   VStack,
-  IconButton,
   Icon,
   SimpleGrid
 } from "@chakra-ui/react";
-import { EmailIcon, EditIcon, CalendarIcon } from "@chakra-ui/icons";
+import { EmailIcon, CalendarIcon } from "@chakra-ui/icons";
 import { FaUsers, FaPokeball } from "react-icons/fa";
 import { TbPokeball } from "react-icons/tb";
 
@@ -43,7 +42,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`/player/${username}`);
+        const response = await axios.get(`/player/${username}`, {withCredentials: true,});
         const data = response.data;
         setUserInfo(data); // Store fetched data in state
       } catch (error) {
@@ -88,16 +87,6 @@ const ProfilePage = () => {
             <Avatar size="2xl" name={userInfo?.username} mr={6} />
 
             <VStack align="flex-start" spacing={1} flex="1">
-              <Flex justify="flex-end" w="100%">
-                <IconButton
-                  boxSize={10}
-                  icon={<EditIcon />}
-                  aria-label="Edit profile"
-                  variant="ghost"
-                  size="lg"
-                />
-              </Flex>
-
               <Heading size="xl" fontWeight="bold" mb={2}>
                 {userInfo?.username}
               </Heading>
@@ -176,7 +165,7 @@ const ProfilePage = () => {
               colorScheme="teal"
               size="lg"
               minW={"180px"}
-              onClick={() => router.push("/view-friends")}
+              onClick={() => router.push("/friend-list")}
             >
               View Friends List
             </Button>

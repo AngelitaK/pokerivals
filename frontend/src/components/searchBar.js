@@ -13,8 +13,8 @@ function SearchBar({ handleSearch }) {  // Updated to receive handleSearch
   };
 
   return (
-    <Box width='450px'>
-      <InputGroup size='md'>
+    <Box pb={8}>
+      <InputGroup size='lg'>
         <Input
           pr='4.5rem'
           placeholder='Search friends...'
@@ -23,6 +23,7 @@ function SearchBar({ handleSearch }) {  // Updated to receive handleSearch
           value={inputValue}
           onChange={handleInputChange}
           color='black'
+          border="2px solid black" 
         />
         <InputRightElement width='3rem' bg='inherit'>
           <Button h='1.75rem' size='sm' borderRadius={30}>
