@@ -62,15 +62,13 @@ export default function MainNavbar() {
   const [username, setUsername] = useState("Guest");
 
     // Retrieve username from LocalStorage
-    // const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
     useEffect(() => {
       // This runs only on the client
       const storedUsername = localStorage.getItem("username");
       if (storedUsername) {
-        setUsername(storedUsername); // Update with the actual username
+        setUsername(storedUsername);
       }
     }, []);
-    console.log("Username:", username);
 
     // Logout function
     const handleLogout = async () => {

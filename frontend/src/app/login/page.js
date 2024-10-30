@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useContext, useEffect } from "react";
-import { UserContext } from "../Providers.js";
 import { useRouter } from "next/navigation";
 import axios from "../../../config/axiosInstance"; 
 import Head from 'next/head'; 
@@ -29,34 +28,20 @@ import {
 export default function Login() {
     const toast = useToast();
     const router = useRouter();
-    const [isNewUser, setIsNewUser] = useState(false); // To control the modal visibility for registration
+
+    //registration input
     const [userName, setUserName] = useState(""); // To store the username input
     const [description, setDescription] = useState(""); // To store the description input
-    const [idToken, setIdToken] = useState(""); // Store the Google credentials
+
+    // To control the modal visibility for registration
+    const [isNewUser, setIsNewUser] = useState(false); 
     const { isOpen, onOpen, onClose } = useDisclosure(); // Modal control
+
+    // Store the Google credentials
+    const [idToken, setIdToken] = useState("");
 
     // for local storage
     const [user, setUser] = useState({ username: null, role: null, isAuthenticated: false });
-
-    // Fetch User Data based on the username
-    const fetchUserData = async (username) => {
-        try {
-            const response = await axios.get(`player/${username}`)
-
-            if (!response.ok) {
-                throw new Error(`Failed to fetch user data: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            setUser({
-                username: data.username,
-                role: data.role,
-                isAuthenticated: true,
-            });
-        } catch (error) {
-            console.error("Error fetching user data:", error);
-        }
-    };
 
     // Google login
     const handleGoogleLogin = async (credentialResponse) => {
@@ -73,7 +58,9 @@ export default function Login() {
             console.log("Login successful:", data);
 
             localStorage.setItem("username", data.username);
-
+            localStorage.setItem("role", data.role);
+            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            
             // Show success toast
             toast({
                 title: "Login Success",
@@ -83,16 +70,11 @@ export default function Login() {
                 isClosable: true,
             });
 
-            document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-            // Fetch user data after login
-            await fetchUserData(data.username);
-
             // Redirect based on role
             if (data.role === "ADMIN") {
                 router.push("/admin-home");
             } else if (data.role === "PLAYER") {
-                router.push("/choose-clan");
+                router.push("/find-tournament");
             }
         } catch (error) {
             console.error("Login failed", error);
@@ -124,7 +106,7 @@ export default function Login() {
                 isClosable: true,
             });
 
-            router.push("/find-tournament");
+            router.push("/choose-clan");
         } catch (error) {
             console.error("Registration failed", error);
             toast({

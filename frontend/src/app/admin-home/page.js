@@ -1,48 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "../../../config/axiosInstance"; 
+import useAuth from "../../../config/useAuth"; 
 import LoadingOverlay from "../../components/loadingOverlay";
 import Link from "next/link";
 import Head from "next/head";
 import { Flex, Stack, Button, Text } from "@chakra-ui/react";
 
 export default function AdminHome() {
-  const [isUser, setIsUser] = useState(false); // User authentication state
-  const [loading, setLoading] = useState(true); // Loading state
+  // Check authentication
+  const { isAuthenticated, user, loading } = useAuth("ADMIN");
+  console.log(isAuthenticated, user, loading);
+
   const router = useRouter();
-
-  // Check for session ID on component mount
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        setLoading(true); // Show loading overlay
-
-        //  verify session with an API call
-        const response = await axios.get("http://localhost:8080/me", {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        console.log("Session check response:", response.data);
-
-        if (response.data.role === "ADMIN") {
-          setIsUser(true); // Set user state to true if authenticated
-        } else {
-          router.push("/login"); // Redirect if not authenticated
-        }
-      } catch (error) {
-        console.error("Session check failed:", error);
-        router.push("/login"); // Redirect on error
-      } finally {
-        setLoading(false); // Hide loading overlay after check
-      }
-    };
-
-    checkSession();
-  }, [router]);
+  
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Flex minH={"100vh"} align={"center"} justify={"center"} bg="white">
@@ -52,12 +26,6 @@ export default function AdminHome() {
       </Head>
 
       <Stack spacing={8} align={"center"}>
-        {/* Show loading overlay when checking session */}
-        {loading && <LoadingOverlay />}
-
-        {/* Render main content only if not loading and user is authenticated */}
-        {!loading && isUser && (
-          <>
             <Button
               colorScheme="blue"
               variant="solid"
@@ -98,8 +66,6 @@ export default function AdminHome() {
                 Add Admins
               </Text>
             </Button>
-          </>
-        )}
       </Stack>
     </Flex>
   );

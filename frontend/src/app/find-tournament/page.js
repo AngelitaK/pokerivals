@@ -13,55 +13,23 @@ import {
   Image,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { UserContext } from "../Providers.js";
 import LoadingOverlay from "../../components/loadingOverlay";
-import axios from "axios";
+import axios from "../../../config/axiosInstance";
+import useAuth from "../../../config/useAuth";
 import FindTournament from "./../../components/findTournament";
 
 const FindTournamentPage = () => {
-  const [isUser, setIsUser] = useState(false); // User authentication state
-  const [loading, setLoading] = useState(true); // Loading state
   const router = useRouter();
 
-  // Check for session ID on component mount
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        setLoading(true); // Show loading overlay
+  // Check authentication
+  const { isAuthenticated, user, loading } = useAuth(["PLAYER", "ADMIN"]);
+  console.log(isAuthenticated, user, loading);
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
-        //  verify session with an API call
-        const response = await axios.get("http://localhost:8080/test", {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        console.log("Session check response:", response.data);
-
-        if (response.data.role != null) {
-          setIsUser(true); // Set user state to true if authenticated
-        } else {
-          router.push("/login"); // Redirect if not authenticated
-        }
-      } catch (error) {
-        console.error("Session check failed:", error);
-        router.push("/login"); // Redirect on error
-      } finally {
-        setLoading(false); // Hide loading overlay after check
-      }
-    };
-
-    checkSession();
-  }, [router]);
 
   return (
     <Box>
-      {/* Show loading overlay when checking session */}
-      {loading && <LoadingOverlay />}
-
-      {/* Render main content only if not loading and user is authenticated */}
-      {!loading && isUser && (
-        <>
           <Stack
             minH={"100vh"}
             bgImage="/TournamentBG.jpg"
@@ -105,8 +73,6 @@ const FindTournamentPage = () => {
               </Box>
             </Flex>
           </Stack>
-        </>
-      )}
     </Box>
   );
 };

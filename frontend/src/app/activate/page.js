@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams  } from "next/navigation";
-import axios from "axios";
+import axios from "../../../config/axiosInstance"; 
 import { GoogleLogin } from "@react-oauth/google";
 import {
   Button,
@@ -19,6 +19,7 @@ export default function Activate() {
   const toast = useToast();
   const searchParams = useSearchParams(); // This will give access to query parameters
   const [idToken, setIdToken] = useState("");
+  const [user, setUser] = useState({ username: null, role: null, isAuthenticated: false });  // for local storage
   const [userData, setUserData] = useState({
     username: '',
     email: '',
@@ -40,51 +41,49 @@ export default function Activate() {
         time,
         mac,
       });
-
       console.log("User data set:", { username, email, time, mac });
+
     } else {
       console.log("Query parameters missing");
     }
   }, [searchParams]);
 
   // Debugging: print out the retrieved values
-  console.log('Username:', userData.username);
-  console.log('Email:', userData.email);
-  console.log('Time:', userData.time);
-  console.log('MAC:', userData.mac);
-
+  // console.log('Username:', userData.username);
+  // console.log('Email:', userData.email);
+  // console.log('Time:', userData.time);
+  // console.log('MAC:', userData.mac);
 
   // activation using Google
  const handleGoogleActivation = async (credentialResponse) => {
-  const idToken = credentialResponse.credential; // Extract the Google credential
-  setIdToken(idToken);
+  const idToken = credentialResponse.credential;
+  setIdToken(idToken); // Save the credentials for registration later
 
   // Post the data to the backend
   try {
-    const response = await axios.post('http://localhost:8080/admin/link', {
+    const response = await axios.post('/admin/link', {
       username: userData.username,
       email: userData.email,
       time: userData.time,  // Unix timestamp (long)
       mac: userData.mac,
       credentials: idToken, // Google ID token
     });
+    console.log("Login successful:", response.data);
 
-    const data = response.data;
-
+    localStorage.setItem("username", userData.username);
+    localStorage.setItem("role", "ADMIN");
+    document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; // Remove the g_state cookie 
+    
     // Show success message
     toast({
       title: "Activation Successful",
-      description: `Account successfully linked! Welcome ${data.username}!`,
+      description: `Account successfully linked! Welcome ${userData.username}!`,
       status: "success",
       duration: 9000,
       isClosable: true,
     });
 
-    // Remove the g_state cookie after successful login
-    document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
     router.push("/admin-home"); 
-
   } catch (error) {
     console.error("Activation failed", error);
 
