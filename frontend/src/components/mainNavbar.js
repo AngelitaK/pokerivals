@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -56,11 +57,20 @@ const NavLink = ({ text, route }) => {
 
 export default function MainNavbar() {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [username, setUsername] = useState('Guest'); // Default value
   const router = useRouter();
   const toast = useToast();
 
+  useEffect(() => {
+    // Read username from localStorage on client mount
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
+
     // Retrieve username from LocalStorage
-    const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
+    // const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
 
     // Logout function
     const handleLogout = async () => {
