@@ -27,11 +27,12 @@ const ProfilePage = () => {
   const [username, setUsername] = useState("");
   const [userInfo, setUserInfo] = useState(null);
 
+  
+  // Retrieve username from LocalStorage
   // Check authentication
   const { isAuthenticated, user, loading } = useAuth("PLAYER");
   console.log(isAuthenticated, user, loading);
 
-  // Retrieve username from LocalStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedUsername = localStorage.getItem("username");
@@ -39,10 +40,13 @@ const ProfilePage = () => {
     }
   }, []);
 
+  
+  
   useEffect(() => {
     const fetchUserData = async () => {
+      console.log("Username:", username);
       try {
-        const response = await axios.get(`/player/${username}`, {withCredentials: true,});
+        const response = await axios.get(`/player/${username}`);
         const data = response.data;
         setUserInfo(data); // Store fetched data in state
       } catch (error) {
@@ -54,6 +58,20 @@ const ProfilePage = () => {
     if (isAuthenticated) {
       fetchUserData();
     }
+
+    //test
+    const fetchTest = async () => {
+      try {
+      const response = await axios.get('/me');
+      const currentUserData = response.data;
+      console.log("Current User Data:", currentUserData);
+      } catch (error) {
+      console.error("Error fetching current user data:", error);
+      }
+    };
+
+    fetchTest();
+
   }, [isAuthenticated]);
 
   if (loading) return <LoadingOverlay />;

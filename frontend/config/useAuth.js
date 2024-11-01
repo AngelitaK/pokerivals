@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "./axiosInstance";
 
 export default function useAuth(requiredRole) {
   const router = useRouter();
@@ -23,7 +22,7 @@ export default function useAuth(requiredRole) {
           setIsAuthenticated(true);
 
           // Redirect based on role if requiredRole is specified
-          if (requiredRole && role !== requiredRole) {
+          if (requiredRole && !requiredRole.includes(role)) {
             router.push("/find-tournament"); // Or any other path for unauthorized access
           }
         } else {

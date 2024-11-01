@@ -9,11 +9,11 @@ import Head from "next/head";
 import { Flex, Stack, Button, Text } from "@chakra-ui/react";
 
 export default function AdminHome() {
+  const router = useRouter();
   // Check authentication
   const { isAuthenticated, user, loading } = useAuth("ADMIN");
   console.log(isAuthenticated, user, loading);
 
-  const router = useRouter();
   
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;

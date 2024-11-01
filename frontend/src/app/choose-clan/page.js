@@ -32,9 +32,22 @@ const TeamSelectionPage = () => {
   const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
   const { isAuthenticated, user, loading } = useAuth(roles);
   console.log(isAuthenticated, user, loading);
-  if (loading) return <LoadingOverlay />;
-  if (!isAuthenticated) return null;
 
+  useEffect(() => {
+    //test
+    const fetchTest = async () => {
+      try {
+      const response = await axios.get('/me');
+      const currentUserData = response.data;
+      console.log("Current User Data:", currentUserData);
+      } catch (error) {
+      console.error("Error fetching current user data:", error);
+      }
+    };
+
+    fetchTest();
+  }, []);
+  
   // Function to handle the "Join Team" button click
   const handleJoinTeam = async (teamName) => {
     try {
@@ -46,7 +59,7 @@ const TeamSelectionPage = () => {
       toast({
         title: "Success",
         description:
-          data.message || `You have joined ${teamName} successfully!`,
+        data.message || `You have joined ${teamName} successfully!`,
         status: "success",
         duration: 2000,
         isClosable: true,
@@ -56,7 +69,7 @@ const TeamSelectionPage = () => {
       router.push("/profile");
     } catch (error) {
       console.error("Error joining team:", error);
-
+      
       // Show an error message if something goes wrong
       toast({
         title: "Error",
@@ -67,6 +80,10 @@ const TeamSelectionPage = () => {
       });
     }
   };
+
+
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Box h="100%" bg="white">

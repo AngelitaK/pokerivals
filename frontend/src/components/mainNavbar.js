@@ -165,6 +165,9 @@ export default function MainNavbar() {
                   </Center>
                   <br />
                   <MenuDivider />
+                <MenuItem color="black" onClick={() => router.push('/profile')}>
+                  Profile
+                </MenuItem>
                   <MenuItem color="black" onClick={handleLogout}>
                     Logout
                   </MenuItem>
