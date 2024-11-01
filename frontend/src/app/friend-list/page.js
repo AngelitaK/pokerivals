@@ -31,6 +31,34 @@ const FriendsPage = () => {
   const { isAuthenticated, user, loading } = useAuth("PLAYER");
   console.log(isAuthenticated, user, loading);
 
+  //pagination
+  const [currentFriendPage, setCurrentFriendPage] = useState(1);
+  const [currentSearchPage, setCurrentSearchPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Slice for current page
+  const paginatedFriends = friendsList.slice(
+    (currentFriendPage - 1) * itemsPerPage,
+    currentFriendPage * itemsPerPage
+  );
+  const paginatedSearchResults = searchResults.slice(
+    (currentSearchPage - 1) * itemsPerPage,
+    currentSearchPage * itemsPerPage
+  );
+
+  // Pagination handlers
+  const handleFriendPageChange = (direction) => {
+    setCurrentFriendPage((prev) =>
+      direction === "next" ? prev + 1 : Math.max(prev - 1, 1)
+    );
+  };
+
+  const handleSearchPageChange = (direction) => {
+    setCurrentSearchPage((prev) =>
+      direction === "next" ? prev + 1 : Math.max(prev - 1, 1)
+    );
+  };
+
   useEffect(() => {
     setCurrentUser(localStorage.getItem("username"));
 
@@ -42,7 +70,6 @@ const FriendsPage = () => {
         });
         setFriendsList(response.data.players);
         console.log("Friends list fetched:", response.data.players);
-
       } catch (error) {
         console.error("Error fetching friends list:", error);
       }
@@ -153,7 +180,7 @@ const FriendsPage = () => {
       align="center"
       justify="center"
       px={5}
-      py={0}
+      py={8}
       direction="column"
     >
       <Button
@@ -165,7 +192,7 @@ const FriendsPage = () => {
         Back
       </Button>
 
-      <Flex w="100%" h="100%" minH="70vh" gap={10} justify="space-between">
+      <Flex w="100%" h="100%" minH="70vh" gap={8} justify="space-between">
         {/* Friends List Section */}
         <Box
           flex="1"
@@ -181,8 +208,8 @@ const FriendsPage = () => {
 
           {/* Friend list retrieved from backend */}
           <VStack spacing={4} align="stretch">
-            {friendsList.length > 0 ? (
-              friendsList.map((friend, index) => (
+            {paginatedFriends.length > 0 ? (
+              paginatedFriends.map((friend, index) => (
                 <HStack key={index} spacing={4} align="center" w="100%">
                   <Avatar size="md" />
                   <Box>
@@ -208,6 +235,24 @@ const FriendsPage = () => {
               <Text fontSize="lg">C'mon, go and make some new friends</Text>
             )}
           </VStack>
+
+          {/* Pagination Controls */}
+          <Flex justify="space-between" mt={4}>
+            <Button
+              size="sm"
+              onClick={() => handleFriendPageChange("prev")}
+              disabled={currentFriendPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleFriendPageChange("next")}
+              disabled={paginatedFriends.length < itemsPerPage}
+            >
+              Next
+            </Button>
+          </Flex>
         </Box>
 
         {/* Add Friends Section */}
@@ -228,12 +273,16 @@ const FriendsPage = () => {
 
           {/* result from friend search */}
           <VStack spacing={4} align="stretch">
-            {searchResults.length > 0 ? (
-              searchResults.map((friend, index) => {
-                const friendUsernames = friendsList.map(friend => friend.username);
+            {paginatedSearchResults.length > 0 ? (
+              paginatedSearchResults.map((friend, index) => {
+                const friendUsernames = friendsList.map(
+                  (friend) => friend.username
+                );
                 const isCurrentUser = friend.username === currentUser; // Check if the friend is the current user
-                const isAlreadyFriend = friendUsernames.includes(friend.username); // Check if the friend is already added
-                
+                const isAlreadyFriend = friendUsernames.includes(
+                  friend.username
+                ); // Check if the friend is already added
+
                 return (
                   <HStack key={index} spacing={4} align="center" w="100%">
                     <Avatar size="md" />
@@ -264,6 +313,23 @@ const FriendsPage = () => {
               <Text fontSize="lg">No users found</Text>
             )}
           </VStack>
+          {/* Pagination Controls */}
+          <Flex justify="space-between" mt={4}>
+            <Button
+              size="sm"
+              onClick={() => handleSearchPageChange("prev")}
+              disabled={currentSearchPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleSearchPageChange("next")}
+              disabled={paginatedSearchResults.length < itemsPerPage}
+            >
+              Next
+            </Button>
+          </Flex>
         </Box>
       </Flex>
     </Flex>
