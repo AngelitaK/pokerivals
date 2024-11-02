@@ -1,99 +1,153 @@
-"use client"; 
+'use client'
 
-import React, { useState } from 'react';
-import { Bracket, Seed, SeedItem, SeedTeam, SeedTime } from 'react-brackets';
-import { Box, Text, Heading, useDisclosure } from '@chakra-ui/react';
-// Test tournament data
-// import rounds from './tournamentData';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-// Test complete tournament data
-// import rounds from './completedTournament';
+import {
+  Center,
+  Flex,
+  Box,
+  Stack,
+  Button,
+  Heading,
+  Text,
+  Grid,
+  GridItem,
+  Image
+} from "@chakra-ui/react";
 
-// Test incomplete tournament data
-  import rounds from './incompleteTournament';
+const Tournament = () => {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
 
-  const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
-    const formattedDate = new Date(seed.matchResultRecordedAt).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    // Sample tournament data placeholder
+    const tournaments = [
+      {
+        name: "Royale Battle",
+        pokemon_used: [],
+        rank: 6,
+        ratings: "Waiting Result",
+      },
+    ];
 
-    const handlePlayerClick = (team) => {
-      onSeedClick({ ...seed, selectedTeam: team });
-    };
-
-    return (
-      <Seed mobileBreakpoint={breakpoint}>
-        <SeedItem style={{ width: '100%' }}>
-          <Box padding="10px" bg={seed.forfeited ? "red.600" : "black"} borderRadius="md" boxShadow="md">
-            <SeedTeam
-              fontSize="lg"
-              color="white"
-              fontWeight="bold"
-              onClick={() => handlePlayerClick(seed.teams[0])}
-              cursor="pointer"
-              _hover={{ color: "gray.400" }}
-            >
-              {seed.teams[0]?.id || '-----------'} ({seed.teams[0]?.score.toFixed(1)})
-            </SeedTeam>
-            <Box height="1px" bg="gray.500" my="2"></Box>
-            <SeedTeam
-              fontSize="lg"
-              color="white"
-              fontWeight="bold"
-              onClick={() => handlePlayerClick(seed.teams[1])}
-              cursor="pointer"
-              _hover={{ color: "gray.400" }}
-            >
-              {seed.teams[1]?.id || '-----------'} ({seed.teams[1]?.score.toFixed(1)})
-            </SeedTeam>
-          </Box>
-        </SeedItem>
-        <SeedTime mobileBreakpoint={breakpoint} fontSize="xs" color="gray.400">
-          Result: {seed.matchResult} | Date: {formattedDate}
-        </SeedTime>
-      </Seed>
-    );
-  };
-
-  const TournamentPage = () => {
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const [selectedSeed, setSelectedSeed] = useState(null);
-
-    const handleSeedClick = (seed) => {
-      setSelectedSeed(seed);
-      onOpen();
-    };
-
-    return (
-      <Box padding="20px" bg="gray.50" minHeight="100vh">
-        <Heading as="h1" textAlign="center" color="teal.700" mb="8">
-          Pokémon Tournament Bracket
-        </Heading>
-        <Bracket
-          mobileBreakpoint={767}
-          rounds={rounds}
-          renderSeedComponent={(props) => <RenderSeed {...props} onSeedClick={handleSeedClick} />}
-          swipeableProps={{ enableMouseEvents: true, animateHeight: true }}
-        />
-        <Box textAlign="center" mt="10">
-          <Heading as="h2" color="teal.700" fontSize="2xl">
-            Winner: player12!
-          </Heading>
-        </Box>
-
-        {/* Modal or other logic to display selected player/team details */}
-        {isOpen && selectedSeed && (
+  return (
+    <Stack
+      minH={"100vh"}
+      bgImage="/TournamentBG.jpg"
+      bgSize="cover"
+      bgPosition="center"
+    >
+      <Center pt={5}>
+        <Stack align="center" spacing={4}>
           <Box>
-            {/* Modal content */}
-            <Text fontSize="lg">Selected Player: {selectedSeed.selectedTeam?.id}</Text>
-            <Text>Score: {selectedSeed.selectedTeam?.score}</Text>
-            {/* Add more details as needed */}
+            <Image
+              src="/trophy.png"
+              alt="Trophy"
+              style={{ width: "auto", height: "auto" }}
+            />
           </Box>
-        )}
-      </Box>
-    );
-  };
 
-  export default TournamentPage;
+          {/* Button to select another tournament */}
+          <Button
+            colorScheme="blue"
+            variant="solid"
+            width="600px"
+            height="70px"
+            borderRadius="3xl"
+            onClick={() => router.push('/find-tournament')}//to change to route to the correct page
+          >
+            <Text fontSize="2xl">Find A Tournament!</Text>
+          </Button>
+        </Stack>
+      </Center>
+
+      {/* Match results for pokemon sets used */}
+      <Flex justifyContent="center">
+        <Box maxWidth="1400px" width="100%" mt={5} color={"white"}>
+          <Heading
+            textAlign="center"
+            textShadow="2px 2px 4px rgba(0, 0, 0, 0.4)"
+            mb={4}
+          >
+            Recent Match Results
+          </Heading>
+
+          <Flex
+            bg="rgba(255, 255, 255, 0.8)"
+            p={5}
+            borderRadius="lg"
+            alignItems="center"
+            justifyContent="center"
+            boxShadow="md"
+            mb={6}
+            gap={2}
+            direction="column"
+          >
+
+            {/* grid for headers */}
+            <Grid templateColumns="repeat(4, 1fr)" gap={6} mx={5}>
+              <GridItem w="100%" h="100%" pb={5} pt={5}>
+                <Text
+                  color="black"
+                  fontWeight="bold"
+                  fontSize="xl"
+                  textShadow="2px 2px 4px rgba(0, 0, 0, 0.4)"
+                  mb={4}
+                >
+                  Tournament Name
+                </Text>
+              </GridItem>
+
+              <GridItem w="100%" h="100%" pb={5} pt={5}>
+                <Text
+                  color="black"
+                  fontWeight="bold"
+                  fontSize="xl"
+                  paddingLeft="20px"
+                  textAlign="center"
+                  textShadow="2px 2px 4px rgba(0, 0, 0, 0.4)"
+                  mb={4}
+                >
+                  Pokemon Used
+                </Text>
+              </GridItem>
+
+              <GridItem w="100%" h="100%" pb={5} pt={5}>
+                <Text
+                  color="black"
+                  fontWeight="bold"
+                  fontSize="xl"
+                  paddingLeft="175px"
+                  textShadow="2px 2px 4px rgba(0, 0, 0, 0.4)"
+                  mb={4}
+                >
+                  Rank
+                </Text>
+              </GridItem>
+
+              <GridItem w="100%" h="100%" pb={5} pt={5}>
+                <Text
+                  color="black"
+                  fontWeight="bold"
+                  fontSize="xl"
+                  paddingLeft="145px"
+                  textShadow="2px 2px 4px rgba(0, 0, 0, 0.4)"
+                  mb={4}
+                >
+                  Total Rating
+                </Text>
+              </GridItem>
+            </Grid>
+
+            {/* <PokemonSet />
+            <PokemonSet />
+            <PokemonSet /> */}
+
+          </Flex>
+        </Box>
+      </Flex>
+    </Stack>
+  );
+};
+
+export default Tournament;
