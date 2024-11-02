@@ -14,7 +14,6 @@ export default function AdminHome() {
   const { isAuthenticated, user, loading } = useAuth("ADMIN");
   console.log(isAuthenticated, user, loading);
 
-  
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;
 

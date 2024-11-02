@@ -85,6 +85,7 @@ export default function MainNavbar() {
         console.log(message.message);
 
         localStorage.removeItem("username");
+        localStorage.removeItem("role");
 
         toast({
           title: "Logout Successful",

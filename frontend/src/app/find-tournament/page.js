@@ -25,9 +25,10 @@ const FindTournamentPage = () => {
   const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
   const { isAuthenticated, user, loading } = useAuth(roles);
   console.log(isAuthenticated, user, loading);
+
+
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;
-
 
   return (
     <Box>

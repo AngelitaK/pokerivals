@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams  } from "next/navigation";
 import axios from "../../../config/axiosInstance"; 
+import useAuth from "../../../config/useAuth"; 
+import LoadingOverlay from "../../components/loadingOverlay";
 import { GoogleLogin } from "@react-oauth/google";
 import {
   Button,
@@ -19,13 +21,16 @@ export default function Activate() {
   const toast = useToast();
   const searchParams = useSearchParams(); // This will give access to query parameters
   const [idToken, setIdToken] = useState("");
-  const [user, setUser] = useState({ username: null, role: null, isAuthenticated: false });  // for local storage
   const [userData, setUserData] = useState({
     username: '',
     email: '',
     time: '',
     mac: '',
   });
+
+  //authentication
+  // const { isAuthenticated, user, loading } = useAuth();
+  // console.log(isAuthenticated, user, loading);
 
   useEffect(() => {
     // Retrieve the query params using searchParams.get()
@@ -98,11 +103,13 @@ export default function Activate() {
   }
 };
 
-
   //   router to login page
   const handleBackToLogin = () => {
     router.push("/login");
   };
+  
+  // if (loading) return <LoadingOverlay />;
+  // if (!isAuthenticated) return null;
 
   return (
     <Stack maxH={"100vh"} direction={{ base: "column", md: "row" }} bg="white">

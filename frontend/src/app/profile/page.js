@@ -7,7 +7,6 @@ import axios from "../../../config/axiosInstance";
 import useAuth from "../../../config/useAuth";
 import {
   Avatar,
-  Badge,
   Box,
   Button,
   Container,
@@ -19,65 +18,45 @@ import {
   SimpleGrid
 } from "@chakra-ui/react";
 import { EmailIcon, CalendarIcon } from "@chakra-ui/icons";
-import { FaUsers, FaPokeball } from "react-icons/fa";
+import { FaUsers } from "react-icons/fa";
 import { TbPokeball } from "react-icons/tb";
 
 const ProfilePage = () => {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [userInfo, setUserInfo] = useState(null);
-
   
-  // Retrieve username from LocalStorage
-  // Check authentication
-  const { isAuthenticated, user, loading } = useAuth("PLAYER");
-  console.log(isAuthenticated, user, loading);
-
+   // Check authentication
+   const { isAuthenticated, user, loading } = useAuth("PLAYER");
+   console.log(isAuthenticated, user, loading);
+  
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    // This effect will run only after `loading` is false
+    if (!loading && isAuthenticated) {
       const storedUsername = localStorage.getItem("username");
       setUsername(storedUsername);
     }
-  }, []);
+  }, [loading, isAuthenticated]);
 
-  
-  
   useEffect(() => {
     const fetchUserData = async () => {
-      console.log("Username:", username);
       try {
         const response = await axios.get(`/player/${username}`);
-        const data = response.data;
-        setUserInfo(data); // Store fetched data in state
+        setUserInfo(response.data); // Store fetched data in state
       } catch (error) {
+        //means that the user is admin or unauthorized
         console.error("Error fetching user data:", error);
+        if(isAuthenticated){
+          return <LoadingOverlay />
+        }
       }
     };
 
-    // Only fetch data if authenticated
-    if (isAuthenticated) {
-      fetchUserData();
-    }
-
-    //test
-    const fetchTest = async () => {
-      try {
-      const response = await axios.get('/me');
-      const currentUserData = response.data;
-      console.log("Current User Data:", currentUserData);
-      } catch (error) {
-      console.error("Error fetching current user data:", error);
-      }
-    };
-
-    fetchTest();
-
-  }, [isAuthenticated]);
+    if (username) fetchUserData();
+  }, [username]);
 
   if (loading) return <LoadingOverlay />;
-  if (!isAuthenticated) return null;
-  console.log("User data fetched:", userInfo);
-
+  
   return (
     <Flex
       minH="100vh"
@@ -108,10 +87,6 @@ const ProfilePage = () => {
               <Heading size="xl" fontWeight="bold" mb={2}>
                 {userInfo?.username}
               </Heading>
-             
-              <Text fontSize="lg"mb={2} fontWeight="bold">
-                Team{" "}{userInfo?.clan.name}
-              </Text>
 
               <Flex align="center" color="gray.600">
                 <EmailIcon mr={2} size={"lg"} />
@@ -138,7 +113,7 @@ const ProfilePage = () => {
                 </Text>
               </Box>
 
-            {/* friends box */}
+            {/* Clan box */}
               <Box
                 bg="#e7e7e7"
                 p={4}
@@ -147,9 +122,9 @@ const ProfilePage = () => {
               >
                 <Icon as={FaUsers} boxSize={10} mb={2}/>
                 <Text fontWeight="bold" fontSize="xl">
-                  Friends
+                  Clan
                 </Text>
-                <Text color="gray.600" fontSize="lg">{userInfo?.noOfFriends}</Text>
+                <Text color="gray.600" fontSize="lg" textTransform="uppercase">{userInfo?.clan.name}</Text>
               </Box>
 
               {/* points box */}

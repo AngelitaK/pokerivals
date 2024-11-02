@@ -27,26 +27,10 @@ const teams = [
 const TeamSelectionPage = () => {
   const router = useRouter();
   const toast = useToast();
-
+  
   // Check authentication
-  const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
-  const { isAuthenticated, user, loading } = useAuth(roles);
+  const { isAuthenticated, user, loading } = useAuth("PLAYER");
   console.log(isAuthenticated, user, loading);
-
-  useEffect(() => {
-    //test
-    const fetchTest = async () => {
-      try {
-      const response = await axios.get('/me');
-      const currentUserData = response.data;
-      console.log("Current User Data:", currentUserData);
-      } catch (error) {
-      console.error("Error fetching current user data:", error);
-      }
-    };
-
-    fetchTest();
-  }, []);
   
   // Function to handle the "Join Team" button click
   const handleJoinTeam = async (teamName) => {
@@ -54,7 +38,7 @@ const TeamSelectionPage = () => {
       // PATCH request to add the user to the selected clan
       const response = await axios.patch(`/player/me/clan/${teamName}`,{withCredentials: true,});
       const data = response.data;
-
+      
       // Show a success message
       toast({
         title: "Success",
@@ -64,7 +48,7 @@ const TeamSelectionPage = () => {
         duration: 2000,
         isClosable: true,
       });
-
+      
       // After successfully joining the team, navigate to the profile page
       router.push("/profile");
     } catch (error) {
@@ -80,8 +64,7 @@ const TeamSelectionPage = () => {
       });
     }
   };
-
-
+  
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;
 

@@ -4,6 +4,8 @@ import { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "../../../config/axiosInstance";
 import Head from "next/head";
+import useAuth from "../../../config/useAuth"; 
+import LoadingOverlay from "../../components/loadingOverlay";
 import { GoogleLogin } from "@react-oauth/google";
 import {
   Box,
@@ -29,6 +31,10 @@ export default function Login() {
   const toast = useToast();
   const router = useRouter();
 
+  //authentication
+  // const { isAuthenticated, loading } = useAuth();
+  // console.log(isAuthenticated, loading);
+
   //registration input
   const [userName, setUserName] = useState(""); // To store the username input
   const [description, setDescription] = useState(""); // To store the description input
@@ -39,13 +45,6 @@ export default function Login() {
 
   // Store the Google credentials
   const [idToken, setIdToken] = useState("");
-
-  // for local storage
-  const [user, setUser] = useState({
-    username: null,
-    role: null,
-    isAuthenticated: false,
-  });
 
   // Google login
   const handleGoogleLogin = async (credentialResponse) => {
@@ -65,10 +64,6 @@ export default function Login() {
       localStorage.setItem("role", data.role);
       document.cookie =
         "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-    //   setUser.username = data.username;
-    //   setUser.role = data.role;
-    //   setUser.isAuthenticated = true;
 
       // Show success toast
       toast({
@@ -105,14 +100,6 @@ export default function Login() {
       );
       console.log(response.data);
 
-    //   localStorage.setItem("username", userName);
-    //   localStorage.setItem("role", "PLAYER");
-    //   document.cookie =
-    //     "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    //   setUser.username = userName;
-    //   setUser.role = "PLAYER";
-    //   setUser.isAuthenticated = true;
-
       await handleGoogleLogin({ credential: idToken });
       router.push("/choose-clan");
     } catch (error) {
@@ -126,6 +113,9 @@ export default function Login() {
       });
     }
   };
+
+  // if (loading) return <LoadingOverlay />;
+  // if (isAuthenticated) return null;
 
   return (
     <>
