@@ -43,7 +43,7 @@ const Tournament = () => {
             <Image
               src="/trophy.png"
               alt="Trophy"
-              style={{ width: "auto", height: "auto" }}
+              style={{ width: "150px", height: "auto" }}
             />
           </Box>
 
