@@ -5,92 +5,71 @@ import { useRouter } from "next/navigation";
 import axios from "../../../config/axiosInstance";
 import useAuth from "../../../config/useAuth";
 import LoadingOverlay from "../../components/loadingOverlay";
-import Link from "next/link";
 import PokemonCard from "@/components/pokemonCard";
 import {
   Box,
   Flex,
   Heading,
   Text,
-  Image,
   Button,
-  IconButton,
 } from "@chakra-ui/react";
-import { AddIcon, ArrowBackIcon } from "@chakra-ui/icons";
-
-// function PokemonCard({ name, type, stats, bgColor }) {
-//   return (
-//     <Box bg={bgColor} borderRadius="lg" p={4} w="150px" textAlign="center">
-//       <Text fontWeight="bold" color="white">
-//         {name}
-//       </Text>
-//       <Text color="white" fontSize="sm">
-//         {type}
-//       </Text>
-//       <Box mt={2}>
-//         {Object.entries(stats).map(([key, value]) => (
-//           <Text color="white" key={key}>
-//             {key.toUpperCase()}: {value}
-//           </Text>
-//         ))}
-//       </Box>
-//     </Box>
-//   );
-// }
 
 const ChoosePokemon = () => {
   const router = useRouter();
+  const [finalTeam, setFinalTeam] = useState([]); // Use an empty array for the team
 
   const { isAuthenticated, loading } = useAuth("PLAYER");
   console.log(isAuthenticated, loading);
 
-  const team = [
-    {
-      name: "Pikachu",
-      type: "Electric",
-      stats: { HP: 450, ATK: 123, SPD: 123, DEF: 50, S_ATK: 117, S_DEF: 15 },
-      bgColor: "orange.400",
-    },
-    {
-      name: "Pichu",
-      type: "Electric",
-      stats: { HP: 450, ATK: 123, SPD: 123, DEF: 50, S_ATK: 117, S_DEF: 15 },
-      bgColor: "orange.400",
-    },
-    {
-      name: "<Choose>",
-      type: "",
-      stats: { HP: "?", ATK: "?", SPD: "?", DEF: "?", S_ATK: "?", S_DEF: "?" },
-      bgColor: "gray.200",
-    },
-    {
-      name: "Clefairy",
-      type: "Fairy",
-      stats: { HP: 450, ATK: 123, SPD: 123, DEF: 50, S_ATK: 117, S_DEF: 15 },
-      bgColor: "pink.400",
-    },
-    {
-      name: "Jigglypuff",
-      type: "Normal/Fairy",
-      stats: { HP: 450, ATK: 123, SPD: 123, DEF: 50, S_ATK: 117, S_DEF: 15 },
-      bgColor: "purple.200",
-    },
-    {
-      name: "Gyarados",
-      type: "Flying/Water",
-      stats: { HP: 450, ATK: 123, SPD: 123, DEF: 50, S_ATK: 117, S_DEF: 15 },
-      bgColor: "blue.400",
-    },
-  ];
+  // Function to add Pokémon to the final team
+  const addPokemonToTeam = (pokemon) => {
+    if (finalTeam.length < 6) { // Limit to 6 Pokémon
+      setFinalTeam((prevTeam) => [...prevTeam, pokemon]);
+    } else {
+      console.warn("Team is already full");
+    }
+  };
+
+   // Log finalTeam whenever it updates
+   useEffect(() => {
+    console.log("Updated team:", finalTeam);
+  }, [finalTeam]);
+
+  // Handle posting the final team to the API
+  const handleReadyForBattle = async () => {
+    console.log("Final team:", finalTeam);
+    
+    const pokemonChoicesRaw = finalTeam.map(pokemon => ({
+      pokemonId: pokemon.id, // Assuming each pokemon object has an id
+      moves: pokemon.moves, // Assuming moves are stored in the pokemon object
+      nature: pokemon.nature, // Assuming nature is stored in the pokemon object
+      ability: pokemon.ability // Assuming ability is stored in the pokemon object
+    }));
+
+    const tournamentId = "123"; // Replace with the actual tournament ID
+
+    try {
+      const response = await axios.post(`/player/tournament/${tournamentId}/join`, {
+        pokemonChoicesRaw
+      });
+      console.log("Successfully joined tournament:", response.data);
+      // Optionally redirect or show a success message here
+    } catch (error) {
+      console.error("Error joining tournament:", error);
+      // Handle error (e.g., show a message to the user)
+    }
+  };
+
 
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;
-
+  
+  
   return (
     <Flex
-      direction="column"
-      align="center"
-      bgImage="/bgPokemon.png"
+    direction="column"
+    align="center"
+    bgImage="/bgPokemon.png"
       bgSize="cover"
       bgPosition="center"
       p={8}
@@ -104,14 +83,14 @@ const ChoosePokemon = () => {
         <Heading size="xl">My Pokémon Team</Heading>
       </Flex>
 
-      {/* Pokemon Team */}
-      <Flex gap={8} my={10} pt={10} wrap="wrap" justify="center">
-        {team.map((pokemon, index) => (
-          <PokemonCard key={index} {...pokemon} />
-        ))}
-      </Flex>
+      {/* Render PokémonCard and pass addPokemonToTeam as a prop */}
+       <Flex gap={8} my={10} pt={10} wrap="wrap" justify="center">
+      {[...Array(6)].map((_, index) => (
+        <PokemonCard key={index} addToTeam={addPokemonToTeam} />
+      ))}
+    </Flex>
 
-      <Button mt={8} colorScheme="blue" size="lg" borderRadius={"lg"} minW={"500px"} minH={"60px"}>
+      <Button mt={8} colorScheme="blue" size="lg" borderRadius={"lg"} minW={"500px"} minH={"60px"}  onClick={handleReadyForBattle} >
         <Text fontSize={"2xl"}>Ready for Battle!</Text>
       </Button>
     </Flex>
