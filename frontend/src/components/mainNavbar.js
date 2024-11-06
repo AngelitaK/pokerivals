@@ -34,7 +34,7 @@ const Logo = () => {
 const Links = [
   { text: 'Build Team', route: '#' },
   { text: 'Tournament', route: '/find-tournament' },
-  { text: 'Leaderboard', route: '#' }
+  { text: 'Leaderboard', route: '/leaderboard' }
 ];
 
 const NavLink = ({ text, route }) => {

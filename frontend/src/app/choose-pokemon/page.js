@@ -7,15 +7,16 @@ import useAuth from "../../../config/useAuth";
 import LoadingOverlay from "../../components/loadingOverlay";
 import PokemonCard from "@/components/pokemonCard";
 import {
-  Box,
   Flex,
   Heading,
   Text,
   Button,
+  useToast
 } from "@chakra-ui/react";
 
 const ChoosePokemon = () => {
   const router = useRouter();
+  const toast = useToast();
   const [finalTeam, setFinalTeam] = useState([]); // Use an empty array for the team
 
   const { isAuthenticated, loading } = useAuth("PLAYER");
@@ -46,17 +47,23 @@ const ChoosePokemon = () => {
       ability: pokemon.ability // Assuming ability is stored in the pokemon object
     }));
 
-    const tournamentId = "123"; // Replace with the actual tournament ID
+    const tournamentId = "078b54e2-e22f-4237-9061-1fa8abe53dd4"; // Replace with the actual tournament ID from props
 
     try {
       const response = await axios.post(`/player/tournament/${tournamentId}/join`, {
         pokemonChoicesRaw
       });
+      
       console.log("Successfully joined tournament:", response.data);
-      // Optionally redirect or show a success message here
+      toast({
+        title: "Successfully joined tournament!",
+        status: "success",
+        duration: 5000,
+        isClosable: true
+      });
+
     } catch (error) {
       console.error("Error joining tournament:", error);
-      // Handle error (e.g., show a message to the user)
     }
   };
 
