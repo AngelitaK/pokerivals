@@ -222,7 +222,7 @@ const ManageTournamentPage = () => {
                             <Text fontSize="sm" alignSelf="center">{`Page ${totalPages === 0 ? 0 : page + 1} of ${totalPages}`}</Text>
                             <Button
                                 onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                                isDisabled={page === totalPages - 1}
+                                isDisabled={page === totalPages - 1 || page === 0}
                                 mx={2}
                             >
                                 Next

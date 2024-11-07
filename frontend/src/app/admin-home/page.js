@@ -57,6 +57,20 @@ export default function AdminHome() {
             Add Admins
           </Text>
         </Button>
+
+        {/* manage betting */}
+        <Button
+          colorScheme="blue"
+          variant="solid"
+          width="500px"
+          height="65px"
+          mb={5}
+          onClick={() => router.push("/manage-betting")}
+        >
+          <Text fontSize="2xl" color="white" fontWeight="bold">
+            Manage Betting
+          </Text>
+        </Button>
       </Stack>
     </Flex>
   );
