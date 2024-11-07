@@ -14,11 +14,12 @@ import {
     FormControl,
     FormLabel,
     Radio,
-    RadioGroup
+    RadioGroup,
+    Grid,
 } from "@chakra-ui/react";
 
-const convertToUTCString = (dateStr, timeStr) => {
-    const localDate = new Date(`${dateStr}T${timeStr}:00`);
+const convertToUTCString = (datetimeStr) => {
+    const localDate = new Date(datetimeStr);
     return localDate.toISOString(); // Convert Singapore time to UTC and format as ISO string
 };
 
@@ -33,7 +34,7 @@ const convertToSGT = (utcDateStr) => {
         hour12: false
     }); // "HH:MM" 24-hour format
 
-    return { datePart, timePart };
+    return `${datePart}T${timePart}`;
 };
 
 var date = new Date().toISOString();
@@ -54,17 +55,13 @@ const TournamentForm = ({ tournament = null, isEdited = false }) => {
             tournamentType: "open",
             name: "",
             description: "",
-            minElo: 0,
-            maxElo: 0,
+            minElo: null,
+            maxElo: null,
             maxTeamCapacity: 2,
-            registrationDateBegin: "",
-            registrationTimeBegin: "",
-            registrationDateEnd: "",
-            registrationTimeEnd: "",
-            tournamentDateBegin: "",
-            tournamentTimeBegin: "",
-            tournamentDateEnd: "",
-            tournamentTimeEnd: "",
+            registrationBegin: "",
+            registrationEnd: "",
+            tournamentBegin: "",
+            tournamentEnd: "",
         }
     });
 
@@ -77,33 +74,29 @@ const TournamentForm = ({ tournament = null, isEdited = false }) => {
                 minElo: tournament.eloLimit.minElo,
                 maxElo: tournament.eloLimit.maxElo,
                 maxTeamCapacity: tournament.maxTeamCapacity,
-                registrationDateBegin: convertToSGT(tournament.registrationPeriod.registrationBegin).datePart,
-                registrationTimeBegin: convertToSGT(tournament.registrationPeriod.registrationBegin).timePart,
-                registrationDateEnd: convertToSGT(tournament.registrationPeriod.registrationEnd).datePart,
-                registrationTimeEnd: convertToSGT(tournament.registrationPeriod.registrationEnd).timePart,
-                tournamentDateBegin: convertToSGT(tournament.estimatedTournamentPeriod.tournamentBegin).datePart,
-                tournamentTimeBegin: convertToSGT(tournament.estimatedTournamentPeriod.tournamentBegin).timePart,
-                tournamentDateEnd: convertToSGT(tournament.estimatedTournamentPeriod.tournamentEnd).datePart,
-                tournamentTimeEnd: convertToSGT(tournament.estimatedTournamentPeriod.tournamentEnd).timePart
+                registrationBegin: convertToSGT(tournament.registrationPeriod.registrationBegin),
+                registrationEnd: convertToSGT(tournament.registrationPeriod.registrationEnd),
+                tournamentBegin: convertToSGT(tournament.estimatedTournamentPeriod.tournamentBegin),
+                tournamentEnd: convertToSGT(tournament.estimatedTournamentPeriod.tournamentEnd)
             });
         }
     }, [tournament, reset]);
 
     const validateDates = () => {
-        const registrationStartDate = convertToUTCString(watch("registrationDateBegin"), watch("registrationTimeBegin"));
-        const registrationEndDate = convertToUTCString(watch("registrationDateEnd"), watch("registrationTimeEnd"));
-        const tournamentStartDate = convertToUTCString(watch("tournamentDateBegin"), watch("tournamentTimeBegin"));
-        const tournamentEndDate = convertToUTCString(watch("tournamentDateEnd"), watch("tournamentTimeEnd"));
+        const registrationBegin = convertToUTCString(watch("registrationBegin"));
+        const registrationEnd = convertToUTCString(watch("registrationEnd"));
+        const tournamentBegin = convertToUTCString(watch("tournamentBegin"));
+        const tournamentEnd = convertToUTCString(watch("tournamentEnd"));
 
-        if (registrationEndDate < registrationStartDate) {
+        if (registrationEnd < registrationBegin) {
             return "Registration end date/time must be later than the start date/time.";
         }
 
-        if (tournamentStartDate < registrationEndDate) {
+        if (tournamentBegin < registrationEnd) {
             return "Tournament start date/time must be later than the registration end date/time.";
         }
 
-        if (tournamentEndDate < tournamentStartDate) {
+        if (tournamentEnd < tournamentBegin) {
             return "Tournament end date/time must be later than the start date/time.";
         }
 
@@ -120,38 +113,33 @@ const TournamentForm = ({ tournament = null, isEdited = false }) => {
 
     const onSubmit = async (data) => {
         const requestBody = {
-            "@type": data.tournamentType,
             name: data.name,
             description: data.description,
             maxTeamCapacity: data.maxTeamCapacity,
-            eloLimit: {
-                minElo: data.minElo,
-                maxElo: data.maxElo,
-            },
             registrationPeriod: {
-                registrationBegin: convertToUTCString(data.registrationDateBegin, data.registrationTimeBegin),
-                registrationEnd: convertToUTCString(data.registrationDateEnd, data.registrationTimeEnd),
+                registrationBegin: convertToUTCString(data.registrationBegin),
+                registrationEnd: convertToUTCString(data.registrationEnd),
             },
             estimatedTournamentPeriod: {
-                tournamentBegin: convertToUTCString(data.tournamentDateBegin, data.tournamentTimeBegin),
-                tournamentEnd: convertToUTCString(data.tournamentDateEnd, data.tournamentTimeEnd),
-            },
-            createdAt: date,
+                tournamentBegin: convertToUTCString(data.tournamentBegin),
+                tournamentEnd: convertToUTCString(data.tournamentEnd),
+            }
         };
+
+        if (!isEdited) {
+            requestBody["@type"] = data.tournamentType;
+            requestBody.eloLimit = {
+                minElo: data.minElo,
+                maxElo: data.maxElo,
+            };
+            requestBody.createdAt = date;
+            requestBody.adminUsername = data.adminUsername;
+            requestBody.invited_players = data.invited_players || [];
+        }
 
         try {
             console.log(requestBody)
-            if (isEdited) {
-                var response = await axios.patch(
-                    `http://localhost:8080/admin/tournament/${tournament?.id}`,
-                    requestBody
-                );
-            } else {
-                var response = await axios.post(
-                    `http://localhost:8080/admin/tournament`,
-                    requestBody
-                );
-            }
+            const response = isEdited ? await axios.patch(`http://localhost:8080/admin/tournament/${tournament?.id}`, requestBody) : await axios.post("http://localhost:8080/admin/tournament", requestBody);
 
             if (response.status !== 200) {
                 throw new Error(`Failed to ${isEdited ? "update" : "create"} tournament`);
@@ -180,95 +168,97 @@ const TournamentForm = ({ tournament = null, isEdited = false }) => {
                 if (eloValidation !== true) { alert(eloValidation) };
             }
         })}>
+            <fieldset disabled={new Date().toISOString() > tournament?.registrationPeriod?.registrationEnd}>
+                <Box maxW="1000px" mx="auto" py="6" px="4">
+                    {/* Tournament Details Card */}
+                    <Box bg="white" p="6" boxShadow="md" borderRadius="md" mb="4">
+                        <FormControl isDisabled={isEdited}>
+                            <FormLabel>Tournament Type</FormLabel>
+                            <RadioGroup value={tournament?.['@type']}>
+                                <HStack spacing="24px">
+                                    <Radio value="open" {...register("tournamentType")}>Open</Radio>
+                                    <Radio value="closed" {...register("tournamentType")}>Closed</Radio>
+                                </HStack>
+                            </RadioGroup>
+                            <Text color="red.500">{errors.tournamentType && errors.tournamentType.message}</Text>
+                        </FormControl>
 
-            <Flex mb={"3%"} height={"120vh"} flexDirection={"column"} justifyContent={"space-between"}>
-                <FormControl isDisabled={isEdited}>
-                    <FormLabel>Tournament Type</FormLabel>
-                    <RadioGroup value={tournament?.['@type'] || "open"}>
-                        <HStack spacing="24px">
-                            <Radio value="open" {...register("tournamentType")}>
-                                Open
-                            </Radio>
-                            <Radio value="closed" {...register("tournamentType")}>
-                                Closed
-                            </Radio>
-                        </HStack>
-                    </RadioGroup>
-                    <Text color="red.500">{errors.tournamentType && errors.tournamentType.message}</Text>
-                </FormControl>
+                        <FormControl isInvalid={errors.name} mt="4">
+                            <FormLabel>Tournament Name</FormLabel>
+                            <Input {...register("name", { required: "Name is required" })} />
+                            <Text color="red.500">{errors.name && errors.name.message}</Text>
+                        </FormControl>
 
-                <FormControl isInvalid={errors.name}>
-                    <FormLabel>Tournament Name</FormLabel>
-                    <Input {...register("name", { required: "Name is required" })} />
-                    <Text color="red.500">{errors.name && errors.name.message}</Text>
-                </FormControl>
+                        <FormControl mt="4">
+                            <FormLabel>Description</FormLabel>
+                            <Input {...register("description")} />
+                        </FormControl>
+                    </Box>
 
-                <FormControl>
-                    <FormLabel>Description</FormLabel>
-                    <Input {...register("description")} />
-                </FormControl>
+                    {/* Player Eligibility Card */}
+                    <Box bg="white" p="6" boxShadow="md" borderRadius="md" mb="4">
+                        <Grid templateColumns="repeat(2, 1fr)" gap="4">
+                            <FormControl isDisabled={isEdited}>
+                                <FormLabel>Min. Rating</FormLabel>
+                                <Input type="number" {...register("minElo", { valueAsNumber: true })} />
+                            </FormControl>
 
-                <FormControl>
-                    <FormLabel>Max. Capacity</FormLabel>
-                    <Input type="number" {...register("maxTeamCapacity", { valueAsNumber: true, required: "Capacity is required" })} />
-                </FormControl>
+                            <FormControl isDisabled={isEdited}>
+                                <FormLabel>Max. Rating</FormLabel>
+                                <Input type="number" {...register("maxElo", { valueAsNumber: true })} />
+                            </FormControl>
+                        </Grid>
 
-                <FormControl isDisabled={isEdited}>
-                    <FormLabel>Min. Rating</FormLabel>
-                    <Input type="number" {...register("minElo", { valueAsNumber: true })} />
-                </FormControl>
+                        <FormControl mt="4">
+                            <FormLabel>Max. Capacity</FormLabel>
+                            <Input type="number" {...register("maxTeamCapacity", { valueAsNumber: true, required: "Capacity is required" })} />
+                        </FormControl>
+                    </Box>
 
-                <FormControl isDisabled={isEdited}>
-                    <FormLabel>Max. Rating</FormLabel>
-                    <Input type="number" {...register("maxElo", { valueAsNumber: true })} />
-                </FormControl>
+                    {/* Date Settings Card */}
+                    <Box bg="white" p="6" boxShadow="md" borderRadius="md" mb="4">
+                        <FormControl>
+                            <FormLabel>Registration Start Date and Time</FormLabel>
+                            <HStack>
+                                <Input type="datetime-local" {...register("registrationBegin", { required: "Registration Start Datetime is required" })} />
+                            </HStack>
+                        </FormControl>
 
-                <FormControl isDisabled={date > tournament?.registrationPeriod.registrationEnd}>
-                    <FormLabel>Registration Start Date and Time</FormLabel>
-                    <HStack>
-                        <Input type="date" {...register("registrationDateBegin", { required: "Registration Start Date is required" })} />
-                        <Input type="time" {...register("registrationTimeBegin", { required: "Registration Start Time is required" })} />
-                    </HStack>
-                </FormControl>
+                        <FormControl isInvalid={errors.registrationEnd} mt="4">
+                            <FormLabel>Registration End Date and Time</FormLabel>
+                            <HStack>
+                                <Input type="datetime-local" {...register("registrationEnd", { required: "Registration End Datetime is required" })} />
+                                <Text color="red.500">{errors.registrationEnd && errors.registrationEnd.message}</Text>
+                            </HStack>
+                        </FormControl>
 
-                <FormControl isInvalid={errors.registrationEnd} isDisabled={date > tournament?.registrationPeriod.registrationEnd}>
-                    <FormLabel>Registration End Date and Time</FormLabel>
-                    <HStack>
-                        <Input type="date" {...register("registrationDateEnd", { required: "Registration End Date is required" })} />
-                        <Input type="time" {...register("registrationTimeEnd", { required: "Registration End Time is required" })} />
-                        <Text color="red.500">{errors.registrationEnd && errors.registrationEnd.message}</Text>
-                    </HStack>
-                </FormControl>
+                        <FormControl isInvalid={errors.tournamentStart} mt="4">
+                            <FormLabel>Tournament Start Date and Time</FormLabel>
+                            <HStack>
+                                <Input type="datetime-local" {...register("tournamentBegin", { required: "Tournament Start Datetime is required" })} />
+                                <Text color="red.500">{errors.tournamentStart && errors.tournamentStart.message}</Text>
+                            </HStack>
+                        </FormControl>
 
-                <FormControl isInvalid={errors.tournamentStart}>
-                    <FormLabel>Tournament Start Date and Time</FormLabel>
-                    <HStack>
-                        <Input type="date" {...register("tournamentDateBegin", { required: "Tournament Start Date is required" })} />
-                        <Input type="time" {...register("tournamentTimeBegin", { required: "Tournament Start Time is required" })} />
-                        <Text color="red.500">{errors.tournamentStart && errors.tournamentStart.message}</Text>
-                    </HStack>
-                </FormControl>
+                        <FormControl isInvalid={errors.tournamentEnd} mt="4">
+                            <FormLabel>Tournament End Date and Time</FormLabel>
+                            <HStack>
+                                <Input type="datetime-local" {...register("tournamentEnd", { required: "Tournament End Datetime is required" })} />
+                                <Text color="red.500">{errors.tournamentEnd && errors.tournamentEnd.message}</Text>
+                            </HStack>
+                        </FormControl>
+                    </Box>
 
-                <FormControl isInvalid={errors.tournamentEnd}>
-                    <FormLabel>Tournament End Date and Time</FormLabel>
-                    <HStack>
-                        <Input type="date" {...register("tournamentDateEnd", { required: "Tournament End Date is required" })} />
-                        <Input type="time" {...register("tournamentTimeEnd", { required: "Tournament End Time is required" })} />
-                        <Text color="red.500">{errors.tournamentEnd && errors.tournamentEnd.message}</Text>
-                    </HStack>
-                </FormControl>
-            </Flex>
-
-            <Box>
-                <Flex align={"center"} margin={"1% 0% 2% 2%"}>
-                    <Button backgroundColor={"lightblue"} type="submit">
-                        <Text>{isEdited ? "Save" : "Create"}</Text>
-                    </Button>
-                    <Button backgroundColor={"lightgrey"} onClick={handleBackNavigation} ml={"1%"}>
-                        <Text>Cancel</Text>
-                    </Button>
-                </Flex>
-            </Box>
+                    <Flex justifyContent="space-between" mt="4">
+                        <Button backgroundColor="lightgrey" onClick={handleBackNavigation}>
+                            <Text>Cancel</Text>
+                        </Button>
+                        <Button backgroundColor="lightblue" type="submit">
+                            <Text>{isEdited ? "Save" : "Create"}</Text>
+                        </Button>
+                    </Flex>
+                </Box>
+            </fieldset>
         </form>
     );
 };

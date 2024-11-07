@@ -13,12 +13,12 @@ import TournamentForm from "@/components/tournamentForm";
 
 const CreateTournamentPage = () => {
     const router = useRouter();
-    
+
     const handleBackNavigation = () => {
         router.back();
     }
-    
-    return(
+
+    return (
         <>
             <Box>
                 <Flex align={"center"} margin={"1% 0% 2% 2%"}>
@@ -34,13 +34,17 @@ const CreateTournamentPage = () => {
                     </Text>
                 </Flex>
             </Box>
-            <Box
-            width={'50vw'}
-            m={'0% 3%'}>
-                <TournamentForm/>
-            </Box>
+            <Flex
+                justifyContent={'center'}>
+                <Box
+                    width={'80vw'}
+                    m={'0% 3%'}>
+                    <TournamentForm />
+                </Box>
+            </Flex>
+
         </>
-        
+
     )
 };
 

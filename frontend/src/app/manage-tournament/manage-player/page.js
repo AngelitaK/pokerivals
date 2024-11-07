@@ -3,56 +3,27 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "../../../../config/axiosInstance";
 import {
+    Tabs,
+    TabList,
+    TabPanels,
+    Tab,
+    TabPanel,
     Box,
     Flex,
     Text,
     Button,
-    HStack,
+    Input,
+    Divider,
     useToast,
-    FormControl,
-    FormLabel,
-    Input
+    Heading
 } from "@chakra-ui/react";
 import {
     FaArrowCircleLeft,
 } from "react-icons/fa";
 import TournamentForm from "@/components/tournamentForm";
-
-const test_data = {
-    data: {
-        teams: [
-            {
-                chosenPokemons: [
-                ],
-                tournament: {
-                    name: "string",
-                    id: "5b24c181-12ce-4efd-be88-b9496123603d"
-                },
-                playerUsername: "marywoodard"
-            },
-            {
-                chosenPokemons: [
-                ],
-                tournament: {
-                    name: "string",
-                    id: "5b24c181-12ce-4efd-be88-b9496123603d"
-                },
-                playerUsername: "samanthabrooks"
-            }
-        ],
-        count: 2,
-        mutable: true
-    }
-}
-
+import test_data from "./test_data";
 
 const pageSize = 3
-
-const convertToSGT = (utcDateStr) => {
-    const utcDate = new Date(utcDateStr);
-    utcDate.setHours(utcDate.getHours() + 8); // Convert to Singapore Time (UTC+8)
-    return utcDate.toISOString();
-};
 
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -65,7 +36,7 @@ function formatDate(dateString) {
         hour: "numeric",
         minute: "numeric",
         hour12: true,
-        timeZone: "UTC"
+        timeZone: "Asia/Singapore"
     };
 
     return new Intl.DateTimeFormat("en-GB", options).format(date);
@@ -84,7 +55,6 @@ const ListComponent = ({ details, registrationEnd }) => {
             if (response.status !== 200) {
                 throw new Error("Failed to kick player");
             }
-
         } catch (error) {
             console.error("Error kicking Player:", error);
             toast({
@@ -95,29 +65,51 @@ const ListComponent = ({ details, registrationEnd }) => {
                 isClosable: true,
             });
         }
-    }
+    };
+
+    const handleViewProfile = () => {
+        router.push(`/profile/${details.playerUsername}`);
+    };
 
     return (
-        <>
-            <Flex
-                ml={'3%'}
-                mt={'2%'}
-                alignItems={'center'}
-                justifyContent={'space-between'}>
-                <Box>
-                    <Text fontSize={'xl'} fontWeight={'semibold'}>{details.playerUsername}</Text>
-                </Box>
+        <Flex
+            p={4}
+            m={3}
+            borderRadius="md"
+            backgroundColor="white"
+            boxShadow="md"
+            alignItems="center"
+            justifyContent="space-between"
+            mx="auto"
+        >
+            <Box>
+                <Text fontSize="xl" fontWeight="semibold" color="gray.700">
+                    {details.playerUsername}
+                </Text>
+            </Box>
+            <Flex>
                 <Button
-                    mr={'3%'}
-                    backgroundColor={'tomato'}
+                    mr={2}
+                    backgroundColor="deepskyblue"
+                    color="white"
+                    _hover={{ backgroundColor: "dodgerblue" }}
+                    onClick={handleViewProfile}
+                >
+                    View Profile
+                </Button>
+                <Button
+                    backgroundColor="tomato"
+                    color="white"
+                    _hover={{ backgroundColor: "red.600" }}
                     disabled={date < registrationEnd}
-                    onClick={handleKick}>
-                    <Text color={'white'}>Kick</Text>
+                    onClick={handleKick}
+                >
+                    Kick
                 </Button>
             </Flex>
-        </>
-    )
-}
+        </Flex>
+    );
+};
 
 const ManageTeamPage = () => {
     const router = useRouter();
@@ -164,7 +156,7 @@ const ManageTeamPage = () => {
     }
 
     const sendInvite = async () => {
-        
+
         try {
             const response = await axios.post(`http://localhost:8080/admin/tournament/closed/${id}/invitation`,
                 {
@@ -230,115 +222,72 @@ const ManageTeamPage = () => {
     const totalPages = Math.ceil(count / pageSize);
 
     return (
-        <>
+        <Box p="1%" backgroundColor="gray.100" minH="100vh">
             <Box>
                 <Flex
-                    align={'center'}
-                    margin={'1% 0% 2% 2%'}
-                    position={'relative'}
+                    align="center"
+                    justify="space-between"
+                    margin="1% 0% 2% 2%"
                 >
-                    <Flex align={"center"} onClick={handleBackNavigation}>
-                        <FaArrowCircleLeft size={"4vh"} />
-                        <Text ml={"1vh"} fontSize={"3xl"}>
-                            Back
-                        </Text>
+                    <Flex align="center" onClick={handleBackNavigation} cursor="pointer" flex="1">
+                        <FaArrowCircleLeft size="4vh" />
+                        <Text ml="1vh" fontSize="3xl">Back</Text>
                     </Flex>
                     {tournament && (
                         <Flex
                             direction={'column'}
-                            margin={'auto'}
-                            left={'50%'}
-                            transform={"translateX(-20%)"}>
-                            <Text fontSize={'2xl'} margin={'auto'} fontWeight={'bold'}>
+                            margin={'auto'}>
+                            <Heading as="h2" size="lg" textAlign="center" fontWeight="bold" color="gray.800" flex="1">
                                 {tournament.name}
-                            </Text>
+                            </Heading>
                             <Text fontSize={'xl'} margin={'auto'}>
-                                {formatDate(convertToSGT(tournament.estimatedTournamentPeriod.tournamentBegin))} - {formatDate(convertToSGT(tournament.estimatedTournamentPeriod.tournamentEnd))}
+                                {formatDate(tournament.estimatedTournamentPeriod.tournamentBegin)} - {formatDate(tournament.estimatedTournamentPeriod.tournamentEnd)}
                             </Text>
                         </Flex>
                     )}
+                    <Box flex="1" />
                 </Flex>
             </Box>
 
-            <Flex
-                justifyContent={'space-between'}
-                m={'0% 3%'}>
-                <Box
-                    width={'45vw'}>
-                    <TournamentForm tournament={tournament} isEdited={true} />
-                </Box>
+            <Tabs isFitted variant="enclosed" backgroundColor="white" borderRadius="lg" shadow="md" p="6">
+                <TabList mb="1em">
+                    <Tab fontWeight="bold">Edit Tournament Details</Tab>
+                    <Tab fontWeight="bold">Start Tournament</Tab>
+                </TabList>
 
-                <Flex
-                    direction={'column'}
-                    justifyContent={'flex-end'}>
-                    <Box
-                        backgroundColor={'lightgrey'}
-                        borderRadius={'2%'}
-                        width={'45vw'}
-                        height={'120vh'}
-                        position={'relative'}>
-                        <Flex
-                            justifyContent={'space-between'}
-                            alignContent={'center'}>
-                            <Text fontSize={'2xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'}>Players Registered</Text>
-                        </Flex>
-                        <Flex hidden={tournament?.["@type"] != "closed"} bgColor={'white'} m={'3% 2%'}>
-                            <Input type="text"
-                                placeholder="Type username of players to be invited"
-                                value={inviteUsername}
-                                onChange={handleInputChange} />
-                            <Button
-                                color={'white'}
-                                bgColor={'deepskyblue'}
-                                onClick={sendInvite}>
-                                Invite
+                <TabPanels>
+                    {/* Tournament Details Tab */}
+                    <TabPanel>
+                        <TournamentForm tournament={tournament} isEdited={true} />
+                    </TabPanel>
+
+                    {/* Players Registered Tab */}
+                    <TabPanel>
+                        <Box>
+                            <Flex mt="4">
+                                <Input placeholder="Enter usernames" value={inviteUsername} onChange={handleInputChange} />
+                                <Button ml="2" colorScheme="blue" onClick={sendInvite}>Invite</Button>
+                            </Flex>
+
+                            <Divider mb="4" />
+
+                            {/* Player List */}
+                            <Box height="60vh" overflowY="auto">
+                                {teams.map((team) => (
+                                    <ListComponent key={team.playerUsername} details={team} registrationEnd={tournament?.registrationPeriod.registrationEnd} />
+                                ))}
+                            </Box>
+
+                            {/* Start Tournament Button */}
+                            <Button mt="4" colorScheme="green" disabled={date < tournament?.registrationPeriod.registrationEnd} onClick={handleStartMatch}>
+                                Start Tournament
                             </Button>
-                        </Flex>
-                        <Flex
-                            justifyContent={'space-between'}>
-                            <Text fontSize={'xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'}>Username</Text>
-                            <Text fontSize={'xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'} mr={'3%'}>Actions</Text>
-                        </Flex>
-                        {teams.map((team) =>
-                            <Box><ListComponent key={tournament.id} details={team} registrationEnd={tournament.registrationPeriod.registrationEnd} /></Box>
-                        )}
-                        <Box
-                            position={'absolute'}
-                            bottom={'3%'}
-                            left={'50%'}
-                            transform={"translateX(-50%)"}>
-                            <HStack justifyContent="center" mt={4}>
-                                <Button
-                                    onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                                    isDisabled={page === 0}
-                                >
-                                    Previous
-                                </Button>
-                                <Text fontSize={'sm'}>{`Page ${totalPages === 0 ? 0 : page + 1} of ${totalPages}`}</Text>
-                                <Button
-                                    onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                                    isDisabled={page === 0 ? true : page === totalPages - 1}
-                                >
-                                    Next
-                                </Button>
-                            </HStack>
                         </Box>
-                    </Box>
-                    {tournament && (
-                        <Button
-                            margin={'1% 0% 2% 2%'}
-                            backgroundColor={'mediumseagreen'}
-                            color={'white'}
-                            disabled={date < tournament.registrationPeriod.registrationEnd}
-                            onClick={handleStartMatch}>
-                            Start Tournament
-                        </Button>
-                    )}
-                </Flex>
-
-            </Flex>
-        </>
-    )
+                    </TabPanel>
+                </TabPanels>
+            </Tabs>
+        </Box>
+    );
 
 }
 

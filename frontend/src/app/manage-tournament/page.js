@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "../../../config/axiosInstance";
@@ -7,26 +7,16 @@ import {
     Flex,
     Text,
     Button,
-    HStack,
-    useToast
+    useToast,
+    Heading,
 } from "@chakra-ui/react";
-import {
-    FaArrowCircleLeft,
-    FaCalendar,
-} from "react-icons/fa";
+import { FaArrowCircleLeft } from "react-icons/fa";
 
-const pageSize = 3
-
-const convertToSGT = (utcDateStr) => {
-    const utcDate = new Date(utcDateStr);
-    utcDate.setHours(utcDate.getHours() + 8); // Convert to Singapore Time (UTC+8)
-    return utcDate.toISOString();
-};
+const pageSize = 5;
 
 function formatDate(dateString) {
     const date = new Date(dateString);
 
-    // Options for formatting the date and time
     const options = {
         day: "numeric",
         month: "short",
@@ -34,7 +24,7 @@ function formatDate(dateString) {
         hour: "numeric",
         minute: "numeric",
         hour12: true,
-        timeZone: "UTC"
+        timeZone: "Asia/Singapore",
     };
 
     return new Intl.DateTimeFormat("en-GB", options).format(date);
@@ -43,37 +33,44 @@ function formatDate(dateString) {
 const ListComponent = ({ details }) => {
     const router = useRouter();
 
-    sessionStorage.setItem('name', details.name);
-    sessionStorage.setItem('tournamentBegin', details.estimatedTournamentPeriod.tournamentBegin);
-    sessionStorage.setItem('tournamentEnd', details.estimatedTournamentPeriod.tournamentEnd);
-
     const handleNavigation = () => {
         router.push(`/manage-tournament/manage-player?id=${details.id}`);
-    }
+    };
 
     return (
-        <>
-            <Flex
-                ml={'3%'}
-                mt={'2%'}
-                alignItems={'center'}
-                justifyContent={'space-between'}>
-                <Box>
-                    <Text fontSize={'xl'} fontWeight={'semibold'}>{details.name}</Text>
-                    <Text fontSize={'sm'}><span style={{ fontWeight: "bold" }}>From:</span> {formatDate(convertToSGT(details.estimatedTournamentPeriod.tournamentBegin))}</Text>
-                    <Text fontSize={'sm'}><span style={{ fontWeight: "bold" }}>End:</span> {formatDate(convertToSGT(details.estimatedTournamentPeriod.tournamentEnd))}</Text>
-                </Box>
-                <Button
-                    mr={'3%'}
-                    backgroundColor={'deepskyblue'}
-                    onClick={handleNavigation}>
-                    <Text
-                        color={'white'}>Manage</Text>
-                </Button>
-            </Flex>
-        </>
-    )
-}
+        <Flex
+            p={{ base: 3, md: 4 }}
+            my={{ base: 2, md: 3 }}
+            mx={3}
+            alignItems="center"
+            justifyContent="space-between"
+            bgGradient="linear(to-r, #f0f4c3, #c8e6c9)"
+            borderRadius="10px"
+            boxShadow="sm"
+            _hover={{ boxShadow: "md", transform: "scale(1.01)", transition: "0.2s" }}
+        >
+            <Box>
+                <Text fontSize={{ base: "md", md: "lg" }} fontWeight="bold" color="gray.700">{details.name}</Text>
+                <Text fontSize="xs" color="gray.600">
+                    <strong>From:</strong> {formatDate(details.estimatedTournamentPeriod.tournamentBegin)}
+                </Text>
+                <Text fontSize="xs" color="gray.600">
+                    <strong>End:</strong> {formatDate(details.estimatedTournamentPeriod.tournamentEnd)}
+                </Text>
+            </Box>
+            <Button
+                size="sm"
+                backgroundColor="teal.500"
+                onClick={handleNavigation}
+                _hover={{ bg: "teal.600" }}
+                _focus={{ boxShadow: "outline" }}
+                transition="background-color 0.2s"
+            >
+                <Text color="white">Manage</Text>
+            </Button>
+        </Flex>
+    );
+};
 
 const ManageTournamentPage = () => {
     const router = useRouter();
@@ -83,18 +80,16 @@ const ManageTournamentPage = () => {
     const toast = useToast();
 
     const handleBackNavigation = () => {
-        router.push('/admin-home');
-    }
-
-    const handleCalendarNavigation = () => {
-        router.push("/calendar");
-    }
+        router.push("/admin-home");
+    };
 
     useEffect(() => {
         const fetchTournaments = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/admin/tournament/me?page=${page}&limit=${pageSize}`);
-                console.log(response)
+                const response = await axios.get(
+                    `http://localhost:8080/admin/tournament/me?page=${page}&limit=${pageSize}`
+                );
+
                 if (response.status !== 200) {
                     throw new Error("Failed to fetch tournaments");
                 }
@@ -104,7 +99,6 @@ const ManageTournamentPage = () => {
                 setCount(data.count);
 
                 sessionStorage.setItem("tournaments", JSON.stringify(data.tournaments));
-
             } catch (error) {
                 console.error("Error fetching Tournaments:", error);
                 toast({
@@ -124,121 +118,121 @@ const ManageTournamentPage = () => {
 
     return (
         <>
-            <Box>
-                <Flex
-                    align={'center'}
-                    margin={'1% 0% 2% 2%'}
-                    position={'relative'}
-                >
-                    <Flex align={"center"} onClick={handleBackNavigation}>
-                        <FaArrowCircleLeft size={"4vh"} />
-                        <Text ml={"1vh"} fontSize={"3xl"}>
-                            Back
-                        </Text>
+            <Box p="1%" backgroundColor="gray.100" minH="100vh">
+                <Box>
+                    <Flex
+                        align="center"
+                        justify="space-between"
+                        margin="1% 0% 2% 2%"
+                    >
+                        <Flex align="center" onClick={handleBackNavigation} cursor="pointer" flex="1">
+                            <FaArrowCircleLeft size="4vh" />
+                            <Text ml="1vh" fontSize="3xl">Back</Text>
+                        </Flex>
+                        <Heading as="h2" size="lg" textAlign="center" fontWeight="bold" color="gray.800" flex="1">
+                            Manage Tournaments
+                        </Heading>
+                        <Box flex="1" />
                     </Flex>
+                </Box>
 
-                    <Text fontSize={'3xl'} margin={'auto'} fontWeight={'bold'} left={'50%'}
-                        transform={"translateX(-20%)"}>
-                        Manage Tournaments
-                    </Text>
+                <Flex
+                    direction={{ base: "column", md: "row" }}
+                    justifyContent="space-around"
+                    p={4}
+                    gap={{ base: 6, md: 4 }}
+                >
+                    {/* Tournament Created Box */}
+                    <Box
+                        bg="gray.50"
+                        borderRadius="16px"
+                        boxShadow="2xl"
+                        w={{ base: "100%", md: "45%" }}
+                        minHeight="70vh"
+                        p={4}
+                        pb={5}
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="space-between"
+                    >
+                        <Box>
+                            <Heading as="h3" size="md" mb={4} borderBottom="2px solid" borderColor="yellow.400" pl={2} color="gray.700">
+                                Tournament Created
+                            </Heading>
+                            <Flex justifyContent="space-between" px={2} mb={4}>
+                                <Text fontSize="xl" fontWeight="bold" color="gray.600">Details</Text>
+                                <Text fontSize="xl" fontWeight="bold" color="gray.600">Actions</Text>
+                            </Flex>
+                            {tournaments.map((tournament) => (
+                                <ListComponent key={tournament.id} details={tournament} />
+                            ))}
+                        </Box>
+                        <Flex justify="center" mt={4}>
+                            <Button
+                                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                                isDisabled={page === 0}
+                                mx={2}
+                            >
+                                Previous
+                            </Button>
+                            <Text fontSize="sm" alignSelf="center">{`Page ${totalPages === 0 ? 0 : page + 1} of ${totalPages}`}</Text>
+                            <Button
+                                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
+                                isDisabled={page === totalPages - 1}
+                                mx={2}
+                            >
+                                Next
+                            </Button>
+                        </Flex>
+                    </Box>
+
+                    {/* Tournament Ongoing Box */}
+                    <Box
+                        bg="gray.50"
+                        borderRadius="16px"
+                        boxShadow="2xl"
+                        w={{ base: "100%", md: "45%" }}
+                        minHeight="70vh"
+                        p={4}
+                        pb={5}
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="space-between"
+                    >
+                        <Box>
+                            <Heading as="h3" size="md" mb={4} borderBottom="2px solid" borderColor="yellow.400" pl={2} color="gray.700">
+                                Tournament Ongoing
+                            </Heading>
+                            <Flex justifyContent="space-between" px={2} mb={4}>
+                                <Text fontSize="xl" fontWeight="bold" color="gray.600">Details</Text>
+                                <Text fontSize="xl" fontWeight="bold" color="gray.600">Actions</Text>
+                            </Flex>
+                            {tournaments.map((tournament) => (
+                                <ListComponent key={tournament.id} details={tournament} />
+                            ))}
+                        </Box>
+                        <Flex justify="center" mt={4}>
+                            <Button
+                                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                                isDisabled={page === 0}
+                                mx={2}
+                            >
+                                Previous
+                            </Button>
+                            <Text fontSize="sm" alignSelf="center">{`Page ${totalPages === 0 ? 0 : page + 1} of ${totalPages}`}</Text>
+                            <Button
+                                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
+                                isDisabled={page === totalPages - 1}
+                                mx={2}
+                            >
+                                Next
+                            </Button>
+                        </Flex>
+                    </Box>
                 </Flex>
             </Box>
-
-            <Flex
-                justifyContent={'space-around'}>
-                <Box
-                    backgroundColor={'lightgrey'}
-                    borderRadius={'5%'}
-                    width={'45vw'}
-                    height={'70vh'}
-                    mb={'2%'}
-                    position={'relative'}>
-                    <Flex
-                        justifyContent={'space-between'}
-                        alignContent={'center'}>
-                        <Text fontSize={'2xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'}>Tournament Created</Text>
-                        {/* <Button mr={'3%'} mt={'3%'} onClick={handleCalendarNavigation}>
-                            <Text mr={'5%'}>View Calendar</Text>
-                            <Box>
-                                <FaCalendar
-                                    width={'5vw'}
-                                    height={'5vh'} />
-                            </Box>
-                        </Button> */}
-                    </Flex>
-                    <Flex
-                        justifyContent={'space-between'}>
-                        <Text fontSize={'xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'}>Details</Text>
-                        <Text fontSize={'xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'} mr={'3%'}>Actions</Text>
-                    </Flex>
-                    {tournaments.map((tournament) => 
-                        <Box><ListComponent key={tournament.id} details={tournament} path={tournament.id} /></Box>
-                    )}
-                    <Box
-                        position={'absolute'}
-                        bottom={'3%'}
-                        left={'50%'}
-                        transform={"translateX(-50%)"}>
-                        <HStack justifyContent="center" mt={4}>
-                            <Button
-                                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                                isDisabled={page === 0}
-                            >
-                                Previous
-                            </Button>
-                            <Text fontSize={'sm'}>{`Page ${totalPages === 0 ? 0 : page + 1} of ${totalPages}`}</Text>
-                            <Button
-                                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                                isDisabled={page === 0 ? true : page === totalPages - 1}
-                            >
-                                Next
-                            </Button>
-                        </HStack>
-                    </Box>
-                </Box>
-
-                <Box
-                    backgroundColor={'lightgrey'}
-                    borderRadius={'5%'}
-                    width={'45vw'}
-                    height={'70vh'}
-                    mb={'2%'}
-                    position={'relative'}>
-                    <Text fontSize={'2xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'}>Tournament Ongoing</Text>
-                    <Flex
-                        justifyContent={'space-between'}>
-                        <Text fontSize={'xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'}>Details</Text>
-                        <Text fontSize={'xl'} ml={'3%'} mt={'3%'} fontWeight={'bold'} mr={'3%'}>Actions</Text>
-                    </Flex>
-                    {tournaments.map((tournament) => 
-                        <Box><ListComponent key={tournament.id} details={tournament} /></Box>
-                    )}
-                    <Box
-                        position={'absolute'}
-                        bottom={'3%'}
-                        left={'50%'}
-                        transform={"translateX(-50%)"}>
-                        <HStack justifyContent="center" mt={4}>
-                            <Button
-                                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                                isDisabled={page === 0}
-                            >
-                                Previous
-                            </Button>
-                            <Text fontSize={'sm'}>{`Page ${totalPages === 0 ? 0 : page + 1} of ${totalPages}`}</Text>
-                            <Button
-                                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                                isDisabled={page === 0 ? true : page === totalPages - 1}
-                            >
-                                Next
-                            </Button>
-                        </HStack>
-                    </Box>
-                </Box>
-            </Flex>
         </>
-    )
-
-}
+    );
+};
 
 export default ManageTournamentPage;
