@@ -15,20 +15,18 @@ import {
     Input,
     Divider,
     useToast,
-    Heading
+    Heading,
 } from "@chakra-ui/react";
-import {
-    FaArrowCircleLeft,
-} from "react-icons/fa";
+import { FaArrowCircleLeft } from "react-icons/fa";
 import TournamentForm from "@/components/tournamentForm";
 import test_data from "./test_data";
+import { useDisclosure } from "@chakra-ui/react";
+import PlayerProfileModal from "@/components/playerProfileModal";
 
-const pageSize = 3
+const pageSize = 100;
 
 function formatDate(dateString) {
     const date = new Date(dateString);
-
-    // Options for formatting the date and time
     const options = {
         day: "numeric",
         month: "short",
@@ -38,7 +36,6 @@ function formatDate(dateString) {
         hour12: true,
         timeZone: "Asia/Singapore"
     };
-
     return new Intl.DateTimeFormat("en-GB", options).format(date);
 }
 
@@ -47,11 +44,11 @@ const date = new Date().toISOString();
 const ListComponent = ({ details, registrationEnd }) => {
     const router = useRouter();
     const toast = useToast();
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     const handleKick = async () => {
         try {
             const response = await axios.delete(`http://localhost:8080/admin/tournament/${details.tournament.id}/team/player/${details.playerUsername}`);
-
             if (response.status !== 200) {
                 throw new Error("Failed to kick player");
             }
@@ -65,10 +62,6 @@ const ListComponent = ({ details, registrationEnd }) => {
                 isClosable: true,
             });
         }
-    };
-
-    const handleViewProfile = () => {
-        router.push(`/profile/${details.playerUsername}`);
     };
 
     return (
@@ -93,7 +86,7 @@ const ListComponent = ({ details, registrationEnd }) => {
                     backgroundColor="deepskyblue"
                     color="white"
                     _hover={{ backgroundColor: "dodgerblue" }}
-                    onClick={handleViewProfile}
+                    onClick={onOpen}
                 >
                     View Profile
                 </Button>
@@ -107,6 +100,7 @@ const ListComponent = ({ details, registrationEnd }) => {
                     Kick
                 </Button>
             </Flex>
+            <PlayerProfileModal isOpen={isOpen} onClose={onClose} playerData={details} />
         </Flex>
     );
 };
@@ -118,30 +112,26 @@ const ManageTeamPage = () => {
     const [teams, setTeams] = useState([]);
     const [count, setCount] = useState(0);
     const toast = useToast();
+    const [inviteUsername, setInviteUsername] = useState("");
 
-    const searchParams = useSearchParams()
-    const id = searchParams.get('id')
-
-    const [inviteUsername, setInviteUsername] = useState(""); // State to store input value
-
+    const searchParams = useSearchParams();
+    const id = searchParams.get('id');
+    
     const handleInputChange = (e) => {
-        setInviteUsername(e.target.value); // Update state on input change
+        setInviteUsername(e.target.value);
     };
 
     const handleBackNavigation = () => {
         router.back();
-    }
+    };
 
     const handleStartMatch = async () => {
         try {
             const response = await axios.post(`http://localhost:8080/tournament/match/${id}/start`);
-            console.log(response)
             if (response.status !== 200) {
                 throw new Error("Failed to start match");
             }
-
-            console.log(response.data.message);
-
+            router.push(`/manage-tournament/manage-match?id=${id}`);
         } catch (error) {
             console.error("Error starting match:", error);
             toast({
@@ -152,55 +142,42 @@ const ManageTeamPage = () => {
                 isClosable: true,
             });
         }
-        router.push('/manage-tournament');
-    }
+    };
 
     const sendInvite = async () => {
-
         try {
-            const response = await axios.post(`http://localhost:8080/admin/tournament/closed/${id}/invitation`,
-                {
-                    "usernames": inviteUsername.split(',')
-                }
-            );
-
+            const response = await axios.post(`http://localhost:8080/admin/tournament/closed/${id}/invitation`, {
+                "usernames": inviteUsername.split(',')
+            });
             if (response.status !== 200) {
                 throw new Error("Failed to invite players");
             }
-
-            console.log(response.data.message);
-
         } catch (error) {
-            console.error("Error starting match:", error);
+            console.error("Error inviting players:", error);
             toast({
                 title: "Error",
-                description: "Failed to start match.",
+                description: "Failed to invite players.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
             });
         }
-    }
+    };
 
     useEffect(() => {
-
         const tournaments = JSON.parse(sessionStorage.getItem("tournaments"));
-
         for (var t of tournaments) {
             if (t.id == id) {
                 setTournament(t);
             }
         }
-
         const fetchTeams = async () => {
-
             try {
                 const response = await axios.get(`http://localhost:8080/admin/tournament/${id}/team?page=${page}&limit=${pageSize}`);
-                var test_response = test_data
+                var test_response = test_data;
                 if (response.status !== 200) {
                     throw new Error("Failed to fetch teams");
                 }
-
                 const data = test_response.data;
                 setTeams(data.teams);
                 setCount(data.count);
@@ -215,7 +192,6 @@ const ManageTeamPage = () => {
                 });
             }
         };
-
         fetchTeams();
     }, [page]);
 
@@ -224,19 +200,13 @@ const ManageTeamPage = () => {
     return (
         <Box p="1%" backgroundColor="gray.100" minH="100vh">
             <Box>
-                <Flex
-                    align="center"
-                    justify="space-between"
-                    margin="1% 0% 2% 2%"
-                >
+                <Flex align="center" justify="space-between" margin="1% 0% 2% 2%">
                     <Flex align="center" onClick={handleBackNavigation} cursor="pointer" flex="1">
                         <FaArrowCircleLeft size="4vh" />
                         <Text ml="1vh" fontSize="3xl">Back</Text>
                     </Flex>
                     {tournament && (
-                        <Flex
-                            direction={'column'}
-                            margin={'auto'}>
+                        <Flex direction={'column'} margin={'auto'}>
                             <Heading as="h2" size="lg" textAlign="center" fontWeight="bold" color="gray.800" flex="1">
                                 {tournament.name}
                             </Heading>
@@ -256,29 +226,21 @@ const ManageTeamPage = () => {
                 </TabList>
 
                 <TabPanels>
-                    {/* Tournament Details Tab */}
                     <TabPanel>
                         <TournamentForm tournament={tournament} isEdited={true} />
                     </TabPanel>
-
-                    {/* Players Registered Tab */}
                     <TabPanel>
                         <Box>
                             <Flex mt="4">
                                 <Input placeholder="Enter usernames" value={inviteUsername} onChange={handleInputChange} />
                                 <Button ml="2" colorScheme="blue" onClick={sendInvite}>Invite</Button>
                             </Flex>
-
                             <Divider mb="4" />
-
-                            {/* Player List */}
                             <Box height="60vh" overflowY="auto">
                                 {teams.map((team) => (
                                     <ListComponent key={team.playerUsername} details={team} registrationEnd={tournament?.registrationPeriod.registrationEnd} />
                                 ))}
                             </Box>
-
-                            {/* Start Tournament Button */}
                             <Button mt="4" colorScheme="green" disabled={date < tournament?.registrationPeriod.registrationEnd} onClick={handleStartMatch}>
                                 Start Tournament
                             </Button>
@@ -288,7 +250,6 @@ const ManageTeamPage = () => {
             </Tabs>
         </Box>
     );
-
-}
+};
 
 export default ManageTeamPage;

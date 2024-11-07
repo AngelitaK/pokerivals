@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import axios from '../../../../config/axiosInstance';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Box,
     Text,
@@ -20,21 +20,56 @@ import {
 import MatchComponent from '@/components/matchComponent';
 import test_data from './test-data';
 
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+        timeZone: "Asia/Singapore"
+    };
+    return new Intl.DateTimeFormat("en-GB", options).format(date);
+}
+
 const ManageMatchesPage = () => {
     const router = useRouter();
-    const [tournamentData, setTournamentData] = useState([]);
+    const [tournament, setTournament] = useState(null);
+    const [tournamentData, setTournamentData] = useState(null);
     const toast = useToast();
+
+    const searchParams = useSearchParams();
+    const id = searchParams.get('id')
 
     // Fetch tournament data on page load
     useEffect(() => {
-        // axios.get('/api/tournament-data')
-        //   .then(response => setTournamentData(response.data))
-        //   .catch(error => console.error('Error fetching tournament data:', error));
-        setTournamentData(test_data);
+        const tournaments = JSON.parse(sessionStorage.getItem("tournaments"));
+        for (var t of tournaments) {
+            if (t.id == id) {
+                setTournament(t);
+            }
+        }
+
+        try {
+            const response = axios.get(`http://localhost:8080/tournament/match/${id}`)
+
+            if (response.status !== 200) {
+                throw new Error("Failed to fetch matches");
+            }
+
+            // setTournamentData(response.data);
+            
+        } catch (error) {
+            console.error("Error fetching matches: ", error)
+        }
+
+        setTournamentData(test_data.data);
     }, []);
 
     const handleBackNavigation = () => {
-        router.back();
+        router.push('/manage-tournament');
     }
 
     return (
@@ -50,31 +85,31 @@ const ManageMatchesPage = () => {
                         Back
                     </Text>
                 </Flex>
-                {tournamentData && (
+                {tournament && (
                     <Flex
                         direction={'column'}
                         margin={'auto'}
                         left={'50%'}
                         transform={"translateX(-20%)"}>
                         <Text fontSize={'2xl'} margin={'auto'} fontWeight={'bold'}>
-                            Boombayah Battle {/* {tournament.name} */}
+                            {tournament.name}
                         </Text>
                         <Text fontSize={'xl'} margin={'auto'}>
-                            13 OCT 2024, 12PM - 14 OCT 2024, 1PM {/* {formatDate(convertToSGT(tournament.estimatedTournamentPeriod.tournamentBegin))} - {formatDate(convertToSGT(tournament.estimatedTournamentPeriod.tournamentEnd))} */}
+                            {formatDate(tournament.estimatedTournamentPeriod.tournamentBegin)} - {formatDate(tournament.estimatedTournamentPeriod.tournamentEnd)}
                         </Text>
                     </Flex>
                 )}
             </Flex>
             <Box
-            m={'0% 3%'}>
+                m={'0% 3%'}>
                 <Tabs variant="enclosed" colorScheme="teal">
                     <TabList>
-                        {tournamentData.map((round, index) => (
+                        {tournamentData && tournamentData.map((round, index) => (
                             <Tab key={index}>{round.title}</Tab>
                         ))}
                     </TabList>
                     <TabPanels>
-                        {tournamentData.map((round, index) => (
+                        {tournamentData && tournamentData.map((round, index) => (
                             <TabPanel key={index} p={4}>
                                 {round.seeds.map((seed, seedIndex) => (
                                     <MatchComponent

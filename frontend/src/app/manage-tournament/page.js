@@ -34,7 +34,8 @@ const ListComponent = ({ details }) => {
     const router = useRouter();
 
     const handleNavigation = () => {
-        router.push(`/manage-tournament/manage-player?id=${details.id}`);
+        const route = details.started ? `/manage-tournament/manage-match?id=${details.id}` : `/manage-tournament/manage-player?id=${details.id}`;
+        router.push(route);
     };
 
     return (
@@ -58,6 +59,9 @@ const ListComponent = ({ details }) => {
                     <strong>End:</strong> {formatDate(details.estimatedTournamentPeriod.tournamentEnd)}
                 </Text>
             </Box>
+
+            <Text fontSize={{ base: "sm", md: "md" }} fontWeight="bold" color="gray.700">{details.started ? "Ongoing" : "Pending Start"}</Text>
+
             <Button
                 size="sm"
                 backgroundColor="teal.500"
@@ -156,11 +160,9 @@ const ManageTournamentPage = () => {
                         justifyContent="space-between"
                     >
                         <Box>
-                            <Heading as="h3" size="md" mb={4} borderBottom="2px solid" borderColor="yellow.400" pl={2} color="gray.700">
-                                Tournament Created
-                            </Heading>
                             <Flex justifyContent="space-between" px={2} mb={4}>
                                 <Text fontSize="xl" fontWeight="bold" color="gray.600">Details</Text>
+                                <Text fontSize="xl" fontWeight="bold" color="gray.600">Status</Text>
                                 <Text fontSize="xl" fontWeight="bold" color="gray.600">Actions</Text>
                             </Flex>
                             {tournaments.map((tournament) => (
@@ -179,50 +181,6 @@ const ManageTournamentPage = () => {
                             <Button
                                 onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
                                 isDisabled={page === totalPages - 1}
-                                mx={2}
-                            >
-                                Next
-                            </Button>
-                        </Flex>
-                    </Box>
-
-                    {/* Tournament Ongoing Box */}
-                    <Box
-                        bg="gray.50"
-                        borderRadius="16px"
-                        boxShadow="2xl"
-                        w={{ base: "100%", md: "45%" }}
-                        minHeight="70vh"
-                        p={4}
-                        pb={5}
-                        display="flex"
-                        flexDirection="column"
-                        justifyContent="space-between"
-                    >
-                        <Box>
-                            <Heading as="h3" size="md" mb={4} borderBottom="2px solid" borderColor="yellow.400" pl={2} color="gray.700">
-                                Tournament Ongoing
-                            </Heading>
-                            <Flex justifyContent="space-between" px={2} mb={4}>
-                                <Text fontSize="xl" fontWeight="bold" color="gray.600">Details</Text>
-                                <Text fontSize="xl" fontWeight="bold" color="gray.600">Actions</Text>
-                            </Flex>
-                            {tournaments.map((tournament) => (
-                                <ListComponent key={tournament.id} details={tournament} />
-                            ))}
-                        </Box>
-                        <Flex justify="center" mt={4}>
-                            <Button
-                                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                                isDisabled={page === 0}
-                                mx={2}
-                            >
-                                Previous
-                            </Button>
-                            <Text fontSize="sm" alignSelf="center">{`Page ${totalPages === 0 ? 0 : page + 1} of ${totalPages}`}</Text>
-                            <Button
-                                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                                isDisabled={page === totalPages - 1 || page === 0}
                                 mx={2}
                             >
                                 Next

@@ -66,7 +66,7 @@ const MatchComponent = ({ seed, toast }) => {
         depth: seed.depth,
         index: seed.index,
       },
-      matchResult: selectedWinner,
+      matchResult: (selectedWinner === seed.teams[0].id ? "TEAM_A" : "TEAM_B"),
     })
       .then(() => {
         toast({
@@ -97,81 +97,83 @@ const MatchComponent = ({ seed, toast }) => {
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="md" boxShadow="md" mb={4} bg="gray.50">
-      <VStack align="start" spacing={2}>
-        <HStack>
-          <Text fontWeight="bold">{seed.teams[0]?.id || 'Team A'}</Text>
-          <Text color="red.500">VS</Text>
-          <Text fontWeight="bold">{seed.teams[1]?.id || 'Team B'}</Text>
-        </HStack>
-        <Text>Proposed Time: {proposedTime ? new Date(proposedTime).toLocaleString() : 'Not Set'}</Text>
-        <Text>Team A Status: {seed.team_a_agree_timing}</Text>
-        <Text>Team B Status: {seed.team_b_agree_timing}</Text>
-        <Text>Overall Status: {seed.both_agree_timing}</Text>
-        <HStack>
-          <Input
-            placeholder="Propose Time"
-            value={proposedTime}
-            onChange={(e) => setProposedTime(e.target.value)}
+      <fieldset disabled={seed.forfeited}>
+        <VStack align="start" spacing={2}>
+          <HStack>
+            <Text fontWeight="bold">{seed.teams[0].id}</Text>
+            <Text color="red.500">VS</Text>
+            <Text fontWeight="bold">{seed.teams[1].id}</Text>
+          </HStack>
+          <Text>Proposed Time: {proposedTime ? new Date(proposedTime).toLocaleString() : 'Not Set'}</Text>
+          <Text>{seed.teams[0].id} Status: {seed.team_a_agree_timing}</Text>
+          <Text>{seed.teams[1].id} Status: {seed.team_b_agree_timing}</Text>
+          <Text>Overall Status: {seed.both_agree_timing}</Text>
+          <HStack>
+            <Input
+              placeholder="Propose Time"
+              value={proposedTime}
+              onChange={(e) => setProposedTime(e.target.value)}
+              size="sm"
+              type="datetime-local"
+              isDisabled={bothPlayersAccepted}
+            />
+            <Button
+              colorScheme="blue"
+              onClick={handleProposeTime}
+              isDisabled={bothPlayersAccepted}
+              width={'fit-content'}
+            >
+              Propose Time
+            </Button>
+          </HStack>
+          <Select
+            placeholder={seed.can_set_result ? "Select Winner" : seed.matchResult}
             size="sm"
-            type="datetime-local"
-            isDisabled={bothPlayersAccepted}
-          />
-          <Button
-            colorScheme="blue"
-            onClick={handleProposeTime}
-            isDisabled={bothPlayersAccepted}
-            width={'fit-content'}
+            value={selectedWinner}
+            onChange={(e) => setSelectedWinner(e.target.value)}
+            isDisabled={!seed.can_set_result}
           >
-            Propose Time
+            <option value={seed.teams[0].id}>{seed.teams[0].id}</option>
+            <option value={seed.teams[1].id}>{seed.teams[1].id}</option>
+          </Select>
+          <Button
+            colorScheme="green"
+            onClick={handleSubmitClick}
+            isDisabled={!seed.can_set_result}
+            mt={2}
+          >
+            Submit
           </Button>
-        </HStack>
-        <Select
-          placeholder="Select Winner"
-          size="sm"
-          value={selectedWinner}
-          onChange={(e) => setSelectedWinner(e.target.value)}
-          isDisabled={!bothPlayersAccepted}
+        </VStack>
+
+        {/* Confirmation Modal */}
+        <AlertDialog
+          isOpen={isOpen}
+          leastDestructiveRef={cancelRef}
+          onClose={onClose}
         >
-          <option value="TEAM_A">Team A</option>
-          <option value="TEAM_B">Team B</option>
-        </Select>
-        <Button
-          colorScheme="green"
-          onClick={handleSubmitClick}
-          isDisabled={!bothPlayersAccepted || !selectedWinner}
-          mt={2}
-        >
-          Submit
-        </Button>
-      </VStack>
+          <AlertDialogOverlay>
+            <AlertDialogContent>
+              <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                Confirm Result
+              </AlertDialogHeader>
 
-      {/* Confirmation Modal */}
-      <AlertDialog
-        isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onClose}
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Confirm Result
-            </AlertDialogHeader>
+              <AlertDialogBody>
+                Are you sure you want to submit the result with <b>{selectedWinner}</b> as the winner?
+              </AlertDialogBody>
 
-            <AlertDialogBody>
-              Are you sure you want to submit the result with <b>{selectedWinner}</b> as the winner?
-            </AlertDialogBody>
-
-            <AlertDialogFooter>
-              <Button colorScheme="red" ref={cancelRef} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button colorScheme="green" onClick={handleConfirmResult} ml={3}>
-                Confirm
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+              <AlertDialogFooter>
+                <Button colorScheme="red" ref={cancelRef} onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button colorScheme="green" onClick={handleConfirmResult} ml={3}>
+                  Confirm
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogOverlay>
+        </AlertDialog>
+      </fieldset>
     </Box>
   );
 }
