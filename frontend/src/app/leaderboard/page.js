@@ -15,19 +15,61 @@ import {
   VStack,
   Flex,
   Heading,
+  Button,
 } from "@chakra-ui/react";
 import LeaderBoardMember from "@/components/leaderboardMember";
 
 const LeaderBoard = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [clan, setClan] = useState(null);
   const [globalList, setGlobalList] = useState([]);
   const [teamList, setTeamList] = useState([]);
   const [friendsList, setFriendsList] = useState([]);
-  const [clan, setClan] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
 
   // Check authentication
   const { isAuthenticated, user, loading } = useAuth("PLAYER");
-  console.log(isAuthenticated, user, loading);
+  // console.log(isAuthenticated, user, loading);
+
+  //pagination
+  const [currentGlobalPage, setCurrentGlobalPage] = useState(1);
+  const [currentTeamPage, setCurrentTeamPage] = useState(1);
+  const [currentFriendsPage, setCurrentFriendsPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // global pagination
+  const paginatedGlobal = globalList.slice(
+    (currentGlobalPage - 1) * itemsPerPage,
+    currentGlobalPage * itemsPerPage
+  );
+  // Pagination handlers
+  const handleGlobal = (direction) => {
+    setCurrentGlobalPage((prev) =>
+      direction === "next" ? prev + 1 : Math.max(prev - 1, 1)
+    );
+  };
+
+  //clan pagination
+  const paginatedClan = teamList.slice(
+    (currentTeamPage - 1) * itemsPerPage,
+    currentTeamPage * itemsPerPage
+  );
+  const handleTeam = (direction) => {
+    setCurrentTeamPage((prev) =>
+      direction === "next" ? prev + 1 : Math.max(prev - 1, 1)
+    );
+  };
+
+  //friends pagination
+  const paginatedFriend = friendsList.slice(
+    (currentFriendsPage - 1) * itemsPerPage,
+    currentFriendsPage * itemsPerPage
+  );
+
+  const handleFriend = (direction) => {
+    setCurrentFriendsPage((prev) =>
+      direction === "next" ? prev + 1 : Math.max(prev - 1, 1)
+    );
+  };
 
   useEffect(() => {
     const username = localStorage.getItem("username");
@@ -36,10 +78,8 @@ const LeaderBoard = () => {
     // Fetch current user data
     const fetchSelf = async () => {
       try {
-        const response = await axios.get(`/player/${username}`, {
-          params: { page: 0, limit: 10 },
-        });
-        console.log("Response data:", response.data);
+        const response = await axios.get(`/player/${username}`);
+        // console.log("Response data:", response.data);
         setClan(response.data.clan?.name);
         setCurrentUser(response.data);
       } catch (error) {
@@ -48,19 +88,18 @@ const LeaderBoard = () => {
     };
 
     fetchSelf();
-  }, []); 
+  }, []);
 
   useEffect(() => {
     // Only fetch rankings if currentUser is set
     if (currentUser) {
-
       // Fetch global ranking
       const fetchGlobalRanking = async () => {
         try {
           const response = await axios.get("/player/me/non-friend", {
             params: {
               page: 0,
-              limit: 10,
+              limit: 100,
             },
           });
           const sortedPlayers = response.data.players.sort(
@@ -90,7 +129,7 @@ const LeaderBoard = () => {
               },
             }
           );
-          console.log("Clan ranking data:", response.data);
+          // console.log("Clan ranking data:", response.data);
           const sortedPlayers = response.data.players.sort(
             (a, b) => b.points - a.points
           );
@@ -115,7 +154,7 @@ const LeaderBoard = () => {
             (a, b) => b.points - a.points
           );
           setFriendsList([currentUser, ...sortedPlayers]);
-          console.log("Friends ranking data:", sortedPlayers);
+          // console.log("Friends ranking data:", sortedPlayers);
         } catch (error) {
           console.error("Error fetching friends ranking:", error);
         }
@@ -125,11 +164,9 @@ const LeaderBoard = () => {
     }
   }, [currentUser, clan]);
 
-
-   // loading screen
-   if (loading) return <LoadingOverlay />;
-   if (!isAuthenticated) return null;
-
+  // loading screen
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Box
@@ -172,7 +209,6 @@ const LeaderBoard = () => {
           </TabList>
 
           <TabPanels>
-            {/* global ranking */}
             <TabPanel>
               <Flex
                 fontWeight="bold"
@@ -191,9 +227,10 @@ const LeaderBoard = () => {
                 </Text>
               </Flex>
 
+              {/* global ranking */}
               <VStack alignItems="stretch" w="100%">
                 {Array.isArray(globalList) &&
-                  globalList.map((player, index) => (
+                  paginatedGlobal.map((player, index) => (
                     <LeaderBoardMember
                       key={index}
                       player={player.username}
@@ -202,6 +239,26 @@ const LeaderBoard = () => {
                     />
                   ))}
               </VStack>
+
+              {/* Pagination Controls */}
+              <Flex justify="space-between" mt={4}>
+                <Button
+                  size="sm"
+                  onClick={() => handleGlobal("prev")}
+                  disabled={currentGlobalPage === 1}
+                  colorScheme="blue"
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleGlobal("next")}
+                  disabled={paginatedGlobal.length < itemsPerPage}
+                  colorScheme="blue"
+                >
+                  Next
+                </Button>
+              </Flex>
             </TabPanel>
 
             {/* Clan ranking */}
@@ -225,9 +282,9 @@ const LeaderBoard = () => {
 
               <VStack alignItems="stretch" w="100%">
                 {Array.isArray(teamList) &&
-                  teamList.map(
+                  paginatedClan.map(
                     (player, index) =>
-                      player && player.username ? ( 
+                      player && player.username ? (
                         <LeaderBoardMember
                           key={index}
                           player={player.username}
@@ -237,6 +294,25 @@ const LeaderBoard = () => {
                       ) : null // If player or player.username is not valid, render nothing
                   )}
               </VStack>
+
+              <Flex justify="space-between" mt={4}>
+                <Button
+                  size="sm"
+                  onClick={() => handleTeam("prev")}
+                  disabled={currentTeamPage === 1}
+                  colorScheme="blue"
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleTeam("next")}
+                  disabled={paginatedClan.length < itemsPerPage}
+                  colorScheme="blue"
+                >
+                  Next
+                </Button>
+              </Flex>
             </TabPanel>
 
             {/* Friends ranking */}
@@ -260,9 +336,9 @@ const LeaderBoard = () => {
 
               <VStack alignItems="stretch" w="100%">
                 {Array.isArray(friendsList) &&
-                  friendsList.map(
+                  paginatedFriend.map(
                     (player, index) =>
-                      player && player.username ? ( 
+                      player && player.username ? (
                         <LeaderBoardMember
                           key={index}
                           player={player.username}
@@ -272,6 +348,25 @@ const LeaderBoard = () => {
                       ) : null // If player or player.username is not valid, render nothing
                   )}
               </VStack>
+
+              <Flex justify="space-between" mt={4}>
+                <Button
+                  size="sm"
+                  onClick={() => handleFriend("prev")}
+                  disabled={currentFriendsPage === 1}
+                  colorScheme="blue"
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleFriend("next")}
+                  disabled={paginatedFriend.length < itemsPerPage}
+                  colorScheme="blue"
+                >
+                  Next
+                </Button>
+              </Flex>
             </TabPanel>
           </TabPanels>
         </Tabs>

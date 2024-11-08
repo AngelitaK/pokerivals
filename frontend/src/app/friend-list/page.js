@@ -66,7 +66,7 @@ const FriendsPage = () => {
     const fetchFriendsList = async () => {
       try {
         const response = await axios.get("/player/me/friend", {
-          params: { page: 0, limit: 10 },
+          params: { page: 0, limit: 100 },
         });
         setFriendsList(response.data.players);
         console.log("Friends list fetched:", response.data.players);
@@ -158,7 +158,7 @@ const FriendsPage = () => {
 
     try {
       const response = await axios.get("/player", {
-        params: { query: username, page: 0, limit: 10 },
+        params: { query: username, page: 0, limit: 100 },
       });
       setSearchResults(response.data.players);
       console.log("Search results:", response.data);
