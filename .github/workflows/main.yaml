@@ -4,7 +4,7 @@ on:
   # this will trigger workflow whenever a change is pushed to main branch
   push:
     branches:
-      - to-sync
+      - backend
 jobs:
   build:
     name: Build Archive
