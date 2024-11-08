@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Flex, HStack, VStack, Text, Button } from '@chakra-ui/react';
 
-const TournamentItem = ({ tournament, buttonLabel, onButtonClick }) => {
+const TournamentItem = ({ tournament, buttonLabel, onButtonClick, isDisabled }) => {
     const {
         name,
         estimatedTournamentPeriod,
@@ -34,6 +34,7 @@ const TournamentItem = ({ tournament, buttonLabel, onButtonClick }) => {
                 <Button 
                     colorScheme={buttonLabel === "Leave" ? "red" : "green"} 
                     onClick={onButtonClick}
+                    disabled={isDisabled}
                 >
                     {buttonLabel}
                 </Button>
