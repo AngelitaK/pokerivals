@@ -11,7 +11,6 @@ import MainNavbar from "@/components/mainNavbar";
 
 export default function RootLayout({ children }) {
     const currentPath = usePathname()
-    console.log(currentPath)
 
   // Routes where no Navbar should be displayed 
   const noNavbarRoutes = ['/','/landing']; // Homepage route

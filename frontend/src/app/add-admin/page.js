@@ -1,18 +1,19 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useToast } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "../../../config/axiosInstance";
+import useAuth from "../../../config/useAuth";
+import LoadingOverlay from "../../components/loadingOverlay";
 import {
-  Box,
-  Button,
-  Container,
   Flex,
-  Heading,
-  Input,
-  Text,
+  Container,
   VStack,
-  useToast,
+  Box,
+  Heading,
+  Text,
+  Input,
+  Button,
   List,
   ListItem,
   Badge,
@@ -20,33 +21,44 @@ import {
 import { AddIcon, EmailIcon } from "@chakra-ui/icons";
 
 export default function AddAdmin() {
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [isInviting, setIsInviting] = useState(false);
-  const [invitedPeople, setInvitedPeople] = useState([]);
+  const { isAuthenticated, user, loading } = useAuth("ADMIN");
+  console.log(isAuthenticated, user, loading);
+
   const toast = useToast();
   const router = useRouter();
+  const [invitedPeople, setInvitedPeople] = useState([]);
+  const [isInviting, setIsInviting] = useState(false);
 
-  // Combined fetch invited admins with useEffect
+  //form input for inviting admin
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+
+    //test
+  const fetchUserData = async () => {
+    try {
+        const response = await axios.get('/me');
+        const data = response.data; 
+        console.log("User data fetched:", data);
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+    }
+};
+
+  // Fetch invited admins with useEffect
   useEffect(() => {
+    fetchUserData();
+
     const loadInvitedAdmins = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:8080/admin/me/invitee",
-          {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
+        const response = await axios.get("/admin/me/invitee", {
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" },
+        });
         const admins = response.data;
         console.log(admins);
 
-        // If no admins are invited yet, handle the empty response
         if (admins.length !== 0) {
-          setInvitedPeople(admins); // Set the invited admins
+          setInvitedPeople(admins);
         }
       } catch (error) {
         console.error("Error fetching invited admins:", error);
@@ -63,19 +75,14 @@ export default function AddAdmin() {
     setIsInviting(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/admin",
-        {
-          username: username,
-          email: email,
-        },
+      const response = await axios.post("/admin",
+        { username, email },
         {
           withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
+      console.log(response.data);
 
       toast({
         title: "Invitation Sent",
@@ -85,13 +92,12 @@ export default function AddAdmin() {
         isClosable: true,
       });
 
-      // Add the newly invited admin to the list
-      setInvitedPeople([
-        ...invitedPeople,
+      setInvitedPeople((prevPeople) => [
+        ...prevPeople,
         { id: String(Date.now()), email, username, active: false },
       ]);
 
-      // Clear the form fields after inviting
+      // Clear input fields
       setEmail("");
       setUsername("");
     } catch (error) {
@@ -108,39 +114,9 @@ export default function AddAdmin() {
     }
   };
 
-  const resendInviteEmail = async (person) => {
-    try {
-      console.log(person.username, person.email);
-      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-
-      const response = await axios.post(
-        "http://localhost:8080/admin/link",
-        {
-          username: person.username,
-          email: person.email,
-          time: currentTimeInSeconds, // current timestamp
-        },
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("Resend invite response:", response.data);
-      alert(`Invitation resent to ${person.username}`);
-    } catch (error) {
-      console.error(
-        "Failed to resend invite:",
-        error.response?.data || error.message
-      );
-      alert(
-        `Failed to resend invite: ${
-          error.response?.data?.message || error.message
-        }`
-      );
-    }
-  };
+  // Render conditional UI after all hooks have been called
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Flex minH="90vh" bg="white">
@@ -154,7 +130,7 @@ export default function AddAdmin() {
             <Heading size="lg" mb={4}>
               Invite Admin
             </Heading>
-            <Text mb={5}>Strictly to Google domain emails only.</Text>
+            <Text mb={5}>Please enter your Chosen here.</Text>
 
             {/* form to invite admin */}
             <form onSubmit={handleInvite}>
@@ -201,6 +177,8 @@ export default function AddAdmin() {
                     <Box>
                       <Text fontWeight="bold">{person.username}</Text>
                       <Text>{person.description}</Text>
+
+                      {/* will change once admin completes registers */}
                       <Badge colorScheme={person.active ? "green" : "yellow"}>
                         {person.active ? "Active" : "Waiting for confirmation"}
                       </Badge>
@@ -212,7 +190,6 @@ export default function AddAdmin() {
                         size="sm"
                         colorScheme="blue"
                         variant="outline"
-                        onClick={() => resendInviteEmail(person)}
                       >
                         Resend link email
                       </Button>

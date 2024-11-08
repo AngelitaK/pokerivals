@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { useRouter } from "next/navigation";
+import axios from "../../config/axiosInstance"; 
 import {
   Box,
   Flex,
@@ -32,8 +33,8 @@ const Logo = () => {
 
 const Links = [
   { text: 'Build Team', route: '#' },
-  { text: 'Tournament', route: '#' },
-  { text: 'Leaderboard', route: '#' }
+  { text: 'Tournament', route: '/find-tournament' },
+  { text: 'Leaderboard', route: '/leaderboard' }
 ];
 
 const NavLink = ({ text, route }) => {
@@ -58,31 +59,33 @@ export default function MainNavbar() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const router = useRouter();
   const toast = useToast();
+  const [username, setUsername] = useState("Guest");
 
     // Retrieve username from LocalStorage
-    const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
+    useEffect(() => {
+      // This runs only on the client
+      const storedUsername = localStorage.getItem("username");
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+    }, []);
 
     // Logout function
     const handleLogout = async () => {
       console.log("Logging out");
     
       try {
-        const response = await fetch('http://localhost:8080/auth/logout', {
-          method: 'GET', 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-    
-        if (!response.ok) {
+        const response = await axios.get('/auth/logout');
+        if (response.status !== 200) {
           throw new Error(`Logout failed: ${response.statusText}`);
         }
-    
+
         // set the response as text
-        const message = await response.text();
-        console.log(message.message)
+        const message = response.data;
+        console.log(message.message);
 
         localStorage.removeItem("username");
+        localStorage.removeItem("role");
 
         toast({
           title: "Logout Successful",
@@ -141,7 +144,7 @@ export default function MainNavbar() {
                   minW={0}
                   _hover={{ textDecoration: 'none' }}>
                   <Flex alignItems="center" flexDirection="row">
-                    <Text color={'black'} mr={'10px'}>{username|| 'Name'}</Text>
+                    <Text color={'black'} mr={'10px'}>{username || 'Name'}</Text>
                     <Avatar
                       size={'sm'}
                       src={'https://avatars.dicebear.com/api/male/username.svg'}
@@ -154,6 +157,7 @@ export default function MainNavbar() {
                     <Avatar
                       size={'2xl'}
                       src={'https://avatars.dicebear.com/api/male/username.svg'}
+                      onClick={() => router.push('/profile')}
                     />
                   </Center>
                   <br />
@@ -162,9 +166,12 @@ export default function MainNavbar() {
                   </Center>
                   <br />
                   <MenuDivider />
-                  <MenuItem color="black" onClick={handleLogout}>
-                  Logout
+                <MenuItem color="black" onClick={() => router.push('/profile')}>
+                  Profile
                 </MenuItem>
+                  <MenuItem color="black" onClick={handleLogout}>
+                    Logout
+                  </MenuItem>
                 </MenuList>
               </Menu>
             </Stack>
