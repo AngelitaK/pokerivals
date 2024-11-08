@@ -17,8 +17,10 @@ import {
   ModalBody,
   Button,
   Wrap,
+  Image,
 } from "@chakra-ui/react";
-import { AddIcon, CheckIcon } from "@chakra-ui/icons";
+import { AddIcon } from "@chakra-ui/icons";
+import { MdOutlineModeEdit } from "react-icons/md";
 
 // for pokemon stats
 function StatRow({ label, value }) {
@@ -115,6 +117,21 @@ function PokemonCard({ addToTeam }) {
     }
   };
 
+
+  const resetSelections = () => {
+    setSearchResults([]); // Clear search results
+    setPokemon(null); // Reset selected Pokémon
+    setSelectedMoves([]); // Clear selected moves
+    setSelectedNature(null); // Clear selected nature
+    setSelectedAbility(null); // Clear selected ability
+    setCurrentStep(1); // Reset to the first step
+  };
+
+  const handleOpenModal = () => {
+    resetSelections();
+    setIsOpen(true); // Open the modal after resetting selections
+  };
+
   const stats = pokemon
     ? pokemon.stats
     : {
@@ -127,7 +144,7 @@ function PokemonCard({ addToTeam }) {
       };
 
   return (
-    <Box position="relative" width="200px">
+    <Box position="relative" width="250px">
       <Box
         position="absolute"
         top="-60px"
@@ -144,8 +161,9 @@ function PokemonCard({ addToTeam }) {
             display="flex"
             alignItems="center"
             justifyContent="center"
+            onClick={handleOpenModal}
           >
-            <CheckIcon />
+            <MdOutlineModeEdit />
           </Box>
         ) : (
           <Box
@@ -168,16 +186,23 @@ function PokemonCard({ addToTeam }) {
       <Box
         bg={pokemon ? "yellow.400" : "white"}
         borderRadius="lg"
-        px={5}
-        py={5}
+        p={3}
         boxShadow="md"
       >
         {loading ? (
           <Spinner />
         ) : (
           <VStack spacing={4} align="stretch">
+            {pokemon?.name && (
+              <Image
+                src={`https://pokerivals-assets.s3.ap-southeast-1.amazonaws.com/sprites/${pokemon.name}.png`}
+                width={"500px"}
+                alt={pokemon.name}
+              />
+            )}
+
             <Text fontSize="xl" fontWeight="bold" textAlign="center">
-            {pokemon ? pokemon.name : "Choose Your Pokémon"}
+              {pokemon ? pokemon.name : "Choose Your Pokémon"}
             </Text>
 
             {pokemon && (

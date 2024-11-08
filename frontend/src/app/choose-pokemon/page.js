@@ -61,9 +61,15 @@ const ChoosePokemon = () => {
         duration: 5000,
         isClosable: true
       });
-
+      
     } catch (error) {
       console.error("Error joining tournament:", error);
+      toast({
+        title: "Error! Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true
+      });
     }
   };
 
@@ -91,7 +97,7 @@ const ChoosePokemon = () => {
       </Flex>
 
       {/* Render PokémonCard and pass addPokemonToTeam as a prop */}
-       <Flex gap={8} my={10} pt={10} wrap="wrap" justify="center">
+       <Flex gap={5} my={10} pt={10} wrap="wrap" justify="center">
       {[...Array(6)].map((_, index) => (
         <PokemonCard key={index} addToTeam={addPokemonToTeam} />
       ))}
