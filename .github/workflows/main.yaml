@@ -65,7 +65,7 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # This is referred from Github Secrets
           use_existing_version_if_available: true
           application_name: PokeRivals-backend # Application name we created in Elastic Beanstalk
-          environment_name: PokeRivals-backend-env # Environment name we created in Elastic Beanstalk
+          environment_name: PokeRivals-backend-prod # Environment name we created in Elastic Beanstalk
           version_label: ${{ github.SHA }}
           region: ${{ secrets.AWS_REGION }} # VERY IMPORTANT: AWS Region where initially Application was created in AWS EBS. We created in us-east-1 which is N-Virginia
           deployment_package: pokerivals-0.0.1-SNAPSHOT.jar # Download artifacts from previous job
