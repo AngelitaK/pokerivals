@@ -1,7 +1,6 @@
   "use client";
 
-  import { useState, useContext, useEffect } from "react";
-  import { UserContext } from "../Providers.js";
+  import { useState, useEffect } from "react";
   import {
     Avatar,
     Box,
@@ -69,7 +68,6 @@
   const ProfilePage = () => {
     const [users, setUsers] = useState([]); // Store remaining users
     const [friends, setFriends] = useState([]); // Store friends
-    const { userData } = useContext(UserContext);
     const toast = useToast();
 
     // Fetch friends from the backend on load
@@ -233,20 +231,20 @@
               <Avatar size="2xl" name="John Doe" />
               <Flex align="center" mt={4}>
                 <Heading size="lg" fontWeight="bold">
-                  {userData?.username || 'John Doe'}
+                  {'Jon Doe' || 'John Doe'}
                 </Heading>
               </Flex>
 
               <Text mt={5} fontSize="xl">
-                {userData?.description || 'No description available'}
+                {'Jon Doe' || 'No description available'}
               </Text>
               <Text mt={5} fontSize="xl">
-                Tournaments won: {userData?.tournamentsWon || 0}
+                Tournaments won: {0 || 0}
               </Text>
-              <Text fontSize="xl">Points: {userData?.points || 0}</Text>
+              <Text fontSize="xl">Points: {0 || 0}</Text>
 
               <Text fontSize="xl" fontWeight="bold">
-                Clan: {userData?.clan?.name || 'No clan'}
+                Clan: {'Marco Clan'|| 'No clan'}
               </Text>
 
               <Stack spacing={6} mt={8} direction="row">
