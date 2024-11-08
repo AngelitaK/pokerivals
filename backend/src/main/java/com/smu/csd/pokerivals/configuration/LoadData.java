@@ -12,9 +12,13 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.util.*;
@@ -40,7 +44,7 @@ class LoadData {
       }
 
       // Load Admin
-      Resource r = new ClassPathResource("admins.csv");
+      r = new ClassPathResource("admins.csv");
       try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
@@ -57,7 +61,7 @@ class LoadData {
       }
 
       // Load Players
-      Resource r = new ClassPathResource("players.csv");
+      r = new ClassPathResource("players.csv");
       try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
