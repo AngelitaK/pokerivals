@@ -27,8 +27,8 @@ class LoadData {
   CommandLineRunner initDatabase(UserRepository userRepository, ClanRepository clanRepository) {
     return args -> {
       // Load Clan
-      File file = ResourceUtils.getFile("classpath:clan.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      Resource r = new ClassPathResource("clan.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -40,8 +40,8 @@ class LoadData {
       }
 
       // Load Admin
-      file = ResourceUtils.getFile("classpath:admins.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      Resource r = new ClassPathResource("admins.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -57,8 +57,8 @@ class LoadData {
       }
 
       // Load Players
-      file = ResourceUtils.getFile("classpath:players.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      Resource r = new ClassPathResource("players.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
