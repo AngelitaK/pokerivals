@@ -27,27 +27,31 @@ import { Box, Text, Heading, useDisclosure, Modal, ModalOverlay, ModalContent, M
       <Seed mobileBreakpoint={breakpoint}>
         <SeedItem style={{ width: '100%' }}>
           <Box padding="10px" bg={seed.forfeited ? "red.600" : "black"} borderRadius="md" boxShadow="md">
-            <SeedTeam
-              fontSize="lg"
-              color="white"
-              fontWeight="bold"
-              onClick={() => handlePlayerClick(seed.teams[0])}
-              cursor="pointer"
-              _hover={{ color: "gray.400" }}
-            >
-              {seed.teams[0]?.id || '-----------'} ({seed.teams[0]?.score.toFixed(1)})
-            </SeedTeam>
+            {seed.teams[0]?.id && (
+              <SeedTeam
+                fontSize="lg"
+                color="white"
+                fontWeight="bold"
+                onClick={() => handlePlayerClick(seed.teams[0])}
+                cursor="pointer"
+                _hover={{ color: "gray.400" }}
+              >
+                {seed.teams[0].id} ({seed.teams[0].score.toFixed(1)})
+              </SeedTeam>
+            )}
             <Box height="1px" bg="gray.500" my="2"></Box>
-            <SeedTeam
-              fontSize="lg"
-              color="white"
-              fontWeight="bold"
-              onClick={() => handlePlayerClick(seed.teams[1])}
-              cursor="pointer"
-              _hover={{ color: "gray.400" }}
-            >
-              {seed.teams[1]?.id || '-----------'} ({seed.teams[1]?.score.toFixed(1)})
-            </SeedTeam>
+              {seed.teams[1]?.id && (
+              <SeedTeam
+                fontSize="lg"
+                color="white"
+                fontWeight="bold"
+                onClick={() => handlePlayerClick(seed.teams[1])}
+                cursor="pointer"
+                _hover={{ color: "gray.400" }}
+              >
+                {seed.teams[1].id} ({seed.teams[1].score.toFixed(1)})
+              </SeedTeam>
+            )}
           </Box>
         </SeedItem>
         <SeedTime mobileBreakpoint={breakpoint} fontSize="xs" color="gray.400">
