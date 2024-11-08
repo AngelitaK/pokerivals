@@ -231,7 +231,8 @@ const ManageTeamPage = () => {
                     </TabPanel>
                     <TabPanel>
                         <Box>
-                            <Flex mt="4">
+                            <Heading size="md">Players Registered</Heading>
+                            <Flex mt="4" hidden={tournament?.["@type"] === "open"}>
                                 <Input placeholder="Enter usernames" value={inviteUsername} onChange={handleInputChange} />
                                 <Button ml="2" colorScheme="blue" onClick={sendInvite}>Invite</Button>
                             </Flex>
