@@ -5,7 +5,6 @@ import axios from "../../../config/axiosInstance";
 import { FaArrowCircleLeft } from "react-icons/fa";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import test_data from "./test_data";
 
 const formatDate = (isoString) => {
     const date = new Date(isoString);

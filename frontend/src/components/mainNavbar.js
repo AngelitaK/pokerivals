@@ -57,10 +57,9 @@ const NavLink = ({ text, route }) => {
 
 export default function MainNavbar() {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [username, setUsername] = useState('Guest'); // Default value
+  const [username, setUsername] = useState('Guest'); 
   const router = useRouter();
   const toast = useToast();
-  const [username, setUsername] = useState("Guest");
 
     // Retrieve username from LocalStorage
     useEffect(() => {

@@ -124,7 +124,7 @@ const ProfilePage = () => {
                 <Text fontWeight="bold" fontSize="xl">
                   Clan
                 </Text>
-                <Text color="gray.600" fontSize="lg" textTransform="uppercase">{userInfo?.clan.name}</Text>
+                {/* <Text color="gray.600" fontSize="lg" textTransform="uppercase">{userInfo?.clan.name}</Text> */}
               </Box>
 
               {/* points box */}
