@@ -21,27 +21,55 @@ import java.util.*;
 
 @Slf4j
 @Configuration
-class LoadData {
-  
+public class LoadData {
+
+  private final int noPokemonsForTest = 100;
+
+  @Autowired
+  public LoadData(Environment environment) {
+    this.environment = environment;
+  }
+
   @Bean
-  CommandLineRunner initDatabase(UserRepository userRepository, ClanRepository clanRepository) {
-    return args -> {
+  public InitializingBean initDatabase(
+          UserRepository userRepository,
+          ClanRepository clanRepository,
+          PokemonRepository pokemonRepository,
+          AbilityRepository abilityRepository,
+          MoveRepository moveRepository,
+          BettingSettingRepository bettingSettingRepository
+  ) {
+    return () -> {
+      // load config
+      var minConfig = bettingSettingRepository.findById(BettingSettingKey.MINIMUM_PROFIT_MARGIN_PERCENTAGE);
+      var maxConfig = bettingSettingRepository.findById(BettingSettingKey.MAXIMUM_PROFIT_MARGIN_PERCENTAGE);
+      if (minConfig.isEmpty()){
+        bettingSettingRepository.save(new BettingSetting(BettingSettingKey.MINIMUM_PROFIT_MARGIN_PERCENTAGE, 5));
+      }
+      if (maxConfig.isEmpty()){
+        bettingSettingRepository.save(new BettingSetting(BettingSettingKey.MAXIMUM_PROFIT_MARGIN_PERCENTAGE,10));
+      }
+
+
+
       // Load Clan
-      File file = ResourceUtils.getFile("classpath:clan.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      Resource r = new ClassPathResource("clan.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
           while ((line = csvReader.readNext()) != null) {
-            clanRepository.deleteById(line[0]);
-            System.out.println("Saving " + clanRepository.save(new Clan(line[0].toLowerCase())));
+            if (clanRepository.findById(line[0].toLowerCase()).isEmpty()) {
+              log.trace("Saving {}", clanRepository.save(new Clan(line[0].toLowerCase())));
+            }
           }
         }
       }
 
       // Load Admin
-      file = ResourceUtils.getFile("classpath:admins.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+
+      r = new ClassPathResource("admins.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -50,15 +78,15 @@ class LoadData {
             if (userRepository.findById(admin.getId()).isEmpty() && userRepository.findOneByGoogleSub(admin.getGoogleSub()).isEmpty()) {
               userRepository.deleteById(admin.getUsername());
               userRepository.deleteByGoogleSub(admin.getGoogleSub());
-              System.out.println("Saving Admin : " + userRepository.save(admin));
+              log.trace("Saving Admin : {}", userRepository.save(admin));
             }
           }
         }
       }
 
       // Load Players
-      file = ResourceUtils.getFile("classpath:players.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      r = new ClassPathResource("players.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -67,26 +95,128 @@ class LoadData {
             if (userRepository.findById(player.getId()).isEmpty() && userRepository.findOneByGoogleSub(player.getGoogleSub()).isEmpty()){
               userRepository.deleteById(player.getUsername());
               userRepository.deleteByGoogleSub(player.getGoogleSub());
-              System.out.println("Saving Player : " + userRepository.save(player));
+              log.trace("Saving Player : {}", userRepository.save(player));
             }
           }
         }
       }
 
+      // Load pokemon
+
+      List<Map<String,String>> pokemonRows = new ArrayList<>();
+      r = new ClassPathResource("pokemon.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
+        try (CSVReader csvReader = new CSVReader(reader)) {
+          String[] header = csvReader.readNext();
+          String[] line;
+          while ((line = csvReader.readNext()) != null) {
+            pokemonRows.add(convertArraysToMap(header,line));
+          }
+        }
+      }
+
+      Map<String, Set<String>> pokemonMoves = new HashMap<>();
+
+      r = new ClassPathResource("learnset_data.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
+        try (CSVReader csvReader = new CSVReader(reader)) {
+          String[] header = csvReader.readNext();
+          String[] line;
+          while ((line = csvReader.readNext()) != null) {
+            pokemonMoves.computeIfAbsent(line[0], k->new HashSet<>()).add(line[1]);
+          }
+        }
+      }
+
+      int noPokemonsInserted = 0;
+      boolean isTest = false;
+      String[] activeProfiles = environment.getActiveProfiles();
+      for (String s: activeProfiles){
+        if (s.equals("test")){
+          isTest = true;
+          break;
+        }
+      }
+
+      if (pokemonRepository.count() == pokemonRows.size()){
+        return;
+      }
+
+      for(Map<String,String> row : pokemonRows){
+
+        String[] type = new String[2];
+        String typeString = row.get("types");
+        if(typeString.contains(",")){
+          type = typeString.split(",");
+        } else{
+          type = new String[]{typeString,null};
+        }
+
+        Pokemon.Stats stats = new Pokemon.Stats(
+                Integer.parseInt(row.get("HP")),
+                Integer.parseInt(row.get("attack")),
+                Integer.parseInt(row.get("defense")),
+                Integer.parseInt(row.get("SpA")),
+                Integer.parseInt(row.get("SpD")),
+                Integer.parseInt(row.get("speed"))
+        );
+
+        List<Ability> abilities = new ArrayList<>();
+        if(!row.get("Ability0").isEmpty()){
+          abilities.add(new Ability(row.get("Ability0")));
+        }
+
+        if(!row.get("HiddenAbility").isEmpty()){
+          abilities.add(new Ability(row.get("HiddenAbility")));
+        }
+
+        for (Ability ability : abilities){
+          abilityRepository.save(ability);
+        }
+
+        Pokemon pokemon = new Pokemon(
+                Integer.parseInt(row.get("id")),
+                row.get("name"),
+                type[0],
+                type[1],
+                stats
+        );
+        for (Ability ability : abilities){
+          pokemon.addAbility(ability);
+        }
+
+        Set<String>  moveNames = pokemonMoves.get(pokemon.getName());
+        final List<Move> moves = new ArrayList<>();
+
+        for(String moveName: moveNames){
+          Move move = new Move(moveName);
+          moveRepository.save(move);
+          moves.add(move);
+        }
+
+        for (Move move : moves){
+          pokemon.addMove(move);
+        }
+
+        log.info("Preloading " + pokemonRepository.save(pokemon));
+
+        if(isTest && ++noPokemonsInserted > noPokemonsForTest){
+          break;
+        }
+      }
     };
   }
 
-  @Autowired
-  private Environment environment;
+  private final Environment environment;
 
   private <K,V> Map<K,V> convertArraysToMap(K[] keys, V[] values){
-      Map<K,V> result = new HashMap<>();
+    Map<K,V> result = new HashMap<>();
 
-      for (int i = 0; i < keys.length; i++){
-        result.put(keys[i], values[i]);
-      }
+    for (int i = 0; i < keys.length; i++){
+      result.put(keys[i], values[i]);
+    }
 
-      return result;
+    return result;
 
   }
 }
