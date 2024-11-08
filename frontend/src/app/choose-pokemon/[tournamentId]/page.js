@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "../../../config/axiosInstance";
-import useAuth from "../../../config/useAuth";
-import LoadingOverlay from "../../components/loadingOverlay";
+import axios from "../../../../config/axiosInstance";
+import useAuth from "../../../../config/useAuth";
+import LoadingOverlay from "../../../components/loadingOverlay";
 import PokemonCard from "@/components/pokemonCard";
 import {
   Flex,
@@ -14,13 +14,16 @@ import {
   useToast
 } from "@chakra-ui/react";
 
-const ChoosePokemon = () => {
+const ChoosePokemon = ({ params }) => {
   const router = useRouter();
   const toast = useToast();
+
   const [finalTeam, setFinalTeam] = useState([]); // Use an empty array for the team
 
   const { isAuthenticated, loading } = useAuth("PLAYER");
   console.log(isAuthenticated, loading);
+
+  const { tournamentId } = params;
 
   // Function to add Pokémon to the final team
   const addPokemonToTeam = (pokemon) => {
@@ -34,7 +37,8 @@ const ChoosePokemon = () => {
    // Log finalTeam whenever it updates
    useEffect(() => {
     console.log("Updated team:", finalTeam);
-  }, [finalTeam]);
+    console.log(tournamentId);
+  }, [finalTeam, tournamentId]);
 
   // Handle posting the final team to the API
   const handleReadyForBattle = async () => {
@@ -46,8 +50,6 @@ const ChoosePokemon = () => {
       nature: pokemon.nature, // Assuming nature is stored in the pokemon object
       ability: pokemon.ability // Assuming ability is stored in the pokemon object
     }));
-
-    const tournamentId = "078b54e2-e22f-4237-9061-1fa8abe53dd4"; // Replace with the actual tournament ID from props
 
     try {
       const response = await axios.post(`/player/tournament/${tournamentId}/join`, {
@@ -61,6 +63,9 @@ const ChoosePokemon = () => {
         duration: 5000,
         isClosable: true
       });
+
+      // Redirect to /find-tournament after showing the success message
+      await router.push("/find-tournament");
 
     } catch (error) {
       console.error("Error joining tournament:", error);
@@ -81,7 +86,7 @@ const ChoosePokemon = () => {
       bgPosition="center"
       p={8}
       minH="100vh"
-    >
+    >x
       {/* Top Header */}
       <Flex w="100%" justify="center" align="center" mb={10}>
         <Button onClick={() => router.back()} colorScheme="blue" position="absolute" left="10px">

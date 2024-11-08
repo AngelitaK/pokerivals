@@ -19,7 +19,6 @@ import {
 } from "@chakra-ui/react";
 import { FaArrowCircleLeft } from "react-icons/fa";
 import TournamentForm from "@/components/tournamentForm";
-import test_data from "./test_data";
 import { useDisclosure } from "@chakra-ui/react";
 import PlayerProfileModal from "@/components/playerProfileModal";
 
