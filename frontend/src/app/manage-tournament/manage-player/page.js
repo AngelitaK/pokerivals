@@ -19,7 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { FaArrowCircleLeft } from "react-icons/fa";
 import TournamentForm from "@/components/tournamentForm";
-import test_data from "./test_data";
+// import test_data from "./test_data";
 import { useDisclosure } from "@chakra-ui/react";
 import PlayerProfileModal from "@/components/playerProfileModal";
 
@@ -174,11 +174,11 @@ const ManageTeamPage = () => {
         const fetchTeams = async () => {
             try {
                 const response = await axios.get(`http://localhost:8080/admin/tournament/${id}/team?page=${page}&limit=${pageSize}`);
-                var test_response = test_data;
+                // var test_response = test_data;
                 if (response.status !== 200) {
                     throw new Error("Failed to fetch teams");
                 }
-                const data = test_response.data;
+                const data = response.data;
                 setTeams(data.teams);
                 setCount(data.count);
             } catch (error) {
