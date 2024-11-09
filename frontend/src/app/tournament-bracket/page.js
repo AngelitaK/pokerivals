@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bracket, Seed, SeedItem, SeedTeam, SeedTime } from 'react-brackets';
 import { Box, Text, Heading, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Flex, Tag, TagLabel, Stack, Divider,  } from '@chakra-ui/react';
-import rounds from './incompleteTournament';
+import rounds from './completedTournament';
 import axios from '../../../config/axiosInstance'
 
 const tournamentId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"; // Replace the hardcoded tournament ID
@@ -89,26 +89,26 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
 const TournamentPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedSeed, setSelectedSeed] = useState(null);
-  const [rounds, setRounds] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // const [rounds, setRounds] = useState([]);
+  // const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch the tournament matches when the component mounts
-    const fetchMatches = async () => {
-      try {
-        const response = await axios.get(`/tournament/match/${TOURNAMENT_ID}`);
-        setRounds(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching tournament matches:", error);
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   // Fetch the tournament matches when the component mounts
+  //   const fetchMatches = async () => {
+  //     try {
+  //       const response = await axios.get(`/tournament/match/${TOURNAMENT_ID}`);
+  //       setRounds(response.data);
+  //       setLoading(false);
+  //     } catch (error) {
+  //       console.error("Error fetching tournament matches:", error);
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchMatches();
-  }, []);
+  //   fetchMatches();
+  // }, []);
 
-  if (loading) return <Text>Loading tournament data...</Text>;
+  // if (loading) return <Text>Loading tournament data...</Text>;
 
   const finalRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
   const finalMatch = finalRound && finalRound.seeds && finalRound.seeds.length > 0 ? finalRound.seeds[0] : null;
