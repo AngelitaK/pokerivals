@@ -1,5 +1,7 @@
 package com.smu.csd.pokerivals.tournament.entity;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smu.csd.pokerivals.user.entity.Player;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
@@ -22,6 +24,7 @@ public class Team {
 
     @EmbeddedId
     @EqualsAndHashCode.Include
+    @JsonIgnore
     private TeamId teamId;
 
     @Embeddable
@@ -46,10 +49,12 @@ public class Team {
 
     @ManyToOne
     @MapsId("playerName")
+    @JsonIgnore
     private Player player;
 
     @ManyToOne
     @MapsId("tournamentId")
+    @JsonIgnore
     private Tournament tournament;
 
 
@@ -68,5 +73,17 @@ public class Team {
     }
     public void removeChosenPokemon(ChosenPokemon pokemon){
         chosenPokemons.remove(pokemon);
+    }
+
+    public record TournamentDetails(String name, UUID id){};
+
+    @JsonGetter("tournament")
+    public TournamentDetails getTournamentDetails(){
+        return new TournamentDetails(tournament.getName(),tournament.getId());
+    }
+
+    @JsonGetter("playerUsername")
+    public String getPlayerUsername(){
+        return teamId.getPlayerName();
     }
 }
