@@ -32,9 +32,9 @@ const Logo = () => {
 };
 
 const Links = [
-  { text: 'Build Team', route: '#' },
   { text: 'Tournament', route: '/find-tournament' },
-  { text: 'Leaderboard', route: '/leaderboard' }
+  { text: 'Leaderboard', route: '/leaderboard' },
+  { text: 'Betting', route: '/betting' }
 ];
 
 const NavLink = ({ text, route }) => {
@@ -147,7 +147,7 @@ export default function MainNavbar() {
                     <Text color={'black'} mr={'10px'}>{username || 'Name'}</Text>
                     <Avatar
                       size={'sm'}
-                      src={'https://avatars.dicebear.com/api/male/username.svg'}
+                      src={'ashketchum.jpg'}
                     />
                   </Flex>
                 </MenuButton>
@@ -156,20 +156,22 @@ export default function MainNavbar() {
                   <Center>
                     <Avatar
                       size={'2xl'}
-                      src={'https://avatars.dicebear.com/api/male/username.svg'}
-                      onClick={() => router.push('/profile')}
+                      src={'ashketchum.jpg'}
                     />
                   </Center>
                   <br />
-                  <Center>
-                    <p>Hello!</p>
+                  <Center 
+                    onClick={() => router.push('/profile')} 
+                    cursor="pointer" 
+                    width="fit-content"
+                    margin="auto"
+                  >
+                    <Text>
+                      {username || 'Name'}
+                    </Text>
                   </Center>
-                  <br />
                   <MenuDivider />
-                <MenuItem color="black" onClick={() => router.push('/profile')}>
-                  Profile
-                </MenuItem>
-                  <MenuItem color="black" onClick={handleLogout}>
+                  <MenuItem color="black" onClick={handleLogout} justifyContent="center" fontWeight="semibold">
                     Logout
                   </MenuItem>
                 </MenuList>
