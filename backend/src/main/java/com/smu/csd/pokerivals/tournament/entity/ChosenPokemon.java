@@ -5,7 +5,10 @@ import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
@@ -16,45 +19,30 @@ import java.util.Set;
 @Getter
 @Setter
 @Table(name = "CHOSEN_POKEMON")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor
 public class ChosenPokemon {
-    public ChosenPokemon(){}
+
     @EmbeddedId
+    @EqualsAndHashCode.Include
     private PokemonId pokemonId;
-    @Override
-    public boolean equals(Object other){
-        if (other instanceof ChosenPokemon o){
-            return pokemonId.equals(o.getPokemonId());
-        }
-        return false;
-    }
+
     @Embeddable
     @Getter
     @Setter
+    @EqualsAndHashCode
+    @NoArgsConstructor
     public static class PokemonId implements Serializable{
-        public PokemonId(){}
         @Column(nullable = false, name = "pokemonId")
         private Integer pokemonId;
 
         @Column(nullable = false, name = "teamId")
         private Team.TeamId teamId;
 
-        @Override
-        public boolean equals(Object other){
-            if (other instanceof PokemonId o){
-                return pokemonId.equals(o.getPokemonId()) && teamId.equals(o.getTeamId());
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode(){
-            return pokemonId.hashCode() + teamId.hashCode();
-        }
-        public PokemonId (Pokemon pokemon , Team team){
-            this.pokemonId = pokemon.getId();
+        public PokemonId(Team team, Pokemon pokemon) {
             this.teamId = team.getTeamId();
+            this.pokemonId = pokemon.getId();
         }
-
     }
 
     @ManyToOne
@@ -69,15 +57,16 @@ public class ChosenPokemon {
     private Set <Move> movesLearnt = new HashSet<>();
 
     @Enumerated(EnumType.ORDINAL)
+    @NotNull
     private POKEMON_NATURE nature;
 
     @ManyToOne
     private Ability ability;
 
-    public ChosenPokemon (Team team , Pokemon pokemon , PokemonId pokemonId){
+    public ChosenPokemon (Team team , Pokemon pokemon){
         this.team = team;
         this.pokemon = pokemon;
-        this.pokemonId = pokemonId;
+        this.pokemonId = new PokemonId(team,pokemon);
     }
 
     public void learnMove(Move move){
