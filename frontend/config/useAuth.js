@@ -9,38 +9,24 @@ export default function useAuth(requiredRole) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      setLoading(true);
+      const username = localStorage.getItem("username");
+      const role = localStorage.getItem("role");
 
-      try {
-        // Retrieve data from localStorage only on the client
-        const username = localStorage.getItem("username");
-        const role = localStorage.getItem("role");
+      if (username && role) {
+        const isRoleAuthorized = Array.isArray(requiredRole)
+          ? requiredRole.includes(role)
+          : role === requiredRole;
 
-        if (username && role) {
-          // Set user data if authenticated
-          setIsAuthenticated(true);
+        if (!isRoleAuthorized) {
+          router.push(role === "PLAYER" ? "/find-tournament" : "/admin-home");
+        } else {
           setUser({ username, role });
-
-          // If requiredRole is an array, check if it includes the user's role.
-          const isRoleAuthorized = Array.isArray(requiredRole)
-            ? requiredRole.includes(role)
-            : role === requiredRole;
-
-          if (!isRoleAuthorized) {
-            if (role === "PLAYER") {
-              router.push("/find-tournament");
-            } else if (role === "ADMIN") {
-              router.push("/admin-home");
-            }
-          }
+          setIsAuthenticated(true);
         }
-        // user not logged
-        else {
-          router.push("/login");
-        }
-      } finally {
-        setLoading(false);
+      } else {
+        router.push("/login");
       }
+      setLoading(false);
     };
 
     checkAuth();
