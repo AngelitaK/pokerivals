@@ -1,133 +1,218 @@
 package com.smu.csd.pokerivals.entity;
 
-import com.smu.csd.pokerivals.tournament.entity.Team;
-import com.smu.csd.pokerivals.tournament.entity.Tournament;
-import com.smu.csd.pokerivals.tournament.entity.Tournament.EloLimit;
+import com.smu.csd.pokerivals.configuration.LoadData;
+import com.smu.csd.pokerivals.pokemon.entity.Move;
+import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
+import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
+import com.smu.csd.pokerivals.pokemon.repository.AbilityRepository;
+import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
+import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
+import com.smu.csd.pokerivals.tournament.entity.*;
+import com.smu.csd.pokerivals.tournament.repository.ChosenPokemonRepository;
 import com.smu.csd.pokerivals.tournament.repository.TeamRepository;
 import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
 import com.smu.csd.pokerivals.user.entity.Admin;
+import com.smu.csd.pokerivals.user.entity.ClanRepository;
 import com.smu.csd.pokerivals.user.entity.Player;
-import com.smu.csd.pokerivals.user.repository.AdminRepository;
-import com.smu.csd.pokerivals.user.repository.PlayerRepository;
+import com.smu.csd.pokerivals.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.core.env.Environment;
+
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3306/test",
-        "spring.jpa.hibernate.ddl-auto=update"})
+@DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Slf4j
+//@ActiveProfiles("test")
 public class TournamentEntityTest {
-    @Autowired
-    private TestEntityManager testEM;
+    private final TournamentRepository tournamentRepository;
+    private final TeamRepository teamRepository;
+    private final ChosenPokemonRepository chosenPokemonRepositor;
+    private final UserRepository userRepository;
+    private final ClanRepository clanRepository;
+    private final MoveRepository moveRepository;
+    private final AbilityRepository abilityRepository;
+    private final PokemonRepository pokemonRepository;
+    private UUID closedTournamentId;
 
     @Autowired
-    private TournamentRepository tournamentRepository;
+    public TournamentEntityTest(TournamentRepository tournamentRepository, TeamRepository teamRepository, ChosenPokemonRepository chosenPokemonRepositor, UserRepository userRepository, ClanRepository clanRepository, MoveRepository moveRepository, AbilityRepository abilityRepository, PokemonRepository pokemonRepository) {
+        this.tournamentRepository = tournamentRepository;
+        this.teamRepository = teamRepository;
+        this.chosenPokemonRepositor = chosenPokemonRepositor;
+        this.userRepository = userRepository;
+        this.clanRepository = clanRepository;
+        this.moveRepository = moveRepository;
+        this.abilityRepository = abilityRepository;
+        this.pokemonRepository = pokemonRepository;
+    }
 
     @Autowired
-    private TeamRepository teamRepository;
+    private Environment environment;
 
-    @Autowired
-    private AdminRepository adminRepository;
+    private UUID openTournamentId;
 
-    @Autowired
-    private PlayerRepository playerRepository;
+    private int[] pokemonsToJoinWith = new int[]{
+            2,4,6,3,7
+    };
 
-    @Test
-    public void testConstructor(){
-        String adminName = "yourMother";
-        Admin u1 = new Admin(adminName , "motherKnowsBest");
-        testEM.persist(u1);
-
-        String t1Name = "worlds";
-        Tournament t1 = new Tournament(t1Name , u1);
-
-        tournamentRepository.save(t1);
-        Tournament t1Found = testEM.find(Tournament.class , t1.getId());
-
-        assertNotNull(t1.getId());
-        assertEquals(t1.getId() , t1Found.getId());
-
-
-        EloLimit t1EloLimit = t1.getEloLimit();
-        assertEquals(5000, t1EloLimit.getMaxElo());
-        assertEquals(0, t1EloLimit.getMinElo());
+    @BeforeEach
+    public void run() throws Exception {
+        new LoadData(environment).initDatabase(userRepository, clanRepository, pokemonRepository, abilityRepository, moveRepository).run();
+        openTournamentId = tournamentRepository.save(new OpenTournament("meow",(Admin) userRepository.findById("fake_admin").orElseThrow())).getId();
+        closedTournamentId = tournamentRepository.save(new ClosedTournament("woof",(Admin) userRepository.findById("fake_admin").orElseThrow())).getId();
     }
 
     @Test
-    public void testUniqueId(){
+    public void testJoinOpenTournament(){
+        Player player = (Player) userRepository.findById("fake_player").orElseThrow();
+        Set<Move> movesAffected = new HashSet<>();
 
-        String adminName = "test";
-        Admin u1 = new Admin(adminName, adminName);
-        testEM.persist(u1);
+        assertNotNull(openTournamentId);
+        Tournament tournament = tournamentRepository.getTournamentById(openTournamentId).orElseThrow();
+        assertEquals("meow", tournament.getName());
+        assertEquals("fake_admin", tournament.getAdminUsername());
 
-        String t1Name = "worlds";
-        String t2Name = "ti24";
+        Team team = new Team(player,tournament);
+        tournament.addTeam(team, ZonedDateTime.now());
 
-        Tournament t1 = new Tournament(t1Name, u1);
-        Tournament t2 = new Tournament(t2Name,u1);
+        for(int pokemonId : pokemonsToJoinWith){
+            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
 
-        tournamentRepository.save(t1);
-        tournamentRepository.save(t2);
+            ChosenPokemon chosenPokemon = new ChosenPokemon(team,pokemon);
+            chosenPokemon.setAbility(getRandomSetElement(pokemon.getAbilities()));
 
-        assertNotEquals(t1.getId() , t2.getId());
-        assertEquals(t1.getAdmin(), t2.getAdmin());
+            Set<Move> movesAdded = new HashSet<>();
+            while(movesAdded.size() < 5){
+                Move m = getRandomSetElement(pokemon.getMoves());
+                if(!movesAdded.contains(m)){
+                    movesAdded.add(m);
+                    chosenPokemon.learnMove(m);
+                    movesAffected.add(m);
+                }
+            }
+            chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
+            team.addChosenPokemon(chosenPokemon);
+        }
+        // join
+
+        team = teamRepository.save(team);
+        assertEquals("fake_player", team.getPlayer().getUsername());
+        assertEquals("meow", team.getTournament().getName());
+
+        assertEquals(pokemonsToJoinWith.length,chosenPokemonRepositor.count());
+        for(int pokemonId : pokemonsToJoinWith) {
+            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
+            assertEquals(
+                    new Team.TeamId(player, tournament),
+                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).orElseThrow().getPokemonId().getTeamId()
+            );
+        }
+
+        // quit
+
+        teamRepository.deleteById(new Team.TeamId(player,tournament));
+
+        assertTrue(teamRepository.findById(new Team.TeamId(player,tournament)).isEmpty());
+        assertEquals(0,chosenPokemonRepositor.count());
+        for(int pokemonId : pokemonsToJoinWith) {
+            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
+            assertTrue(
+                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).isEmpty()
+            );
+        }
+
+        for (Move m : movesAffected){
+            assertFalse(moveRepository.findById(m.getName()).isEmpty());
+        }
     }
 
     @Test
-    public void testEloLimits(){
-        String adminName = "test";
-        Admin u1 = new Admin(adminName, adminName);
-        testEM.persist(u1);
+    public void testJoinClosedTournament(){
+        Player player = (Player) userRepository.findById("fake_player").orElseThrow();
+        Set<Move> movesAffected = new HashSet<>();
 
-        EloLimit e1 = new EloLimit(0, 500);
+        assertNotNull(closedTournamentId);
+        ClosedTournament tournament = (ClosedTournament) tournamentRepository.getTournamentById(closedTournamentId).orElseThrow();
+        assertEquals("woof", tournament.getName());
+        assertEquals("fake_admin", tournament.getAdminUsername());
 
-        String t1Name = "test";
-        String t2Name = "test";
+        Team team = new Team(player,tournament);
+        Team finalTeam = team;
+        assertThrows(IllegalArgumentException.class, ()->{
+            tournament.addTeam(finalTeam, ZonedDateTime.now());
+        });
+        tournament.addInvitedPlayer(List.of(player));
+        tournament.addTeam(team, ZonedDateTime.now());
 
-        Tournament t1 = new Tournament(t1Name, u1, e1);
-        Tournament t2 = new Tournament(t2Name, u1);
+        for(int pokemonId : pokemonsToJoinWith){
+            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
 
-        tournamentRepository.save(t1);
-        tournamentRepository.save(t2);
+            ChosenPokemon chosenPokemon = new ChosenPokemon(team,pokemon);
+            chosenPokemon.setAbility(getRandomSetElement(pokemon.getAbilities()));
 
-        assertNotEquals(t1, t2);
-        assertNotEquals(t1.getId(), t2.getId());
+            Set<Move> movesAdded = new HashSet<>();
+            while(movesAdded.size() < 5){
+                Move m = getRandomSetElement(pokemon.getMoves());
+                if(!movesAdded.contains(m)){
+                    movesAdded.add(m);
+                    chosenPokemon.learnMove(m);
+                    movesAffected.add(m);
+                }
+            }
+            chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
+            team.addChosenPokemon(chosenPokemon);
+        }
+        // join
 
-        assertEquals(t1.getEloLimit().getMaxElo(), e1.getMaxElo());
-        assertEquals(t1.getEloLimit().getMinElo(), e1.getMinElo());
+        team = teamRepository.save(team);
+        assertEquals("fake_player", team.getPlayer().getUsername());
+        assertEquals("woof", team.getTournament().getName());
+
+        assertEquals(pokemonsToJoinWith.length,chosenPokemonRepositor.count());
+        for(int pokemonId : pokemonsToJoinWith) {
+            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
+            assertEquals(
+                    new Team.TeamId(player, tournament),
+                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).orElseThrow().getPokemonId().getTeamId()
+            );
+        }
+
+        // quit
+
+        teamRepository.deleteById(new Team.TeamId(player,tournament));
+
+        assertTrue(teamRepository.findById(new Team.TeamId(player,tournament)).isEmpty());
+        assertEquals(0,chosenPokemonRepositor.count());
+        for(int pokemonId : pokemonsToJoinWith) {
+            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
+            assertTrue(
+                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).isEmpty()
+            );
+        }
+
+        for (Move m : movesAffected){
+            assertFalse(moveRepository.findById(m.getName()).isEmpty());
+        }
     }
 
-    @Test
-    public void testSignUp(){
-        String adminName = "yourMother";
-        Admin u1 = new Admin(adminName , "motherKnowsBest");
-        testEM.persist(u1);
+    private static final Random random = new Random();
 
-        String t1Name = "worlds";
-        Tournament t1 = new Tournament(t1Name , u1);
+    public static <T extends Enum<?>> T randomEnum(Class<T> clazz){
+        int x = random.nextInt(clazz.getEnumConstants().length);
+        return clazz.getEnumConstants()[x];
+    }
 
-        tournamentRepository.save(t1);
-
-        String playerName = "louis teo";
-        Player p1 = new Player(playerName, playerName);
-
-        testEM.persist(p1);
-        Team.TeamId teamId1 = new Team.TeamId(p1 , t1);
-        Team team1 = new Team(p1, t1 , teamId1);
-        Team.TeamId t1Id= team1.getTeamId();
-
-        teamRepository.save(team1);
-
-        assertNotNull(team1);
-        assertNotNull(team1.getTeamId());
-
-        Team team1Found = testEM.find(Team.class , t1Id);
-        assertEquals(team1Found , team1);
+    static <E> E getRandomSetElement(Set<E> set) {
+        return set.stream().skip(random.nextInt(set.size())).findFirst().orElse(null);
     }
 
 

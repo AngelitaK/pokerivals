@@ -27,12 +27,17 @@ import java.util.*;
 
 @Slf4j
 @Configuration
-class LoadData {
+public class LoadData {
 
   private final int noPokemonsForTest = 100;
 
+  @Autowired
+  public LoadData(Environment environment) {
+    this.environment = environment;
+  }
+
   @Bean
-  CommandLineRunner initDatabase(UserRepository userRepository, ClanRepository clanRepository, PokemonRepository pokemonRepository, AbilityRepository abilityRepository, MoveRepository moveRepository) {
+  public CommandLineRunner initDatabase(UserRepository userRepository, ClanRepository clanRepository, PokemonRepository pokemonRepository, AbilityRepository abilityRepository, MoveRepository moveRepository) {
     return args -> {
       // Load Clan
       File file = ResourceUtils.getFile("classpath:clan.csv");
@@ -41,8 +46,9 @@ class LoadData {
           String[] header = csvReader.readNext();
           String[] line;
           while ((line = csvReader.readNext()) != null) {
-            clanRepository.deleteById(line[0]);
-            System.out.println("Saving " + clanRepository.save(new Clan(line[0].toLowerCase())));
+            if (clanRepository.findById(line[0].toLowerCase()).isEmpty()) {
+              System.out.println("Saving " + clanRepository.save(new Clan(line[0].toLowerCase())));
+            }
           }
         }
       }
@@ -191,7 +197,6 @@ class LoadData {
     };
   }
 
-  @Autowired
   private Environment environment;
 
   private <K,V> Map<K,V> convertArraysToMap(K[] keys, V[] values){
