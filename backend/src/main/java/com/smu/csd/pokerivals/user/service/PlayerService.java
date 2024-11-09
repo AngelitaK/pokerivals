@@ -7,12 +7,14 @@ import com.smu.csd.pokerivals.security.authentication.IncompleteGoogleAuthentica
 import com.smu.csd.pokerivals.user.entity.Clan;
 import com.smu.csd.pokerivals.user.entity.ClanRepository;
 import com.smu.csd.pokerivals.user.entity.Player;
+import com.smu.csd.pokerivals.user.repository.PlayerPagingRepository;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +28,14 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final GoogleIdTokenVerifier verifier;
     private final ClanRepository clanRepository;
+    private final PlayerPagingRepository playerPagingRepository;
 
     @Autowired
-    public PlayerService(PlayerRepository repo, GoogleIdTokenVerifier verifier, ClanRepository clanRepository){
+    public PlayerService(PlayerRepository repo, GoogleIdTokenVerifier verifier, ClanRepository clanRepository, PlayerPagingRepository playerPagingRepository){
         this.playerRepository= repo;
         this.verifier = verifier;
         this.clanRepository = clanRepository;
+        this.playerPagingRepository = playerPagingRepository;
     }
 
     /**
@@ -42,27 +46,38 @@ public class PlayerService {
      */
     @SneakyThrows
     public void register(Player player, IncompleteGoogleAuthentication token){
-            GoogleIdToken idToken = verifier.verify((String) token.getCredentials());
-            if (idToken != null) {
-                Payload payload = idToken.getPayload();
+        GoogleIdToken idToken = verifier.verify((String) token.getCredentials());
+        if (idToken != null) {
+            Payload payload = idToken.getPayload();
 
-                // Print user identifier
-                String userId = payload.getSubject();
-                log.trace("Verified as" + payload.get("name"));
+            // Print user identifier
+            String userId = payload.getSubject();
+            log.trace("Verified as" + payload.get("name"));
 
-                player.updateGoogleSub(new Date(System.currentTimeMillis()),userId);
-                player.setEmail((String) payload.get("email"));
-                player = playerRepository.save(player);
+            player.updateGoogleSub(new Date(System.currentTimeMillis()),userId);
+            player.setEmail((String) payload.get("email"));
+            player = playerRepository.save(player);
 
-            } else {
-                log.info("Expired token");
-                throw new BadCredentialsException("Expired token");
-            }
+        } else {
+            log.info("Expired token");
+            throw new BadCredentialsException("Expired token");
+        }
     }
 
     @RolesAllowed("ROLE_PLAYER")
-    public List<Player> getFriendsOf(String username){
-        return playerRepository.findFriendsOfPlayer(username);
+    public PlayerPageDTO getFriendsOf(String username, int page, int limit){
+        return new PlayerPageDTO(
+                playerPagingRepository.findFriendsOfPlayer(username,PageRequest.of(page,limit)),
+                playerRepository.countFriendsOfPlayer(username)
+        );
+    }
+
+    @RolesAllowed("ROLE_PLAYER")
+    public PlayerPageDTO getNotFriendsOf(String username, int page, int limit){
+        return new PlayerPageDTO(
+                playerPagingRepository.findNotFriendsOfPlayer(username,PageRequest.of(page,limit)),
+                playerRepository.countNotFriendsOfPlayer(username)
+        );
     }
 
     /**
@@ -73,6 +88,10 @@ public class PlayerService {
     @Transactional
     @RolesAllowed("ROLE_PLAYER")
     public void connectAsFriends(String username1, String username2){
+        if(username2.equals(username1)){
+            throw new IllegalArgumentException("cannot befriend yourself");
+        }
+
         var player1 = playerRepository.findById(username1).orElseThrow();
         var player2 = playerRepository.findById(username2).orElseThrow();
         player1.addFriend(player2);
@@ -88,6 +107,9 @@ public class PlayerService {
     @Transactional
     @RolesAllowed("ROLE_PLAYER")
     public void disconnectAsFriends(String username1, String username2){
+        if(username2.equals(username1)){
+            throw new IllegalArgumentException("cannot unfriend yourself");
+        }
         var player1 = playerRepository.findById(username1).orElseThrow();
         var player2 = playerRepository.findById(username2).orElseThrow();
         player1.removeFriend(player2);
@@ -95,8 +117,11 @@ public class PlayerService {
         playerRepository.save(player2);
     }
 
-    public List<Player> searchPlayersByUsername(String query){
-        return playerRepository.findByUsernameContaining(query);
+    public PlayerPageDTO searchPlayersByUsername(String query, int page, int limit){
+        return new PlayerPageDTO(
+                playerPagingRepository.findByUsernameContainingIgnoreCase(query, PageRequest.of(page,limit)),
+                playerRepository.count()
+        );
     }
 
     public Player getUser(String username){
@@ -104,6 +129,7 @@ public class PlayerService {
     }
 
     @Transactional
+    @RolesAllowed("ROLE_PLAYER")
     public void addToClan(String username, String clanName){
         Player player = playerRepository.findById(username).orElseThrow();
         Clan clan = clanRepository.findById(clanName).orElseThrow();
@@ -112,6 +138,9 @@ public class PlayerService {
         playerRepository.save(player);
         clanRepository.save(clan);
     }
+
+    public record PlayerPageDTO(List<Player> players, long count){ }
+
 
 
 }

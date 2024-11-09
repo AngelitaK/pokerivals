@@ -11,9 +11,13 @@ import java.util.List;
 
 @Component
 public interface PlayerRepository extends JpaRepository<Player,String> {
-    List<Player> findByUsernameContaining(String query);
+    List<Player> findByUsernameContainingIgnoreCase(String query);
 
-    @Query("select p from Player p join p.befriendedBy bB join p.friendsWith fW " +
+    @Query("select COUNT(p) from Player p join p.befriendedBy bB join p.friendsWith fW " +
             "where bB.username = :username and fW.username = :username")
-    List<Player> findFriendsOfPlayer(@Param("username") String username);
+    long countFriendsOfPlayer(@Param("username") String username);
+
+    @Query("SELECT COUNT(x) FROM Player x WHERE x not in (select p from Player p join p.befriendedBy bB join p.friendsWith fW " +
+            "where bB.username = :username and fW.username = :username)")
+    long countNotFriendsOfPlayer(@Param("username") String username);
 }

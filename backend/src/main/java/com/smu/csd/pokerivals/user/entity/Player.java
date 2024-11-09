@@ -62,8 +62,8 @@ public class Player extends User {
     private Clan clan;
 
     public void addToClan(Clan c){
-        if (this.clan != null && !clan.getName().equals(c.getName())) {
-            clan.getMembers().remove(this);
+        if (this.clan != null ) {
+            throw new IllegalArgumentException("user is already associated to a clan");
         }
         this.clan = c;
         c.getMembers().add(this);
