@@ -5,6 +5,7 @@ import axios from "../../../config/axiosInstance";
 import { FaArrowCircleLeft } from "react-icons/fa";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
+// import test_data from "./test_data";
 
 const formatDate = (isoString) => {
     const date = new Date(isoString);
@@ -49,7 +50,7 @@ const CalendarPage = () => {
                     throw new Error("Failed to fetch Events");
                 }
                 
-                const matches = test_data //response.data.matches;
+                const matches = response.data.matches; // test_data
 
                 const events = matches.matches.map((match) => ({
                     id: match.tournament_id,
