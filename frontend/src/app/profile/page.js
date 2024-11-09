@@ -81,7 +81,7 @@ const ProfilePage = () => {
         >
           {/* Top Section: Avatar on the left, User Info on the right */}
           <Flex align="center" mb={"5%"}>
-            <Avatar size="2xl" name={userInfo?.username} mr={6} />
+            <Avatar size="2xl" src={'ashketchum.jpg'} name={userInfo?.username} mr={6} />
 
             <VStack align="flex-start" spacing={1} flex="1">
               <Heading size="xl" fontWeight="bold" mb={2}>
@@ -124,7 +124,7 @@ const ProfilePage = () => {
                 <Text fontWeight="bold" fontSize="xl">
                   Clan
                 </Text>
-                {/* <Text color="gray.600" fontSize="lg" textTransform="uppercase">{userInfo?.clan.name}</Text> */}
+                <Text color="gray.600" fontSize="lg" textTransform="uppercase">{userInfo?.clan.name}</Text>
               </Box>
 
               {/* points box */}
