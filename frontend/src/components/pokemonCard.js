@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "../../config/axiosInstance";
 import SearchBar from "@/components/searchBar";
 import {
+  Flex,
   Box,
   VStack,
   Text,
@@ -45,6 +46,22 @@ function PokemonCard({ addToTeam }) {
   const [natures, setNatures] = useState([]);
   const [selectedAbility, setSelectedAbility] = useState(null);
 
+  //pagination
+  const [currentSearchResults, setCurrentSearchResults] = useState(1);
+  const itemsPerPage = 10;
+
+  // Slice for pagination
+  const paginatedSearchList = searchResults.slice(
+    (currentSearchResults - 1) * itemsPerPage,
+    currentSearchResults * itemsPerPage
+  );
+  // Pagination handlers
+  const handleSearchPageChange = (direction) => {
+    setCurrentSearchResults((prev) =>
+      direction === "next" ? prev + 1 : Math.max(prev - 1, 1)
+    );
+  };
+
   // Fetch available natures
   useEffect(() => {
     const fetchNatures = async () => {
@@ -64,10 +81,11 @@ function PokemonCard({ addToTeam }) {
       setSearchResults([]);
       return;
     }
+    setCurrentSearchResults(1);
 
     try {
       const response = await axios.get("/pokemon/search", {
-        params: { query: query, page: 0, limit: 10 },
+        params: { query: query, page: 0, limit: 100 },
       });
       setSearchResults(response.data.pokemons);
     } catch (error) {
@@ -116,7 +134,6 @@ function PokemonCard({ addToTeam }) {
       alert("Please complete all selections.");
     }
   };
-
 
   const resetSelections = () => {
     setSearchResults([]); // Clear search results
@@ -283,8 +300,8 @@ function PokemonCard({ addToTeam }) {
               <>
                 <SearchBar handleSearch={handleSearch} />
                 <VStack align="stretch" spacing={2} mb={3}>
-                  {searchResults.length > 0 ? (
-                    searchResults.map((p) => (
+                  {paginatedSearchList.length > 0 ? (
+                    paginatedSearchList.map((p) => (
                       <HStack
                         key={p.id}
                         p={3}
@@ -301,6 +318,24 @@ function PokemonCard({ addToTeam }) {
                     <Text fontSize="lg">No Pokémon found</Text>
                   )}
                 </VStack>
+
+                {/* Pagination Controls */}
+                <Flex justify="space-between" mt={4}>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSearchPageChange("prev")}
+                    disabled={currentSearchResults === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSearchPageChange("next")}
+                    disabled={paginatedSearchList.length < itemsPerPage}
+                  >
+                    Next
+                  </Button>
+                </Flex>
               </>
             )}
 

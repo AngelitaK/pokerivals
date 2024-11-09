@@ -25,7 +25,7 @@ function SearchBar({ handleSearch }) {
       <InputGroup size='lg'>
         <Input
           pr='4.5rem'
-          placeholder='Search friends...'
+          placeholder='Begin your search...'
           borderRadius={20}
           focusBorderColor='black'
           value={inputValue}
