@@ -1,5 +1,6 @@
 package com.smu.csd.pokerivals.pokemon.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,6 +31,7 @@ public class Ability {
         }
         return false;
     }
+    @JsonIgnore
     @ManyToMany(mappedBy = "abilities")
     private Set<Pokemon> possessedBy = new HashSet<>();
 
