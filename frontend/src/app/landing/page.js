@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Head from "next/head";
+import checkLogged from "../../../config/checkLogged";
+import LoadingOverlay from "../../components/loadingOverlay";
 import {
   Center,
   Flex,
@@ -19,7 +21,12 @@ import {
 export default function Landing() {
   const router = useRouter();
 
-    const checkUserRole = async () => {
+  // check if user is logged in
+  const { isAuthenticated, loading } = checkLogged();
+  console.log(isAuthenticated, loading);
+
+  // play now button redirection if user is logged in and their role
+  const checkUserRole = async () => {
       const storedRole = localStorage.getItem("role");
       
       if (storedRole === "ADMIN") {
@@ -31,8 +38,11 @@ export default function Landing() {
         router.push("/login");
       }
     };
+    
+    if (loading) return <LoadingOverlay />;
+    if (isAuthenticated) return null;
 
-  return (
+    return (
     <>
       <Head>
         <title>PokeRivals - Pokemon Tournament Platform</title>
