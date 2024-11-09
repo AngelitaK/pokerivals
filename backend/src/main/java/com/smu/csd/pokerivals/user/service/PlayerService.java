@@ -9,12 +9,12 @@ import com.smu.csd.pokerivals.user.entity.ClanRepository;
 import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.PlayerPagingRepository;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
@@ -64,7 +64,7 @@ public class PlayerService {
         }
     }
 
-    @RolesAllowed("ROLE_PLAYER")
+    @PreAuthorize("hasAuthority('PLAYER')")
     public PlayerPageDTO getFriendsOf(String username, int page, int limit){
         return new PlayerPageDTO(
                 playerPagingRepository.findFriendsOfPlayer(username,PageRequest.of(page,limit)),
@@ -72,7 +72,7 @@ public class PlayerService {
         );
     }
 
-    @RolesAllowed("ROLE_PLAYER")
+    @PreAuthorize("hasAuthority('PLAYER')")
     public PlayerPageDTO getNotFriendsOf(String username, int page, int limit){
         return new PlayerPageDTO(
                 playerPagingRepository.findNotFriendsOfPlayer(username,PageRequest.of(page,limit)),
@@ -86,7 +86,7 @@ public class PlayerService {
      * @param username2 Second Player
      */
     @Transactional
-    @RolesAllowed("ROLE_PLAYER")
+    @PreAuthorize("hasAuthority('PLAYER')")
     public void connectAsFriends(String username1, String username2){
         if(username2.equals(username1)){
             throw new IllegalArgumentException("cannot befriend yourself");
@@ -105,7 +105,7 @@ public class PlayerService {
      * @param username2 Second Player
      */
     @Transactional
-    @RolesAllowed("ROLE_PLAYER")
+    @PreAuthorize("hasAuthority('PLAYER')")
     public void disconnectAsFriends(String username1, String username2){
         if(username2.equals(username1)){
             throw new IllegalArgumentException("cannot unfriend yourself");
@@ -129,7 +129,7 @@ public class PlayerService {
     }
 
     @Transactional
-    @RolesAllowed("ROLE_PLAYER")
+    @PreAuthorize("hasAuthority('PLAYER')")
     public void addToClan(String username, String clanName){
         Player player = playerRepository.findById(username).orElseThrow();
         Clan clan = clanRepository.findById(clanName).orElseThrow();
