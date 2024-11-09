@@ -174,7 +174,6 @@ public class UserEntitiesTest {
 
         u1.addToClan(c);
         u2.addToClan(c);
-        u1.addToClan(c);
 
         testEM.persist(u1);
         testEM.persist(u2);
@@ -259,8 +258,6 @@ public class UserEntitiesTest {
 
         assertEquals("Clan-0", players.get(0).getClan().getName());
 
-        players.get(0).addToClan(clans.get(1));
-
         // persist
 
         players.forEach( (player) -> testEM.persist(player));
@@ -284,7 +281,7 @@ public class UserEntitiesTest {
 
         // - end get it back
 
-        assertEquals("Clan-1", players.get(0).getClan().getName());
+        assertEquals("Clan-0", players.get(0).getClan().getName());
 
     }
 

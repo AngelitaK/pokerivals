@@ -8,10 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class ClosedTournament extends Tournament {
@@ -37,6 +34,15 @@ public class ClosedTournament extends Tournament {
 
     public void addInvitedPlayer(Collection<Player> players){
         invitedPlayers.addAll(players);
+    }
+
+    public boolean checkInvited(String username){
+        for (Player p : invitedPlayers){
+            if(p.getUsername().equals(username)){
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

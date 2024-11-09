@@ -1,8 +1,6 @@
 package com.smu.csd.pokerivals.tournament.entity;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.AssertTrue;
@@ -24,6 +22,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Inheritance(strategy = InheritanceType.JOINED)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = OpenTournament.class, name = "Open"),
+
+        @JsonSubTypes.Type(value = ClosedTournament.class, name = "Closed") }
+)
 public abstract class Tournament {
 
     @Id
@@ -38,15 +42,18 @@ public abstract class Tournament {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    /**
+     * Not modifiable once set
+     */
     @ManyToOne
     @JoinColumn(name = "admin_creator")
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonIgnore
     private Admin admin;
 
+
     @JsonGetter
     public String getAdminUsername(){
-        return admin.getUsername();
+        return admin == null ? null :  admin.getUsername();
     }
 
     public void setAdmin(Admin admin){
@@ -56,20 +63,28 @@ public abstract class Tournament {
         this.admin=admin;
     }
 
+    /**
+     * Modifiable but only upwards not downwards
+     * Use {@link Tournament#setMaxTeamCapacity(int)} to modify
+     */
     @Min(value = 0, message = "The value must be positive")
     private int maxTeamCapacity = 32;
 
     public void setMaxTeamCapacity(int maxTeamCapacity){
-        if (this.maxTeamCapacity < maxTeamCapacity){
+        if (this.maxTeamCapacity <= maxTeamCapacity){
             this.maxTeamCapacity = maxTeamCapacity;
         } else {
             throw new IllegalArgumentException("Cannot reduce max team capacity");
         }
     }
 
+    /**
+     * Not modifiable to prevent logic issues
+     */
     @Embedded
     @NotNull
-    private EloLimit eloLimit;
+    @JsonProperty(access= JsonProperty.Access.READ_ONLY)
+    private EloLimit eloLimit = new EloLimit(0,5000);
 
     @Embeddable
     @Getter
@@ -108,15 +123,15 @@ public abstract class Tournament {
             return registrationBegin.isBefore(registrationEnd);
         }
 
-        public boolean isWithinPeriod(ZonedDateTime time){
+        public boolean contains(ZonedDateTime time){
             return time.isAfter(registrationBegin) && time.isBefore(registrationEnd);
         }
 
-        public boolean isBefore(ZonedDateTime time){
+        public boolean isAfter(ZonedDateTime time){
             return time.isBefore(registrationBegin);
         }
 
-        public boolean isAfter(ZonedDateTime time){
+        public boolean isBefore(ZonedDateTime time){
             return time.isAfter(registrationEnd);
         }
     }
@@ -124,6 +139,11 @@ public abstract class Tournament {
     @Embedded
     @NotNull
     private RegistrationPeriod registrationPeriod;
+
+    @AssertTrue
+    private boolean isRegistrationBeforeTournamentStart() {
+        return registrationPeriod.isBefore(estimatedTournamentPeriod.getTournamentBegin());
+    }
 
 
     @Embeddable
@@ -155,7 +175,6 @@ public abstract class Tournament {
     public Tournament(String name, Admin admin) {
         this.name = name;
         this.admin = admin;
-        this.eloLimit = new EloLimit(0, 5000);
         this.registrationPeriod = new RegistrationPeriod(
                 ZonedDateTime.now(),
                 ZonedDateTime.now().plusHours(2)
@@ -172,7 +191,7 @@ public abstract class Tournament {
         this.registrationPeriod = registrationPeriod;
     }
 
-    @OneToMany(mappedBy = "tournament")
+    @OneToMany(mappedBy = "tournament", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Team> teams = new HashSet<>();
 
@@ -187,7 +206,7 @@ public abstract class Tournament {
      * @param today today's date (this is to facilitate mocking)
      */
     public void addTeam(Team team , ZonedDateTime today){
-        if (registrationPeriod.isWithinPeriod(today) && this.maxTeamCapacity > teams.size()){
+        if (registrationPeriod.contains(today) && this.maxTeamCapacity > teams.size()){
             this.teams.add(team);
             team.setTournament(this);
         } else {
@@ -207,4 +226,23 @@ public abstract class Tournament {
         team.setTournament(null);
     };
 
+    /**
+     * Modify this tournament based on another tournament
+     * will overwrite name, description, max team capacity (see {@link Tournament#setMaxTeamCapacity(int)}
+     * Registration period only changed if registration before has yet to start/is during
+     * Estimated tournament period can always be modified
+     *
+     * @param t tournament to overwrite this attrubute with
+     */
+    public void modify(Tournament t, ZonedDateTime today){
+        if (registrationPeriod.isBefore(today)){
+            throw new IllegalArgumentException("cannot modify tournament after registration period");
+        }
+
+        this.registrationPeriod = t.getRegistrationPeriod();
+        this.name = t.getName();
+        this.description = t.getDescription();
+        this.setMaxTeamCapacity(t.getMaxTeamCapacity());
+        this.estimatedTournamentPeriod = t.getEstimatedTournamentPeriod();
+    }
 }
