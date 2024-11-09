@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Head from 'next/head';
 import {
   Center,
   Flex,
@@ -19,6 +20,11 @@ export default function Landing() {
   const router = useRouter();
 
   return (
+    <>
+    <Head>
+      <title>PokeRivals - Pokemon Tournament Platform</title>
+    </Head>
+    
     <Stack spacing={0}>
       <Stack
         minH={"65vh"}
@@ -26,45 +32,38 @@ export default function Landing() {
         bgSize="cover"
         bgPosition="center"
       >
-        <Center pt={5}>
-          <Stack align="center" spacing={4}>
-            <Box>
-              <Image
-                src="/PokeLogo.png"
-                alt="PokeRivals Logo"
-                style={{ width: "500px", height: "auto" }}
-              />
-            </Box>
-
-            {/* Buttons */}
-            <Button
-              colorScheme="blue"
-              variant="solid"
-              width="500px"
-              height="65px"
-              mb={5}
-              onClick={() => router.push("/login")}
-            >
-              <Text fontSize="2xl" color="black" fontWeight="bold">Play Now</Text>
-            </Button>
-
-            <Button
-              colorScheme="blue"
-              variant="solid"
-              width="500px"
-              height="65px"
-              mb={5}
-              onClick={() => router.push("/home")}
-            >
-              <Text fontSize="2xl" color="black" fontWeight="bold">Watch Live Matches</Text>
-            </Button>
-          </Stack>
-        </Center>
+        <Stack align="center" spacing={4}>
+          <Box>
+            <Image
+              src="/PokeLogo.png"
+              alt="PokeRivals Logo"
+              style={{ width: "500px", height: "auto" }}
+            />
+          </Box>
+          <Button
+            colorScheme="blue"
+            variant="solid"
+            width="500px"
+            height="65px"
+            mb={5}
+            onClick={() => router.push("/login")}
+          >
+            <Text fontSize="2xl" color="black" fontWeight="bold">
+              Play Now
+            </Text>
+          </Button>
+        </Stack>
       </Stack>
 
       {/* bottom section */}
       <Stack bg="#FFC700" bgSize="cover" bgPosition="center">
-        <Heading as="h1" size="2xl" textAlign="center" py={"30px"} color="black">
+        <Heading
+          as="h1"
+          size="2xl"
+          textAlign="center"
+          py={"30px"}
+          color="black"
+        >
           JOIN US!
         </Heading>
 
@@ -132,22 +131,19 @@ export default function Landing() {
         {/* paragraphs */}
         <Box textAlign="center" color="black" px="100px" py="50px">
           <Text>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum
-            dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-            veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-            ea commodo consequat. Duis aute irure dolor in reprehenderit in
-            voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            PokeRivals is an online platform for Pokémon fans to connect,
+            compete, and engage in tournaments. It’s designed to bring together
+            players who share a passion for strategic battles, with tournaments
+            where they can test their skills against others in the community.
+            Alongside competitive gameplay, PokeRivals also offers a unique
+            betting system, allowing spectators and players to bet on outcomes,
+            adding an extra layer of excitement. With its community-focused
+            design, PokeRivals creates an immersive experience for Pokémon
+            enthusiasts to enjoy the thrill of battles and friendly wagers.
           </Text>
         </Box>
-
       </Stack>
     </Stack>
+    </>
   );
 }

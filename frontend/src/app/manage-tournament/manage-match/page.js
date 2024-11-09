@@ -18,7 +18,7 @@ import {
     FaArrowCircleLeft,
 } from 'react-icons/fa';
 import MatchComponent from '@/components/matchComponent';
-// import test_data from './test-data';
+import test_data from './test-data';
 
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -65,7 +65,7 @@ const ManageMatchesPage = () => {
             console.error("Error fetching matches: ", error)
         }
 
-        // setTournamentData(test_data.data);
+        setTournamentData(test_data.data);
     }, []);
 
     const handleBackNavigation = () => {
