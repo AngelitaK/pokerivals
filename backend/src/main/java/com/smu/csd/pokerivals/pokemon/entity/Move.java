@@ -6,7 +6,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
@@ -15,21 +17,15 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor
 public class Move {
-    public Move(){}
 
     @Id
     @Column(length = 100)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @EqualsAndHashCode.Include
     private String name;
-
-    @Override
-    public boolean equals(Object other){
-        if (other instanceof Move o){
-            return name.equals(o.getName());
-        }
-        return false;
-    }
 
     @JsonIgnore
     @ManyToMany(mappedBy = "moves")
