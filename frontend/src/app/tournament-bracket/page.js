@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Bracket, Seed, SeedItem, SeedTeam, SeedTime } from 'react-brackets';
 import { Box, Text, Heading, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Flex, Tag, TagLabel, Stack, Divider,  } from '@chakra-ui/react';
 import rounds from './completedTournament';
-import axios from '../../../config/axiosInstance'
+// import axios from '../../../config/axiosInstance'
 
 const tournamentId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"; // Replace the hardcoded tournament ID
 
@@ -72,7 +72,11 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
         textAlign="center"
       >
         <Text as="span" color={seed.matchResult === "TEAM_A" ? "green.600" : "green.600"} fontWeight="semibold">
-          {seed.matchResult === "TEAM_A" ? "Team A Wins!" : "Team B Wins!"}
+        {seed.matchResult === "TEAM_A"
+          ? "Team A Wins!"
+          : seed.matchResult === "TEAM_B"
+          ? "Team B Wins!"
+          : seed.matchResult}
         </Text>
         <Text as="span" mx="2" color="gray.500">
           |
@@ -184,7 +188,11 @@ const TournamentPage = () => {
                   <Text fontSize="md" fontWeight="semibold" color="gray.700">
                     Match Result:
                     <Text as="span" color="teal.600" fontWeight="bold" ml={1}>
-                      {selectedSeed.matchResult === "TEAM_A" ? "Team A Wins!" : "Team B Wins!"}
+                    {selectedSeed.matchResult === "TEAM_A"
+                      ? "Team A Wins!"
+                      : selectedSeed.matchResult === "TEAM_B"
+                      ? "Team B Wins!"
+                      : selectedSeed.matchResult}
                     </Text>
                   </Text>
                 </Box>
