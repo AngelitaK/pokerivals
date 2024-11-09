@@ -234,7 +234,8 @@ const LeaderBoard = () => {
                     <LeaderBoardMember
                       key={index}
                       player={player.username}
-                      clan={player.clan ? player.clan.name : "No clan"}
+                      // clan={player.clan ? player.clan.name : "No clan"}
+                      clan={player.clan ? player.clan.name : ""}
                       points={player.points}
                     />
                   ))}
@@ -288,7 +289,8 @@ const LeaderBoard = () => {
                         <LeaderBoardMember
                           key={index}
                           player={player.username}
-                          clan={player.clan ? player.clan.name : "No clan"}
+                          // clan={player.clan ? player.clan.name : "No clan"}
+                          clan={player.clan ? player.clan.name : ""}
                           points={player.points}
                         />
                       ) : null // If player or player.username is not valid, render nothing
@@ -342,7 +344,8 @@ const LeaderBoard = () => {
                         <LeaderBoardMember
                           key={index}
                           player={player.username}
-                          clan={player.clan ? player.clan.name : "No clan"}
+                          // clan={player.clan ? player.clan.name : "No clan"}
+                          clan={player.clan ? player.clan.name : ""}
                           points={player.points}
                         />
                       ) : null // If player or player.username is not valid, render nothing

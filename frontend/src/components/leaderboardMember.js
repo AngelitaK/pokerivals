@@ -35,11 +35,11 @@ export default function LeaderboardMember({ player, clan, points }) {
             left="50%" 
             transform="translateX(-50%)" 
           >
-            Team {clan}
+            {clan || 'Clanless'}
           </Badge>
 
           <Text fontSize="lg" mx={5}>
-            {points}
+            {points.toFixed(0)}
           </Text>
         </Flex>
       </Box>

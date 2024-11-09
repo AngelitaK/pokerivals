@@ -214,10 +214,10 @@ const FriendsPage = () => {
                   <Avatar size="md" />
                   <Box>
                     <Text fontWeight="bold" color="black">
-                      {friend.username}, Team{" "}
+                      {friend.username},{" "}
                       {friend.clan && friend.clan.name
-                        ? friend.clan.name
-                        : "No Clan"}
+                        ? `Team ${friend.clan.name}`
+                        : "Clanless"}
                     </Text>
                   </Box>
                   <Spacer />
@@ -288,10 +288,10 @@ const FriendsPage = () => {
                     <Avatar size="md" />
                     <Box>
                       <Text fontWeight="bold" color="black">
-                        {friend.username}, Team{" "}
-                        {friend.clan && friend.clan.name
-                          ? friend.clan.name
-                          : "No Clan"}
+                      {friend.username},{" "}
+                      {friend.clan && friend.clan.name
+                        ? `Team ${friend.clan.name}`
+                        : "Clanless"}
                       </Text>
                     </Box>
                     <Spacer />
