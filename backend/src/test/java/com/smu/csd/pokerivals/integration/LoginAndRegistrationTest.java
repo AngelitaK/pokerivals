@@ -105,6 +105,48 @@ public class LoginAndRegistrationTest {
     }
 
     @Test
+    public void registerPlayer_fail_sameSub() throws Exception{
+
+        String subOfNewPlayer = "def";
+        when(verifier.verify(tokenMap.get(subOfNewPlayer))).thenReturn(idTokenMock);
+        when(idTokenMock.getPayload()).thenReturn(payload);
+        when(payload.getSubject()).thenReturn(subOfNewPlayer);
+
+        PlayerController.PlayerRegistrationDTO playerDTO = new PlayerController.PlayerRegistrationDTO(tokenMap.get("ghi"), new Player(
+                "not_important",subOfNewPlayer
+        ));
+
+        URI uri = new URI(baseUrl + port + "/player");
+
+        ResponseEntity<Message> result = restTemplate.postForEntity(uri, playerDTO, Message.class);
+
+        assertNotNull(result);
+        log.info(String.valueOf(result.getBody()));
+        assertEquals(400, result.getStatusCode().value());
+    }
+
+    @Test
+    public void registerPlayer_fail_sameUsername() throws Exception{
+
+        String subOfNewPlayer = "mno";
+        when(verifier.verify(tokenMap.get(subOfNewPlayer))).thenReturn(idTokenMock);
+        when(idTokenMock.getPayload()).thenReturn(payload);
+        when(payload.getSubject()).thenReturn(subOfNewPlayer);
+
+        PlayerController.PlayerRegistrationDTO playerDTO = new PlayerController.PlayerRegistrationDTO(tokenMap.get("ghi"), new Player(
+                "fake_player",subOfNewPlayer
+        ));
+
+        URI uri = new URI(baseUrl + port + "/player");
+
+        ResponseEntity<Message> result = restTemplate.postForEntity(uri, playerDTO, Message.class);
+
+        assertNotNull(result);
+        log.info(String.valueOf(result.getBody()));
+        assertEquals(400, result.getStatusCode().value());
+    }
+
+    @Test
     public void loginAdmin_Success() throws Exception {
         // Arrange
         String subOfPlayer = "abc";
