@@ -71,18 +71,22 @@ const TeamSelectionPage = () => {
   return (
     <Box h="100%" bg="white">
       <Box position="relative" h="100vh">
-        <Heading
+        <Box
           position="absolute"
-          top="0"
+          top="10%"
           left="50%"
           transform="translateX(-50%)"
           zIndex="1"
-          color="black"
-          size="xl"
-          mt={4}
+          bg="white"
+          px={4} 
+          py={2} 
+          borderRadius="md" 
+          boxShadow="md" 
         >
-          Choose Your Team
-        </Heading>
+          <Heading color="black" size="xl">
+            Choose Your Team
+          </Heading>
+        </Box>
 
         {/* Team Selection Boxes */}
         <Flex h="100%">
@@ -101,7 +105,7 @@ const TeamSelectionPage = () => {
               <Image
                 src={team.logo}
                 alt={`${team.name} Logo`}
-                boxSize="100px"
+                boxSize="200px"
               />
               {/* Button to join the specific clan */}
               <Button
