@@ -57,7 +57,7 @@ public class PokemonIntegrationTest {
     private String username;
 
     @BeforeEach
-    public void loginAdmin() throws Exception {
+    public void loginPlayer() throws Exception {
         // Arrange
         String subOfPlayer = "def";
         when(verifier.verify(tokenMap.get(subOfPlayer))).thenReturn(idTokenMock);
