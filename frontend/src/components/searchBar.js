@@ -14,6 +14,12 @@ function SearchBar({ handleSearch }) {
     handleSearch(inputValue); // Trigger search when button is clicked
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleButtonClick();
+    }
+  };
+
   return (
     <Box pb={8}>
       <InputGroup size='lg'>
@@ -24,6 +30,7 @@ function SearchBar({ handleSearch }) {
           focusBorderColor='black'
           value={inputValue}
           onChange={handleInputChange}
+          onKeyPress={handleKeyPress} 
           color='black'
           border="2px solid black" 
         />
