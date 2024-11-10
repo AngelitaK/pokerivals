@@ -56,7 +56,13 @@ public class TournamentPlayerController {
         return tournamentPlayerService.searchTournaments(query,userDetails.getUsername(),page, pageSize);
     }
 
-
+    @GetMapping("/closed/invited")
+    @Operation(summary = "get CLOSED tournaments where player is invited", description = "only for players")
+    public TournamentPageDTO findTournamentsWherePlayerInvited(@AuthenticationPrincipal UserDetails userDetails,
+                                                               @Parameter(description = "page of tournament to get (start from zero)") @RequestParam("page") Integer page,
+                                                               @Parameter(description = "number of tournament per page") @RequestParam("limit") Integer pageSize){
+        return tournamentPlayerService.findTournamentWherePlayerIsInvited(userDetails.getUsername(),page, pageSize);
+    }
 
 
 

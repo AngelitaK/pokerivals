@@ -12,9 +12,7 @@ import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
 import com.smu.csd.pokerivals.tournament.entity.ChosenPokemon;
 import com.smu.csd.pokerivals.tournament.entity.Team;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
-import com.smu.csd.pokerivals.tournament.repository.TeamRepository;
-import com.smu.csd.pokerivals.tournament.repository.TournamentPagingRepository;
-import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
+import com.smu.csd.pokerivals.tournament.repository.*;
 import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.AdminRepository;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
@@ -45,9 +43,11 @@ public class TournamentPlayerService {
     private final NotificationService notificationService;
     private final PokemonRepository pokemonRepository;
     private final TeamRepository teamRepository;
+    private final ClosedTournamentPagingRepository closedTournamentPagingRepository;
+    private final ClosedTournamentRepository closedTournamentRepository;
 
     @Autowired
-    public TournamentPlayerService(AdminRepository adminRepository, TournamentRepository tournamentRepository, DateFactory dateFactory, TournamentPagingRepository tournamentPagingRepository, PlayerRepository playerRepository, NotificationService notificationService, PokemonRepository pokemonRepository, TeamRepository teamRepository) {
+    public TournamentPlayerService(AdminRepository adminRepository, TournamentRepository tournamentRepository, DateFactory dateFactory, TournamentPagingRepository tournamentPagingRepository, PlayerRepository playerRepository, NotificationService notificationService, PokemonRepository pokemonRepository, TeamRepository teamRepository, ClosedTournamentPagingRepository closedTournamentPagingRepository, ClosedTournamentRepository closedTournamentRepository) {
         this.adminRepository = adminRepository;
         this.tournamentRepository = tournamentRepository;
         this.dateFactory = dateFactory;
@@ -56,6 +56,8 @@ public class TournamentPlayerService {
         this.notificationService = notificationService;
         this.pokemonRepository = pokemonRepository;
         this.teamRepository = teamRepository;
+        this.closedTournamentPagingRepository = closedTournamentPagingRepository;
+        this.closedTournamentRepository = closedTournamentRepository;
     }
 
 
@@ -126,6 +128,7 @@ public class TournamentPlayerService {
         if (!tournament.getRegistrationPeriod().contains(dateFactory.getToday())){
             throw new IllegalArgumentException("Player can only withdraw during registration period");
         }
+        teamRepository.findById(new Team.TeamId(player,tournament)).orElseThrow();
         teamRepository.deleteById(new Team.TeamId(player,tournament));
     }
 
@@ -141,6 +144,14 @@ public class TournamentPlayerService {
         return new TournamentPageDTO(
                 tournamentPagingRepository.searchTournaments(query,player.getPoints(), PageRequest.of(page,limit)),
                 tournamentRepository.countSearchResult(query,player.getPoints())
+        );
+    }
+
+    public TournamentPageDTO findTournamentWherePlayerIsInvited(String playerUsername, int page, int limit){
+        Player player = playerRepository.findById(playerUsername).orElseThrow();
+        return new TournamentPageDTO(
+                closedTournamentPagingRepository.findClosedTournamentWherePlayerInvited(player.getUsername(), PageRequest.of(page,limit)),
+                closedTournamentRepository.countClosedTournamentWherePlayerInvited(player.getUsername())
         );
     }
 
