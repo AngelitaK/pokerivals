@@ -86,7 +86,7 @@ const ChoosePokemon = ({ params }) => {
       bgPosition="center"
       p={8}
       minH="100vh"
-    >x
+    >
       {/* Top Header */}
       <Flex w="100%" justify="center" align="center" mb={10}>
         <Button onClick={() => router.back()} colorScheme="blue" position="absolute" left="10px">

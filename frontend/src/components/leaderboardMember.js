@@ -1,17 +1,12 @@
-import {
-  Box,
-  Flex,
-  Text,
-  Badge,
-} from "@chakra-ui/react";
+import { Box, Flex, Text, Badge } from "@chakra-ui/react";
 
-export default function LeaderboardMember() {
+export default function LeaderboardMember({ player, clan, points }) {
   return (
     <Flex
-    bg="whiteAlpha.800"
-    borderRadius="md"
-    p={6}
-    align="center"
+      bg="whiteAlpha.800"
+      borderRadius="md"
+      p={6}
+      align="center"
       justify="space-between"
       mb={4}
       boxShadow="lg"
@@ -24,28 +19,27 @@ export default function LeaderboardMember() {
       }}
       transition="all 0.2s ease-in-out"
     >
-      <Box width="100%" color={"black"} >
-        <Flex
-          alignItems="center"
-          justifyContent="space-between"
-          gap={2}
-        >
-          <Text fontWeight="bold" fontSize="xl" ml={5}>
-            NoobMaster69
+      <Box width="100%" color={"black"}>
+        <Flex alignItems="center" justifyContent="space-between" gap={2} position="relative">
+          <Text fontWeight="bold" fontSize="xl" mx={5}>
+            {player}
           </Text>
 
           <Badge
             fontSize="lg"
             colorScheme="purple"
-            p={2}
+            py={3}
+            px={5}
             borderRadius="full"
-            mr={4}
+            position="absolute"
+            left="50%" 
+            transform="translateX(-50%)" 
           >
-            Team Rocket
+            {clan || 'Clanless'}
           </Badge>
-         
-          <Text fontSize="lg" mr={5}>
-            5291
+
+          <Text fontSize="lg" mx={5}>
+            {points.toFixed(0)}
           </Text>
         </Flex>
       </Box>
