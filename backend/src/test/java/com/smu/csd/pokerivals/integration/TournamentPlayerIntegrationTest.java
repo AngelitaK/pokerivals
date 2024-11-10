@@ -38,10 +38,7 @@ import org.springframework.http.ResponseEntity;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.smu.csd.pokerivals.integration.IntegrationTestDependency.*;
@@ -370,6 +367,7 @@ public class TournamentPlayerIntegrationTest {
     public void searchTournament_success () throws URISyntaxException {
         Player player = playerRepository.findById(username).orElseThrow();
         player.setPoints(50.0);
+        player.setEmail("wellFormedEmail@tryingtoevadebeanvalidation.com");
         player = playerRepository.save(player);
 
         URIBuilder builder = new URIBuilder()
@@ -424,7 +422,7 @@ public class TournamentPlayerIntegrationTest {
     }
 
     @Test
-    public void joinCLosedTournament_success() throws URISyntaxException {
+    public void joinClosedTournament_success() throws URISyntaxException {
         ClosedTournament t =  tournamentRepository.save(
                 new ClosedTournament(
                         "abc",
@@ -458,6 +456,56 @@ public class TournamentPlayerIntegrationTest {
         assertEquals(200, result.getStatusCode().value());
 
     }
+
+    @Test
+    public void searchInvitedClosedTournaments_success() throws URISyntaxException {
+        URIBuilder builder = new URIBuilder()
+                .setHost(host)
+                .setPort(port)
+                .setScheme(scheme)
+                .setPathSegments("player","tournament","closed","invited")
+                .addParameter("limit","10")
+                .addParameter("page","1");
+
+        var result = restTemplate.exchange(builder.build(),HttpMethod.GET,createStatefulResponse(username), TournamentPageDTO.class);
+        assertEquals(200, result.getStatusCode().value());
+        long initialCount = result.getBody().count();
+
+        Player player = playerRepository.findById(username).orElseThrow();
+        List<ClosedTournament> tournaments = new ArrayList<>();
+        for (int i =0; i< 10; i++) {
+            tournaments.add(
+                    tournamentRepository.save(
+                            new ClosedTournament(
+                                    "abc"+i,
+                                    (Admin) userRepository.findById("fake_admin").orElseThrow(),
+                                    new Tournament.EloLimit(0,50_000),
+                                    new Tournament.RegistrationPeriod(
+                                            ZonedDateTime.now(), ZonedDateTime.now().plusHours(1)
+                                    )
+                            )
+                    )
+            );
+        }
+        for (long i =0; i< 10; i++) {
+            for (int j =0 ; j<i ; j++){
+                ClosedTournament t = tournaments.get(j);
+                t.addInvitedPlayer(List.of(player));
+                tournaments.set(j, tournamentRepository.save(t));
+            }
+            builder
+                    .setPathSegments("player","tournament","closed","invited")
+                    .addParameter("limit","10")
+                    .addParameter("page","1");
+
+            result = restTemplate.exchange(builder.build(),HttpMethod.GET,createStatefulResponse(username), TournamentPageDTO.class);
+            assertEquals(200, result.getStatusCode().value());
+            assertEquals(i, result.getBody().count()-initialCount);
+
+        }
+
+    }
+
 
     private static final ThreadLocalRandom random = ThreadLocalRandom.current();
 

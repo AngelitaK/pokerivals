@@ -1,7 +1,6 @@
 package com.smu.csd.pokerivals.tournament.repository;
 
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,7 +24,7 @@ public interface TournamentRepository extends JpaRepository<Tournament, UUID> {
     long countTournamentByAdminUsername(@Param("username") String adminUsername);
 
     @Query("select t from Tournament t join t.teams ts where ts.teamId.playerName = :username ORDER BY t.createdAt ASC")
-    List<Tournament> findTournamentByPlayerUsername(@Param("username") String adminUsername, Pageable pageable);
+    List<Tournament> findTournamentByPlayerUsername(@Param("username") String adminUsername);
 
     @Query("select count(t) from Tournament t join t.teams ts where ts.teamId.playerName = :username ORDER BY t.createdAt ASC")
     long countTournamentByPlayerUsername(@Param("username") String adminUsername);
