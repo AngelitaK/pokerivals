@@ -1,7 +1,7 @@
 package com.smu.csd.pokerivals.tournament.service;
 
 
-import com.smu.csd.pokerivals.NotificationService;
+import com.smu.csd.pokerivals.notification.service.NotificationService;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.pokemon.entity.Ability;
 import com.smu.csd.pokerivals.pokemon.entity.Move;

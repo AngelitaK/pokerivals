@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,9 +27,11 @@ public interface TournamentRepository extends JpaRepository<Tournament, UUID> {
     @Query("select t from Tournament t join t.teams ts where ts.teamId.playerName = :username ORDER BY t.createdAt ASC")
     List<Tournament> findTournamentByPlayerUsername(@Param("username") String adminUsername);
 
-    @Query("select count(t) from Tournament t join t.teams ts where ts.teamId.playerName = :username ORDER BY t.createdAt ASC")
+    @Query("select count(t) from Tournament t join t.teams ts where ts.teamId.playerName = :username")
     long countTournamentByPlayerUsername(@Param("username") String adminUsername);
 
-    @Query("select count(t) from Tournament t where upper(t.name) like lower(concat('%', :query,'%')) AND t.eloLimit.minElo < :points AND :points < t.eloLimit.maxElo")
+    @Query("select count(t) from Tournament t where lower(t.name) like lower(concat('%', :query,'%')) AND t.eloLimit.minElo < :points AND :points < t.eloLimit.maxElo")
     long countSearchResult(@Param("query") String query,@Param("points") double points);
+
+    List<Tournament> findByRegistrationPeriod_RegistrationEndBetween(ZonedDateTime start, ZonedDateTime end);
 }

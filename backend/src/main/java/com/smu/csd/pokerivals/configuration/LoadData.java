@@ -16,8 +16,8 @@ import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.ClanRepository;
 import com.smu.csd.pokerivals.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -41,7 +41,7 @@ public class LoadData {
   }
 
   @Bean
-  public CommandLineRunner initDatabase(
+  public InitializingBean initDatabase(
           UserRepository userRepository,
           ClanRepository clanRepository,
           PokemonRepository pokemonRepository,
@@ -49,7 +49,7 @@ public class LoadData {
           MoveRepository moveRepository,
           BettingSettingRepository bettingSettingRepository
   ) {
-    return args -> {
+    return () -> {
       // load config
       var minConfig = bettingSettingRepository.findById(BettingSettingKey.MINIMUM_PROFIT_MARGIN_PERCENTAGE);
       var maxConfig = bettingSettingRepository.findById(BettingSettingKey.MAXIMUM_PROFIT_MARGIN_PERCENTAGE);
@@ -141,8 +141,11 @@ public class LoadData {
       int noPokemonsInserted = 0;
       boolean isTest = false;
       String[] activeProfiles = environment.getActiveProfiles();
-      if (activeProfiles.length > 0) {
-        isTest=true;
+      for (String s: activeProfiles){
+        if (s.equals("test")){
+          isTest = true;
+          break;
+        }
       }
 
       if (pokemonRepository.count() == pokemonRows.size()){
@@ -205,7 +208,6 @@ public class LoadData {
           pokemon.addMove(move);
         }
 
-        pokemonRepository.deleteById(pokemon.getId());
         log.info("Preloading " + pokemonRepository.save(pokemon));
 
         if(isTest && ++noPokemonsInserted > noPokemonsForTest){

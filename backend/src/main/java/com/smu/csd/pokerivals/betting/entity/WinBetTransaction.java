@@ -17,10 +17,11 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor
 public class WinBetTransaction extends Transaction{
 
-    public static WinBetTransaction createBet(Match match, Player player, @Positive long winAmount, ZonedDateTime today){
-        if (match.isBothTeamsFinalisedAndNotNull()
-                && !match.getMatchResult().equals(MatchResult.PENDING)
-                && !match.isForfeited()
+    public static WinBetTransaction create(Match match, Player player, @Positive long winAmount, ZonedDateTime today){
+        if (!match.isBothTeamsFinalisedAndNotNull()
+                || match.getMatchResult().equals(MatchResult.PENDING)
+                || match.getMatchResult() == MatchResult.CANCELLED
+                || match.isForfeited()
         ){
             throw new IllegalArgumentException("Match is not eligible to provide win on");
         }

@@ -1,8 +1,11 @@
 package com.smu.csd.pokerivals.tournament.service;
 
 
-import com.smu.csd.pokerivals.NotificationService;
 import com.smu.csd.pokerivals.configuration.DateFactory;
+import com.smu.csd.pokerivals.notification.dto.LambdaNotificationDTO;
+import com.smu.csd.pokerivals.notification.dto.NotificationDetails;
+import com.smu.csd.pokerivals.notification.dto.NotificationType;
+import com.smu.csd.pokerivals.notification.service.NotificationService;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
 import com.smu.csd.pokerivals.tournament.entity.ClosedTournament;
 import com.smu.csd.pokerivals.tournament.entity.Team;
@@ -21,12 +24,15 @@ import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -93,9 +99,14 @@ public class TournamentAdminService {
             }
             List<Player> players = playerRepository.findAllById(usernames);
             ct.addInvitedPlayer(players);
-            players.forEach(p -> {
-                notificationService.notifyPlayerOfInvite(p.getUsername());
-            });
+            notificationService.pushNotificationToLambda(new LambdaNotificationDTO(
+                    new NotificationDetails(
+                            NotificationDetails.convertUsersToMap(players),
+                            ct.getName(),
+                            dateFactory.getToday()
+                    ),
+                    NotificationType.TOURNAMENT_PLAYER_INVITE
+            ));
             tournamentRepository.save(ct);
         } else {
             throw new IllegalArgumentException("Not a closed tournament!");
@@ -134,7 +145,6 @@ public class TournamentAdminService {
 
         Tournament tournament = tournamentRepository.getTournamentById(tournamentID).orElseThrow();
 
-        //TODO Checking for whether the first round has been started
         if (!tournament.getAdmin().getId().equals(adminUsername)
                 || !tournament.getRegistrationPeriod().isBefore(dateFactory.getToday())
                 || tournament.hasStarted()
@@ -142,6 +152,26 @@ public class TournamentAdminService {
             throw new IllegalArgumentException("Tournament not managed by this admin");
         }
         teamRepository.deleteById(new Team.TeamId(player,tournament));
+    }
+
+    @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
+    public void remindOfNearbyRegistrationDates(){
+        var today = dateFactory.getToday();
+        var tournaments = tournamentRepository.findByRegistrationPeriod_RegistrationEndBetween(
+                today.minusMinutes(1),today
+        );
+        for (Tournament t: tournaments){
+            notificationService.pushNotificationToLambda(
+                    new LambdaNotificationDTO(
+                            new NotificationDetails(
+                                    NotificationDetails.convertUsersToMap(Collections.singletonList(t.getAdmin())),
+                                    t.getName(),
+                                    t.getRegistrationPeriod().getRegistrationEnd()
+                            ),
+                            NotificationType.TOURNAMENT_ADMIN_REGISTRATION_CLOSED
+                    )
+            );
+        }
     }
 
 }

@@ -1,27 +1,32 @@
 package com.smu.csd.pokerivals.match;
 
 
-import com.smu.csd.pokerivals.NotificationService;
 import com.smu.csd.pokerivals.betting.service.PaymentAsyncService;
-import com.smu.csd.pokerivals.betting.service.PlayerBettingService;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.match.entity.MatchWrapper;
 import com.smu.csd.pokerivals.match.repository.MatchPagingRepository;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
+import com.smu.csd.pokerivals.notification.dto.LambdaNotificationDTO;
+import com.smu.csd.pokerivals.notification.dto.NotificationDetails;
+import com.smu.csd.pokerivals.notification.dto.NotificationType;
+import com.smu.csd.pokerivals.notification.service.NotificationService;
 import com.smu.csd.pokerivals.tournament.entity.Team;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
 import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
+import com.smu.csd.pokerivals.user.entity.Player;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.pow;
 
@@ -34,17 +39,15 @@ public class MatchService {
     private final DateFactory dateFactory;
     private final NotificationService notificationService;
     private final MatchPagingRepository matchPagingRepository;
-    private final PlayerBettingService playerBettingService;
     private final PaymentAsyncService paymentAsyncService;
 
     @Autowired
-    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory, NotificationService notificationService, MatchPagingRepository matchPagingRepository, PlayerBettingService playerBettingService, PaymentAsyncService paymentAsyncService) {
+    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory, NotificationService notificationService, MatchPagingRepository matchPagingRepository, PaymentAsyncService paymentAsyncService) {
         this.tournamentRepository = tournamentRepository;
         this.matchRepository = matchRepository;
         this.dateFactory = dateFactory;
         this.notificationService = notificationService;
         this.matchPagingRepository = matchPagingRepository;
-        this.playerBettingService = playerBettingService;
         this.paymentAsyncService = paymentAsyncService;
     }
 
@@ -115,7 +118,23 @@ public class MatchService {
         }
         // i have the team i need to move forward
         Team winningTeam = matchBefore.setMatchResult(dto.matchResult, today);
-        notificationService.notifyMatchOutcome(matchBefore.getMatchId());
+        List<Player> players = new ArrayList<>();
+        if (matchBefore.getTeamA() != null){
+            players.add(matchBefore.getTeamA().getPlayer());
+        }
+        if (matchBefore.getTeamB() != null){
+            players.add(matchBefore.getTeamB().getPlayer());
+        }
+        notificationService.pushNotificationToLambda(
+                new LambdaNotificationDTO(
+                        new NotificationDetails(
+                                NotificationDetails.convertUsersToMap(players),
+                                matchBefore.getTournament().getName(),
+                                today
+                        ),
+                        NotificationType.MATCH_PLAYER_MATCH_OUTCOME
+                )
+        );
         // continue until reaching root
         while (true) {
             // if root don't attempt to move forward
@@ -137,7 +156,23 @@ public class MatchService {
             // if a bye, we need to go up the chain, but get the winning team first
             if (bye){
                 winningTeam = matchAfter.finaliseBye(today);
-                notificationService.notifyMatchOutcome(matchAfter.getMatchId());
+                players = new ArrayList<>();
+                if (matchAfter.getTeamA() != null){
+                    players.add(matchAfter.getTeamA().getPlayer());
+                }
+                if (matchAfter.getTeamB() != null){
+                    players.add(matchAfter.getTeamB().getPlayer());
+                }
+                notificationService.pushNotificationToLambda(
+                        new LambdaNotificationDTO(
+                                new NotificationDetails(
+                                        NotificationDetails.convertUsersToMap(players),
+                                        matchAfter.getTournament().getName(),
+                                        today
+                                ),
+                                NotificationType.MATCH_PLAYER_MATCH_OUTCOME
+                        )
+                );
             } else {
                 break;
             }
@@ -188,6 +223,7 @@ public class MatchService {
         } else {
             bye = matchBefore.finaliseTeamB(null, today) ;
         }
+        paymentAsyncService.asyncProcessForfeit(matchBefore.getMatchId());
 
         if (!bye){
             return;
@@ -195,7 +231,23 @@ public class MatchService {
         // have bye
         // i have the team i need to move forward
         Team winningTeam = matchBefore.finaliseBye(today);
-        notificationService.notifyMatchOutcome(matchBefore.getMatchId());
+        List<Player> players = new ArrayList<>();
+        if (matchBefore.getTeamA() != null){
+            players.add(matchBefore.getTeamA().getPlayer());
+        }
+        if (matchBefore.getTeamB() != null){
+            players.add(matchBefore.getTeamB().getPlayer());
+        }
+        notificationService.pushNotificationToLambda(
+                new LambdaNotificationDTO(
+                        new NotificationDetails(
+                                NotificationDetails.convertUsersToMap(players),
+                                matchBefore.getTournament().getName(),
+                                today
+                        ),
+                        NotificationType.MATCH_PLAYER_FORFEIT
+                )
+        );
 
         // continue until reaching root
         while (true) {
@@ -215,15 +267,32 @@ public class MatchService {
             } else {
                 bye= matchAfter.finaliseTeamB(winningTeam, today);
             }
+
             // if a bye, we need to go up the chain, but get the winning team first
             if (bye){
                 winningTeam = matchAfter.finaliseBye(today);
-                notificationService.notifyMatchOutcome(matchAfter.getMatchId());
+                players = new ArrayList<>();
+                if (matchAfter.getTeamA() != null){
+                    players.add(matchAfter.getTeamA().getPlayer());
+                }
+                if (matchAfter.getTeamB() != null){
+                    players.add(matchAfter.getTeamB().getPlayer());
+                }
+                notificationService.pushNotificationToLambda(
+                        new LambdaNotificationDTO(
+                                new NotificationDetails(
+                                        NotificationDetails.convertUsersToMap(players),
+                                        matchAfter.getTournament().getName(),
+                                        today
+                                ),
+                                NotificationType.MATCH_PLAYER_FORFEIT
+                        )
+                );
             } else {
                 break;
             }
         }
-        paymentAsyncService.asyncProcessForfeit(dto.matchId);
+
     }
 
     public List<MatchWrapper.MatchRoundDTO> generateFrontendFriendlyBrackets(UUID tournamentId){
@@ -242,16 +311,24 @@ public class MatchService {
         if (!match.isPlayerInMatch(username)){
             throw new IllegalArgumentException("this tournament is not participated by you");
         }
+        notificationService.pushNotificationToLambda(
+                new LambdaNotificationDTO(
+                        new NotificationDetails(
+                                NotificationDetails.convertUsersToMap(List.of(match.getTournament().getAdmin())),
+                                match.getTournament().getName(),
+                                dateFactory.getToday()
+                        ),
+                        NotificationType.MATCH_ADMIN_CHANGE_TIME_AGREEMENT
+                )
+        );
         // PENDING
         if (match.getTeamA() != null && match.getTeamA().getPlayer().getUsername().equals(username)){
             // Team A
             match.setTeamAAgreed(dto.approve, dateFactory.getToday());
-            notificationService.notifyUpdateOfTimingAgreement(match.getMatchId());
         }
         else if (match.getTeamB().getPlayer().getUsername().equals(username)){
             // Team B
             match.setTeamBAgreed(dto.approve, dateFactory.getToday());
-            notificationService.notifyUpdateOfTimingAgreement(match.getMatchId());
         }
     }
 
@@ -270,7 +347,16 @@ public class MatchService {
         if(Objects.equals(match.getTournament().getAdmin().getUsername(), adminUsername)){
             // time validation occurs inside
             match.setTimeMatchOccursAndResetAgreement(dto.matchTiming, dateFactory.getToday());
-            notificationService.notifyPlayersOfTiming(match.getMatchId());
+            notificationService.pushNotificationToLambda(
+                    new LambdaNotificationDTO(
+                            new NotificationDetails(
+                                    NotificationDetails.convertUsersToMap(List.of(match.getTeamA().getPlayer(), match.getTeamB().getPlayer())),
+                                    match.getTournament().getName(),
+                                    dateFactory.getToday()
+                            ),
+                            NotificationType.MATCH_PLAYER_TIMING_CHANGE
+                    )
+            );
         } else {
             throw new IllegalArgumentException("You are not admin for this match");
         }
@@ -302,6 +388,36 @@ public class MatchService {
                 matchPagingRepository.findByTimeMatchOccursBetweenOrderByTimeMatchOccursAsc(start,end, PageRequest.of(page, limit)),
                 matchRepository.countByTimeMatchOccursBetweenOrderByTimeMatchOccursAsc(start,end)
         );
+    }
+
+    @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
+    public void remindOfNearbyRegistrationDates(){
+        var today = dateFactory.getToday();
+        var matches = matchRepository.findByTimeMatchOccursBetween(
+                today,today.minusMinutes(1)
+        );
+        for (Match m: matches){
+            notificationService.pushNotificationToLambda(
+                    new LambdaNotificationDTO(
+                            new NotificationDetails(
+                                    NotificationDetails.convertUsersToMap(Collections.singletonList(m.getTournament().getAdmin())),
+                                    m.getTournament().getName(),
+                                    m.getTimeMatchOccurs()
+                            ),
+                            NotificationType.MATCH_ADMIN_TIME_COMING
+                    )
+            );
+            notificationService.pushNotificationToLambda(
+                    new LambdaNotificationDTO(
+                            new NotificationDetails(
+                                    NotificationDetails.convertUsersToMap(List.of(m.getTeamA().getPlayer(), m.getTeamB().getPlayer())),
+                                    m.getTournament().getName(),
+                                    m.getTimeMatchOccurs()
+                            ),
+                            NotificationType.MATCH_PLAYER_TIME_COMING
+                    )
+            );
+        }
     }
 
 }

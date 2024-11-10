@@ -19,4 +19,6 @@ public interface MatchRepository extends JpaRepository<Match, Match.MatchId> {
     long countByTimeMatchOccursBetweenAndTournamentPlayer(@Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end,  @Param("username") String username);
 
     long countByTimeMatchOccursBetweenOrderByTimeMatchOccursAsc( ZonedDateTime start, ZonedDateTime end);
+
+    List<Match> findByTimeMatchOccursBetween(ZonedDateTime start, ZonedDateTime end);
 }

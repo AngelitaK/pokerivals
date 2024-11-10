@@ -1,6 +1,5 @@
 package com.smu.csd.pokerivals.betting.service;
 
-import com.smu.csd.pokerivals.NotificationService;
 import com.smu.csd.pokerivals.betting.dto.MatchBettingSummaryDTO;
 import com.smu.csd.pokerivals.betting.dto.TransactionPageDTO;
 import com.smu.csd.pokerivals.betting.entity.BettingSetting;
@@ -12,6 +11,11 @@ import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
+import com.smu.csd.pokerivals.notification.dto.LambdaNotificationDTO;
+import com.smu.csd.pokerivals.notification.dto.NotificationDetails;
+import com.smu.csd.pokerivals.notification.dto.NotificationType;
+import com.smu.csd.pokerivals.notification.service.NotificationService;
+import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Positive;
@@ -22,9 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.lang.Math.round;
 
@@ -121,8 +123,8 @@ public class PlayerBettingService {
 
     @Transactional
     public void winBet(Match.MatchId matchId){
-        Map<String,String> loser = new HashMap<>();
-        Map<String,String> winner = new HashMap<>();
+        List<Player> loser = new ArrayList<>();
+        List<Player> winners = new ArrayList<>();
 
         List<WinBetTransaction> winBets = new ArrayList<>();
 
@@ -155,28 +157,42 @@ public class PlayerBettingService {
             {
                 var wt =WinBetTransaction.create(match,pt.getPlayer(),round(amountToDistribute),dateFactory.getToday());
                 winBets.add(wt);
-                winner.put(pt.getPlayerUsername(),pt.getPlayer().getEmail());
+                winners.add(pt.getPlayer());
                 pt.setWinBetTransaction(wt);
                 noOfPeopleGiven++;
             } else{
-                loser.put(pt.getPlayerUsername(),pt.getPlayer().getEmail());
+                loser.add(pt.getPlayer());
             }
         }
         if(noOfPeopleGiven != ((match.getMatchResult() == MatchResult.TEAM_A) ? summary.totalNoOfTeamABets() : summary.totalNoOfTeamBBets())  ){
             throw new IllegalArgumentException("more people given");
         }
 
-        notificationService.notifyWinBet(new NotificationService.NotifyBetOutcomeDTO(
-                winner,
-                loser,
-                match.getTournament().getName()
-        ));
+        notificationService.pushNotificationToLambda(
+                new LambdaNotificationDTO(
+                        new NotificationDetails(
+                                NotificationDetails.convertUsersToMap(winners),
+                                match.getTournament().getName(),
+                                dateFactory.getToday()
+                        ),
+                        NotificationType.BET_PLAYER_WIN
+                )
+        );
+        notificationService.pushNotificationToLambda(
+                new LambdaNotificationDTO(
+                        new NotificationDetails(
+                                NotificationDetails.convertUsersToMap(loser),
+                                match.getTournament().getName(),
+                                dateFactory.getToday()
+                        ),
+                        NotificationType.BET_PLAYER_LOSE
+                )
+        );
     }
 
     @Transactional
     // must be cancelled/not forfeited
     public void processForfeitOrCancel(Match.MatchId matchId){
-        Map<String,String> affected = new HashMap<>();
 
         var match = matchRepository.findById(matchId).orElseThrow();
         if (!match.isForfeited() && !match.getMatchResult().equals(MatchResult.CANCELLED)){
@@ -187,12 +203,15 @@ public class PlayerBettingService {
         List<PlaceBetTransaction> toProcess = placeBetTransactionRepository.findByMatch_MatchId(matchId);
         for (PlaceBetTransaction pt: toProcess){
             pt.cancelIfForfeited();
-            affected.put(pt.getPlayerUsername(),pt.getPlayer().getEmail());
         }
 
-        notificationService.notifyForfeitDTO(new NotificationService.NotifyBetForfeitDTO(
-                affected,
-                match.getTournament().getName()
+        notificationService.pushNotificationToLambda(new LambdaNotificationDTO(
+                new NotificationDetails(
+                        NotificationDetails.convertUsersToMap(toProcess.stream().map(pt->pt.getPlayer()).toList()),
+                        match.getTournament().getName(),
+                        dateFactory.getToday()
+                ),
+                NotificationType.BET_PLAYER_FORFEIT
         ));
 
         placeBetTransactionRepository.saveAll(toProcess);
