@@ -135,17 +135,27 @@ public class Match {
             teamA = this.teamA;
             teamB = this.teamB;
         }
+
+        double differenceBetweenBAndA =
+                (teamA == null || teamB == null) ? 0 :
+                        (teamB.getPlayer().getPoints() - teamA.getPlayer().getPoints());
+        // calculate both side win rate
+        double teamAWinRate = getWinRate(differenceBetweenBAndA);
+        double teamBWinRate = 1 - teamAWinRate;
+
         return new ArrayList<>(
                 List.of(
                         new MatchWrapper.TeamInMatchDTO(
                                 (teamA == null ? "" : teamA.getPlayerUsername()),
                                 (teamA == null ? 0.0 : teamA.getPlayer().getPoints()),
-                                teamA == null
+                                teamA == null,
+                                teamA == null ? 0.0 : teamAWinRate
                         ),
                         new MatchWrapper.TeamInMatchDTO(
                                 (teamB == null ? "" : teamB.getPlayerUsername()),
                                 (teamB == null ? 0.0 : teamB.getPlayer().getPoints()),
-                                teamB == null
+                                teamB == null,
+                                teamB == null ? 0.0 : teamBWinRate
                         )
                 )
         );
@@ -259,6 +269,7 @@ public class Match {
     private static double getWinRate(double pointsDifference){
         return 1 / (1+ Math.pow(10, (pointsDifference/400)));
     }
+
 
     /**
      * Create a tree where the tree this is called upon is the root (must be depth 0)

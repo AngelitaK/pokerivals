@@ -1,6 +1,9 @@
 package com.smu.csd.pokerivals.configuration;
 
 import com.opencsv.CSVReader;
+import com.smu.csd.pokerivals.betting.entity.BettingSetting;
+import com.smu.csd.pokerivals.betting.entity.BettingSettingKey;
+import com.smu.csd.pokerivals.betting.repository.BettingSettingRepository;
 import com.smu.csd.pokerivals.pokemon.entity.Ability;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
@@ -9,8 +12,8 @@ import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import com.smu.csd.pokerivals.user.entity.Clan;
-import com.smu.csd.pokerivals.user.repository.ClanRepository;
 import com.smu.csd.pokerivals.user.entity.Player;
+import com.smu.csd.pokerivals.user.repository.ClanRepository;
 import com.smu.csd.pokerivals.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +21,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.util.ResourceUtils;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
-import java.io.File;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.file.Files;
 import java.util.*;
 
 @Slf4j
@@ -37,11 +41,30 @@ public class LoadData {
   }
 
   @Bean
-  public CommandLineRunner initDatabase(UserRepository userRepository, ClanRepository clanRepository, PokemonRepository pokemonRepository, AbilityRepository abilityRepository, MoveRepository moveRepository) {
+  public CommandLineRunner initDatabase(
+          UserRepository userRepository,
+          ClanRepository clanRepository,
+          PokemonRepository pokemonRepository,
+          AbilityRepository abilityRepository,
+          MoveRepository moveRepository,
+          BettingSettingRepository bettingSettingRepository
+  ) {
     return args -> {
+      // load config
+      var minConfig = bettingSettingRepository.findById(BettingSettingKey.MINIMUM_PROFIT_MARGIN_PERCENTAGE);
+      var maxConfig = bettingSettingRepository.findById(BettingSettingKey.MAXIMUM_PROFIT_MARGIN_PERCENTAGE);
+      if (minConfig.isEmpty()){
+        bettingSettingRepository.save(new BettingSetting(BettingSettingKey.MINIMUM_PROFIT_MARGIN_PERCENTAGE, 5));
+      }
+      if (maxConfig.isEmpty()){
+        bettingSettingRepository.save(new BettingSetting(BettingSettingKey.MAXIMUM_PROFIT_MARGIN_PERCENTAGE,10));
+      }
+
+
+
       // Load Clan
-      File file = ResourceUtils.getFile("classpath:clan.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      Resource r = new ClassPathResource("clan.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -54,8 +77,9 @@ public class LoadData {
       }
 
       // Load Admin
-      file = ResourceUtils.getFile("classpath:admins.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+
+      r = new ClassPathResource("admins.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -71,8 +95,8 @@ public class LoadData {
       }
 
       // Load Players
-      file = ResourceUtils.getFile("classpath:players.csv");
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      r = new ClassPathResource("players.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -88,10 +112,10 @@ public class LoadData {
       }
 
       // Load pokemon
-      file = ResourceUtils.getFile("classpath:pokemon.csv");
-      List<Map<String,String>> pokemonRows = new ArrayList<>();
 
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      List<Map<String,String>> pokemonRows = new ArrayList<>();
+      r = new ClassPathResource("pokemon.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;
@@ -101,10 +125,10 @@ public class LoadData {
         }
       }
 
-      file = ResourceUtils.getFile("classpath:learnset_data.csv");
       Map<String, Set<String>> pokemonMoves = new HashMap<>();
 
-      try (Reader reader = Files.newBufferedReader(file.toPath())) {
+      r = new ClassPathResource("learnset_data.csv");
+      try (InputStreamReader isr = new InputStreamReader(r.getInputStream()); Reader reader =  new BufferedReader(isr)) {
         try (CSVReader csvReader = new CSVReader(reader)) {
           String[] header = csvReader.readNext();
           String[] line;

@@ -1,6 +1,7 @@
 package com.smu.csd.pokerivals.entity;
 
 
+import com.smu.csd.pokerivals.betting.repository.BettingSettingRepository;
 import com.smu.csd.pokerivals.configuration.LoadData;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
@@ -69,13 +70,16 @@ public class TournamentEntityTest {
     @Autowired
     private AbilityRepository abilityRepository;
 
+    @Autowired
+    private BettingSettingRepository bettingSettingRepository;
+
 
     @Autowired
     private Environment environment;
 
     @BeforeEach
     public void loadData() throws Exception {
-        new LoadData(environment).initDatabase(userRepository,clanRepository, pokemonRepository,abilityRepository, moveRepository).run("abc");
+        new LoadData(environment).initDatabase(userRepository,clanRepository, pokemonRepository,abilityRepository, moveRepository, bettingSettingRepository).run("abc");
     }
 
     @Test

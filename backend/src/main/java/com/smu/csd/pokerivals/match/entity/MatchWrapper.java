@@ -136,7 +136,7 @@ public class MatchWrapper {
     }
 
     public record MatchRoundDTO(String title, List<Match> seeds){}
-    public record TeamInMatchDTO(String id, double score, boolean empty){}
+    public record TeamInMatchDTO(String id, double score, boolean empty, double winRate){}
 
 
 }

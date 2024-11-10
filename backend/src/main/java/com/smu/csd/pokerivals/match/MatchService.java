@@ -284,4 +284,12 @@ public class MatchService {
         );
     }
 
+    @Transactional
+    public MatchPageDTO getMatchesBetweenDates(ZonedDateTime start, ZonedDateTime end , int page, int limit){
+        return new MatchPageDTO(
+                matchPagingRepository.findByTimeMatchOccursBetweenOrderByTimeMatchOccursAsc(start,end, PageRequest.of(page, limit)),
+                matchRepository.countByTimeMatchOccursBetweenOrderByTimeMatchOccursAsc(start,end)
+        );
+    }
+
 }

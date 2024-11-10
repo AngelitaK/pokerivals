@@ -90,4 +90,16 @@ public class MatchController {
     ) {
         return matchService.getMatchesForPlayerBetweenDates(userDetails.getUsername(),start,end,page,pageSize);
     }
+
+    @GetMapping("/timing")
+    @Operation(summary = "Get any matches between two times (i.e. point in time)")
+    public MatchService.MatchPageDTO getMatchesBetweenDates(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "start of period to search ISO-8601 compliant") @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime start,
+            @Parameter(description = "end of period to search ISO-8601 compliant") @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime end,
+            @Parameter(description = "page of pokemon to get (start from zero)") @RequestParam("page") Integer page,
+            @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize
+    ) {
+        return matchService.getMatchesBetweenDates(start,end,page,pageSize);
+    }
 }
