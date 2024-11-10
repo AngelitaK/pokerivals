@@ -2,6 +2,8 @@ package com.smu.csd.pokerivals.match;
 
 
 import com.smu.csd.pokerivals.NotificationService;
+import com.smu.csd.pokerivals.betting.service.PaymentAsyncService;
+import com.smu.csd.pokerivals.betting.service.PlayerBettingService;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
@@ -32,14 +34,18 @@ public class MatchService {
     private final DateFactory dateFactory;
     private final NotificationService notificationService;
     private final MatchPagingRepository matchPagingRepository;
+    private final PlayerBettingService playerBettingService;
+    private final PaymentAsyncService paymentAsyncService;
 
     @Autowired
-    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory, NotificationService notificationService, MatchPagingRepository matchPagingRepository) {
+    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory, NotificationService notificationService, MatchPagingRepository matchPagingRepository, PlayerBettingService playerBettingService, PaymentAsyncService paymentAsyncService) {
         this.tournamentRepository = tournamentRepository;
         this.matchRepository = matchRepository;
         this.dateFactory = dateFactory;
         this.notificationService = notificationService;
         this.matchPagingRepository = matchPagingRepository;
+        this.playerBettingService = playerBettingService;
+        this.paymentAsyncService = paymentAsyncService;
     }
 
     /**
@@ -137,6 +143,11 @@ public class MatchService {
             }
             matchBefore = matchAfter;
         }
+        if (dto.matchResult == MatchResult.CANCELLED) {
+            paymentAsyncService.asyncProcessForfeit(dto.matchId);
+        } else {
+            paymentAsyncService.asyncWinBet(dto.matchId);
+        }
     }
 
     /**
@@ -212,6 +223,7 @@ public class MatchService {
                 break;
             }
         }
+        paymentAsyncService.asyncProcessForfeit(dto.matchId);
     }
 
     public List<MatchWrapper.MatchRoundDTO> generateFrontendFriendlyBrackets(UUID tournamentId){

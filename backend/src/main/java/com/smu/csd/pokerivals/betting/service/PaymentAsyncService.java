@@ -2,19 +2,21 @@ package com.smu.csd.pokerivals.betting.service;
 
 import com.smu.csd.pokerivals.match.entity.Match;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.Collection;
 
 @Service
 @Slf4j
 public class PaymentAsyncService {
 
     private final DepositService depositService;
+    private final PlayerBettingService playerBettingService;
 
-    public PaymentAsyncService(DepositService depositService) {
+    @Autowired
+    public PaymentAsyncService(DepositService depositService, PlayerBettingService playerBettingService) {
         this.depositService = depositService;
+        this.playerBettingService = playerBettingService;
     }
 
     @Async
@@ -24,7 +26,11 @@ public class PaymentAsyncService {
     }
 
     @Async
-    public void asyncProcessForfeit(Collection<Match.MatchId> matchIds){
+    public void asyncProcessForfeit(Match.MatchId matchId){
+        playerBettingService.processForfeitOrCancel(matchId);
+    }
 
+    public void asyncWinBet(Match.MatchId matchId){
+        playerBettingService.winBet(matchId);
     }
 }

@@ -124,6 +124,23 @@ public class Match {
     @Setter(AccessLevel.NONE)
     private Team teamA;
 
+    /**
+     * Calculate win rate of team A or B
+     * @param forTeamA true means A false means B
+     * @return the win rate desired
+     */
+    public double calculateWinRate(boolean forTeamA){
+        double differenceBetweenBAndA =
+                (teamA == null || teamB == null) ? 0 :
+                        (teamB.getPlayer().getPoints() - teamA.getPlayer().getPoints());
+        // calculate both side win rate
+        double teamAWinRate = getWinRate(differenceBetweenBAndA);
+        double teamBWinRate = 1 - teamAWinRate;
+
+        return forTeamA ? teamAWinRate : teamBWinRate;
+    }
+
+
     @JsonGetter("teams")
     private List<MatchWrapper.TeamInMatchDTO> getTeams(){
         Team teamA;
@@ -467,6 +484,9 @@ public class Match {
         }
         teamAAgreed = agree;
         timeTeamARespondedTiming = today;
+        if (!agree){
+            timeMatchOccurs = null;
+        }
     }
     public void setTeamBAgreed(boolean agree, ZonedDateTime today){
         if (getBothTeamAgreementStatus().equals(TeamAgreementStatus.APPROVED)){
@@ -477,6 +497,9 @@ public class Match {
         }
         teamBAgreed = agree;
         timeTeamBRespondedTiming = today;
+        if (!agree){
+            timeMatchOccurs = null;
+        }
     }
 
     @JsonGetter("team_a_agree_timing")
