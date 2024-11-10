@@ -61,7 +61,6 @@ const ManageMatchesPage = () => {
       } catch (error) {
         console.error("Error fetching matches: ", error)
       }
-      // setTournamentData(test_data.data);
       fetchTournamentData();
     }}, [id]);
 
