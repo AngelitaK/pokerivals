@@ -16,9 +16,20 @@ import {
   TabPanel,
   useToast,
   Heading,
+  Tooltip,
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalBody,
+  ModalContent,
+  VStack,
+  Spinner
 } from "@chakra-ui/react";
 import { FaArrowCircleLeft } from "react-icons/fa";
+import { TbTournament } from "react-icons/tb";
+import { CgPokemon } from "react-icons/cg";
 import PlayerMatchComponent from "@/components/playerMatchComponent";
+import PokemonDataCard from "@/components/pokemonDataCard";
 import test_data from "./test-data"; //remove once get tournament id
 
 // format date
@@ -41,10 +52,11 @@ const TournamentDetails = ({ params }) => {
   const toast = useToast();
   const [tournament, setTournament] = useState(null);
   const [tournamentData, setTournamentData] = useState(null);
+  const [teamData, setTeamData] = useState([]);
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isLoadingTeam, setIsLoadingTeam] = useState(false);
   
   const { tournamentId } = params;
-
-  tournamentId = "" //hardcoded for now, remove once get tournament id
 
   // Fetch tournament data on page load
   useEffect(() => {
@@ -77,12 +89,38 @@ const TournamentDetails = ({ params }) => {
     setTournamentData(test_data.data); //remove once get tournament id
   }, []);
 
+   // Function to fetch the player's team
+  const fetchTeamData = async () => {
+    setIsLoadingTeam(true);
+    try {
+      const response = await axios.get(`/player/tournament/${tournamentId}/me/team/`);
+      console.log(response.data.chosenPokemons);
+      setTeamData(response.data.chosenPokemons);
+    } catch (error) {
+      console.error("Error fetching team data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load team data.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoadingTeam(false);
+    }
+  };
+
+  const handleViewTeam = () => { 
+    fetchTeamData(); 
+    setIsTeamModalOpen(true);
+  };
+
   const handleViewBracket = (tournamentId) => { 
     router.push(`/tournament-bracket/${tournamentId}`);
   };
 
   const handleBackNavigation = () => {
-    router.push("/manage-tournament");
+    router.push("/find-tournament");
   };
 
   return (
@@ -95,24 +133,56 @@ const TournamentDetails = ({ params }) => {
           </Text>
         </Flex>
 
-        {/* tournament name */}
         {tournament && (
-          <Flex
-            direction={"column"}
-            margin={"auto"}
-            left={"50%"}
-            transform={"translateX(-20%)"}
+          <Text
+            fontSize="2xl"
+            fontWeight="bold"
+            position="absolute"
+            left="50%"
+            transform="translateX(-50%)"
           >
-            <Text fontSize={"2xl"} margin={"auto"} fontWeight={"bold"}>
-              {tournament.name}
-            </Text>
-            <Text fontSize={"xl"} margin={"auto"}>
-              {formatDate(tournament.estimatedTournamentPeriod.tournamentBegin)}{" "}
-              - {formatDate(tournament.estimatedTournamentPeriod.tournamentEnd)}
-            </Text>
-          </Flex>
+            {tournament.name}
+          </Text>
         )}
-      </Flex>
+
+        {/* Bracket View Button */}
+        {tournament && (
+          <Tooltip label="View Tournament Bracket" aria-label="View Tournament Bracket">
+            <Button
+              leftIcon={<TbTournament size={20} />}
+              colorScheme="gray"
+              variant="solid"
+              onClick={handleViewBracket}
+              size="md"
+              fontSize="sm"
+              left="50%"
+            >
+              Bracket View
+            </Button>
+          </Tooltip>
+        )}
+
+        {tournament && (
+            <Button
+              leftIcon={<CgPokemon size={20} />}
+              colorScheme="gray"
+              variant="solid"
+              onClick={handleViewTeam}
+              size="md"
+              fontSize="sm"
+              left="52%"
+            >
+              View my Team
+            </Button>
+        )}
+        </Flex>
+
+        {tournament && (
+          <Text fontSize="xl" textAlign="center" mt={1}>
+            {formatDate(tournament.estimatedTournamentPeriod.tournamentBegin)}{" "}
+            - {formatDate(tournament.estimatedTournamentPeriod.tournamentEnd)}
+          </Text>
+        )}
 
       {/* tournament data and info */}
       <Box m={"0% 3%"}>
@@ -140,6 +210,42 @@ const TournamentDetails = ({ params }) => {
           </TabPanels>
         </Tabs>
       </Box>
+
+      {/* Team Modal */}
+      <Modal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} size="full" isCentered>
+        <ModalOverlay />
+        <ModalContent maxW="70vw" maxH="80vh" overflowY="auto" borderRadius="lg">
+          <Flex justify="center" align="center" p={4} position="relative">
+            <Heading size="lg" textAlign="center">
+              My Team
+            </Heading>
+            <Button onClick={() => setIsTeamModalOpen(false)} variant="ghost" size="lg" position="absolute" right="16px">
+              ✕
+            </Button>
+          </Flex>
+
+          <ModalBody>
+            {isLoadingTeam ? (
+              <VStack align="center">
+                <Spinner size="xl" />
+                <Text>Loading team data...</Text>
+              </VStack>
+            ) : (
+              <Flex gap={3} wrap="wrap" justify="center" maxW="100%" mx="auto">
+                {teamData.length > 0 ? (
+                  teamData.map((pokemonData, index) => (
+                    <Box key={index} width="calc(33.33% - 16px)" mb={3}>
+                      <PokemonDataCard pokemonData={pokemonData} />
+                    </Box>
+                  ))
+                ) : (
+                  <Text>No Pokémon in your team.</Text>
+                )}
+              </Flex>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
