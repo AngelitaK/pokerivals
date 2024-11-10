@@ -1,6 +1,7 @@
 package com.smu.csd.pokerivals;
 
 import com.smu.csd.pokerivals.match.entity.Match;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -27,5 +28,12 @@ public class NotificationService {
     @Async
     public void notifyUpdateOfTimingAgreement(Match.MatchId matchId) {
         log.info("Tell admin that got changes to agreement");
+    }
+
+    @SneakyThrows
+    @Async
+    public void isThisActlAsync(){
+        Thread.sleep(15000);
+        log.info("yeehaw");
     }
 }
