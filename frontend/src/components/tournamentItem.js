@@ -20,6 +20,8 @@ const TournamentItem = ({ tournament, buttonLabel, onButtonClick, isDisabled }) 
         return `${day}${suffix} ${date.toLocaleString('en-US', options)}`;
     };
 
+    const isPastRegistrationEnd = new Date() > new Date(registrationPeriod.registrationEnd);
+
     return (
         <Box 
             bg="rgba(255, 255, 255, 0.9)" 
@@ -43,11 +45,11 @@ const TournamentItem = ({ tournament, buttonLabel, onButtonClick, isDisabled }) 
                     </VStack>
                 </HStack>
                 <Button 
-                    colorScheme={buttonLabel === "Leave" ? "red" : "green"} 
+                    colorScheme={isPastRegistrationEnd ? "yellow" : buttonLabel === "Leave" ? "red" : "green"}
                     onClick={onButtonClick}
-                    disabled={isDisabled}
+                    disabled={isDisabled || isPastRegistrationEnd}
                 >
-                    {buttonLabel}
+                    {isPastRegistrationEnd ? "Closed" : buttonLabel}
                 </Button>
             </Flex>
         </Box>
