@@ -6,20 +6,27 @@ import {
 } from '@schedule-x/calendar';
 
 import '@schedule-x/theme-default/dist/index.css';
+import { createEventsServicePlugin } from '@schedule-x/events-service';
 
 const Calendar = ({ matches }) => {
-    console.log(matches);
-    const calendar = useNextCalendarApp({
-        views: [createViewDay(), createViewWeek(), createViewMonthGrid()],
-        events: matches,
-        defaultView: createViewMonthGrid().name,
-    });
 
-    return (
-        <div>
-            <ScheduleXCalendar calendarApp={calendar} />
-        </div>
-    );
+    if (matches.length != 0) {
+        
+        const plugin = [createEventsServicePlugin()]
+
+        const calendar = useNextCalendarApp({
+            views: [createViewDay(), createViewWeek(), createViewMonthGrid()],
+            events: matches,
+            defaultView: createViewMonthGrid().name,
+        }, plugin);
+
+        return (
+            <div>
+                <ScheduleXCalendar calendarApp={calendar} />
+            </div>
+        );
+    }
+
 };
 
 export default Calendar;

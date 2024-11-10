@@ -1,8 +1,28 @@
 "use client"
 import { Flex, Text, Button, Icon, Stack } from "@chakra-ui/react";
-import { FaCoins } from "react-icons/fa";
+import { useState } from "react";
+import BetModal from "./bettingModal";
 
-const BettingComponent = ({ player1, player2, odds1, odds2, bettingPool, payout, yourBet, isResult }) => {
+const BettingComponent = ({ details }) => {
+    const teamA = details.teams[0].id
+    const teamB = details.teams[1].id
+    const odds1 = details.teams[0].winRate
+    const odds2 = details.teams[1].winRate
+
+    const [isBetModalOpen, setBetModalOpen] = useState(false);
+    const [selectedMatch, setSelectedMatch] = useState(null);
+
+    const openBetModal = () => {
+        console.log(details)
+        setSelectedMatch(details);
+        setBetModalOpen(true);
+    };
+
+    const closeBetModal = () => {
+        setBetModalOpen(false);
+        setSelectedMatch(null);
+    };
+
     return (
         <Flex
             bg="whiteAlpha.800"
@@ -19,9 +39,8 @@ const BettingComponent = ({ player1, player2, odds1, odds2, bettingPool, payout,
             transition="all 0.2s ease-in-out"
         >
             <Stack spacing={1} align="center" width="20%">
-                <Text fontWeight="bold" fontSize="lg" color="gray.700">{player1}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="gray.700">{teamA}</Text>
                 <Text fontSize="sm" color="gray.600">Odds: {odds1}</Text>
-                {isResult && yourBet === player1 && <Text color="green.500" fontWeight="bold">Winner</Text>}
             </Stack>
 
             <Text fontWeight="bold" fontSize="2xl" color="red.500">
@@ -29,35 +48,18 @@ const BettingComponent = ({ player1, player2, odds1, odds2, bettingPool, payout,
             </Text>
 
             <Stack spacing={1} align="center" width="20%">
-                <Text fontWeight="bold" fontSize="lg" color="gray.700">{player2}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="gray.700">{teamB}</Text>
                 <Text fontSize="sm" color="gray.600">Odds: {odds2}</Text>
-                {isResult && yourBet === player2 && <Text color="green.500" fontWeight="bold">Winner</Text>}
             </Stack>
 
-            {isResult ? (
-                <>
-                    <Flex align="center" width="15%">
-                        <Text fontSize="lg" fontWeight="bold" color="gray.700">{yourBet}</Text>
-                    </Flex>
-                    <Flex align="center" width="15%">
-                        <Icon as={FaCoins} color="yellow.400" boxSize={5} />
-                        <Text ml={2} fontWeight="bold" fontSize="lg" color="gray.700">{bettingPool}</Text>
-                    </Flex>
-                    <Flex align="center" width="15%">
-                        <Icon as={FaCoins} color="yellow.400" boxSize={5} />
-                        <Text ml={2} fontWeight="bold" fontSize="lg" color={payout > 0 ? "green.500" : "gray.700"}>
-                            {payout}
-                        </Text>
-                    </Flex>
-                </>
-            ) : (
-                <>
-                    <Flex align="center" width="15%">
-                        <Icon as={FaCoins} color="yellow.400" boxSize={5} />
-                        <Text ml={2} fontWeight="bold" fontSize="lg" color="gray.700">{bettingPool}</Text>
-                    </Flex>
-                    <Button colorScheme="teal" size="md">Bet</Button>
-                </>
+            <Button colorScheme="teal" size="md" onClick={openBetModal}>Bet</Button>
+
+            {selectedMatch && (
+                <BetModal
+                    isOpen={isBetModalOpen}
+                    onClose={closeBetModal}
+                    details={selectedMatch}
+                />
             )}
         </Flex>
     );

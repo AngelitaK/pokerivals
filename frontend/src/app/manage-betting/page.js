@@ -1,24 +1,77 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { Heading, Box, Button, Flex, FormControl, FormLabel, Input, Tab, TabList, TabPanel, TabPanels, Tabs, Text, VStack } from '@chakra-ui/react';
-import { FaArrowCircleLeft } from "react-icons/fa";
+import {
+    Heading,
+    Box,
+    Button,
+    Flex,
+    FormControl,
+    FormLabel,
+    Input,
+    Tab,
+    TabList,
+    TabPanel,
+    TabPanels,
+    Tabs,
+    Text,
+    VStack,
+} from '@chakra-ui/react';
+import { FaArrowCircleLeft, FaInfo } from "react-icons/fa";
 import { useRouter } from 'next/navigation';
 import axios from '../../../config/axiosInstance';
+import MatchInfoModal from '@/components/matchInfoModal';
 
 const limit = 5;
 
+function formatDate(dateString) {
+    const date = new Date(dateString);
+
+    const options = {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+        timeZone: "Asia/Singapore",
+    };
+
+    return new Intl.DateTimeFormat("en-GB", options).format(date);
+}
+
 // ListComponent to render individual bets
-const ListComponent = ({ title, date, teamABets, teamBBets, payout }) => (
-    <Flex justify="space-between" py="2" borderBottom="1px solid #e2e8f0">
-        <Box flex="1">
-            <Text fontWeight="bold">{title}</Text>
-            <Text fontSize="sm">{date}</Text>
-        </Box>
-        <Text flex="1" textAlign="center">{teamABets}</Text>
-        <Text flex="1" textAlign="center">{teamBBets}</Text>
-        <Text flex="1" textAlign="center">{payout}</Text>
-    </Flex>
-);
+const ListComponent = ({ data, type, maxProfitMargin = null, minProfitMargin = null }) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleOpenModal = () => setIsModalOpen(true);
+    const handleCloseModal = () => setIsModalOpen(false);
+
+    const teamA_wr = data.match.teams[0].winRate;
+    const teamB_wr = data.match.teams[1].winRate;
+    const gradient = maxProfitMargin - minProfitMargin;
+    const y_intercept = minProfitMargin;
+    const expected_profit = (gradient * (teamA_wr + teamB_wr) + 2 * y_intercept) / 2;
+    const expected_payout = (expected_profit * (data.totalBetsOnTeamAInCents + data.totalBetsOnTeamBInCents)) / 100;
+
+    const date = data.match.timeMatchOccurs;
+    const teamABets = data.totalBetsOnTeamAInCents;
+    const teamBBets = data.totalBetsOnTeamBInCents;
+    const payout = type === "past" ? data.totalPaidOut / 100 : expected_payout;
+
+    return (
+        <Flex justify="space-between" py="4" borderBottom="1px solid #e2e8f0">
+            <Box flex="1">
+                <Text fontSize="sm">{formatDate(date)}</Text>
+            </Box>
+            <Text flex="1" textAlign="center">{teamABets}</Text>
+            <Text flex="1" textAlign="center">{teamBBets}</Text>
+            <Text flex="1" textAlign="center">{payout}</Text>
+            <FaInfo onClick={handleOpenModal} cursor="pointer" />
+
+            <MatchInfoModal isOpen={isModalOpen} onClose={handleCloseModal} matchData={data} />
+        </Flex>
+    );
+};
 
 const ManageBetting = () => {
     const router = useRouter();
@@ -29,8 +82,7 @@ const ManageBetting = () => {
     const [maxProfitMargin, setMaxProfitMargin] = useState(0);
     const [originalMinProfitMargin, setOriginalMinProfitMargin] = useState(0);
     const [originalMaxProfitMargin, setOriginalMaxProfitMargin] = useState(0);
-    const estimatedProfit = 1000;
-    
+
     // Independent pagination states for each tab panel
     const [pastPage, setPastPage] = useState(0);
     const [futurePage, setFuturePage] = useState(0);
@@ -158,10 +210,10 @@ const ManageBetting = () => {
 
             <Flex direction={['column', 'row']} p={6} gap={10} align="flex-start">
                 {/* Left side form with balanced height */}
-                <Box width={['100%', '25%']} bg="gray.50" p={6} borderRadius="md" boxShadow="md">
+                <Box width={['100%', '17%']} bg="gray.50" p={6} borderRadius="md" boxShadow="md">
                     <VStack spacing={4} align="stretch">
                         <Text fontSize="lg" fontWeight="bold" mb={4}>Betting Settings</Text>
-                        
+
                         {/* Min. Profit Margin % */}
                         <FormControl>
                             <FormLabel>Min. Profit Margin %</FormLabel>
@@ -189,7 +241,7 @@ const ManageBetting = () => {
                                 )}
                             </Flex>
                         </FormControl>
-                        
+
                         {/* Max. Profit Margin % */}
                         <FormControl>
                             <FormLabel>Max. Profit Margin %</FormLabel>
@@ -217,16 +269,11 @@ const ManageBetting = () => {
                                 )}
                             </Flex>
                         </FormControl>
-
-                        <FormControl>
-                            <FormLabel>Estimated Profit</FormLabel>
-                            <Input type="text" value={`SGD ${estimatedProfit}`} isReadOnly bg="gray.200" />
-                        </FormControl>
                     </VStack>
                 </Box>
 
                 {/* Right side tabs for bets */}
-                <Box flex="1" bg="gray.100" p={4} borderRadius="md" boxShadow="md" display="flex" flexDirection="column" justifyContent="space-between">
+                <Box flex="1" bg="gray.50" p={4} borderRadius="md" boxShadow="md" display="flex" flexDirection="column" justifyContent="space-between">
                     <Tabs variant="soft-rounded" colorScheme="teal" flex="1">
                         <TabList>
                             <Tab>Past Bets</Tab>
@@ -244,18 +291,15 @@ const ManageBetting = () => {
                                     {pastBets && pastBets.map((bet, i) => (
                                         <ListComponent
                                             key={i}
-                                            title={bet.tournament_id}
-                                            date={bet.match.matchResultRecordedAt}
-                                            teamABets={bet.totalBetsOnTeamAInCents}
-                                            teamBBets={bet.totalBetsOnTeamAInCents}
-                                            payout={bet.totalPaidOut}
+                                            data={bet}
+                                            type={'past'}
                                         />
                                     ))}
                                 </Box>
                                 <Flex justify="center" mt={4} mb={2}>
                                     <Button onClick={() => setPastPage(prev => Math.max(prev - 1, 0))} isDisabled={pastPage === 0} mx={2}>Previous</Button>
                                     <Text fontSize="sm" alignSelf="center">{`Page ${totalPastPages === 0 ? 0 : pastPage + 1} of ${totalPastPages}`}</Text>
-                                    <Button onClick={() => setPastPage((prev) => Math.min(prev + 1, totalPastPages - 1))} isDisabled={pastPage === totalPastPages-1 || pastPage === 0} mx={2}>Next</Button>
+                                    <Button onClick={() => setPastPage((prev) => Math.min(prev + 1, totalPastPages - 1))} isDisabled={pastPage === totalPastPages - 1} mx={2}>Next</Button>
                                 </Flex>
                             </TabPanel>
                             <TabPanel>
@@ -264,21 +308,22 @@ const ManageBetting = () => {
                                         <Text flex="1" fontWeight="bold">Details</Text>
                                         <Text flex="1" textAlign="center" fontWeight="bold">Team A Bets</Text>
                                         <Text flex="1" textAlign="center" fontWeight="bold">Team B Bets</Text>
+                                        <Text flex="1" textAlign="center" fontWeight="bold">Estimated Profit</Text>
                                     </Flex>
                                     {futureBets && futureBets.map((bet, i) => (
                                         <ListComponent
                                             key={i}
-                                            title={bet.tournament_id}
-                                            date={bet.match.timeMatchOccurs}
-                                            teamABets={bet.totalBetsOnTeamAInCents}
-                                            teamBBets={bet.totalBetsOnTeamAInCents}
+                                            data={bet}
+                                            type={'future'}
+                                            minProfitMargin={minProfitMargin}
+                                            maxProfitMargin={maxProfitMargin}
                                         />
                                     ))}
                                 </Box>
                                 <Flex justify="center" mt={4} mb={2}>
                                     <Button onClick={() => setFuturePage(prev => Math.max(prev - 1, 0))} isDisabled={futurePage === 0} mx={2}>Previous</Button>
                                     <Text fontSize="sm" alignSelf="center">{`Page ${totalFuturePages === 0 ? 0 : futurePage + 1} of ${totalFuturePages}`}</Text>
-                                    <Button onClick={() => setFuturePage((prev) => Math.min(prev + 1, totalFuturePages - 1))} isDisabled={futurePage === totalFuturePages-1 || futurePage === 0} mx={2}>Next</Button>
+                                    <Button onClick={() => setFuturePage((prev) => Math.min(prev + 1, totalFuturePages - 1))} isDisabled={futurePage === totalFuturePages - 1} mx={2}>Next</Button>
                                 </Flex>
                             </TabPanel>
                         </TabPanels>

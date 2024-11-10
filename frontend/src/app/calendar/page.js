@@ -35,7 +35,7 @@ const CalendarPage = () => {
                 const endDate = new Date(now.getFullYear(), now.getMonth(), 0);
 
                 const response = await axios.get(
-                    `/tournament/match/me/admin`,
+                    `/tournament/match/me/player`,
                     {
                         params: {
                             start: startDate.toISOString(),
