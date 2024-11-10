@@ -217,7 +217,7 @@ public abstract class Tournament {
             this.teams.add(team);
             team.setTournament(this);
         } else {
-            throw new IllegalArgumentException("Tournament is full!");
+            throw new IllegalArgumentException("Tournament is full or registration has passed!");
         }
     };
 

@@ -40,9 +40,14 @@ public class MatchService {
      * @param uuid ID of tournament that has not been started
      * @return all the matches within the tournament
      */
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
-    public Set<Match> startSingleEliminationTournament(UUID uuid, ZonedDateTime today){
+    public Set<Match> startSingleEliminationTournament(UUID uuid){
+        ZonedDateTime today = dateFactory.getToday();
         Tournament tournament = tournamentRepository.getTournamentById(uuid).orElseThrow();
+        if (!tournament.getRegistrationPeriod().isBefore(today)){
+            throw new IllegalArgumentException("Tournament registration still open");
+        }
         if (!tournament.getMatches().isEmpty()){
             throw new IllegalArgumentException("Tournament already started");
         }
@@ -53,9 +58,7 @@ public class MatchService {
 
         // find total number of rounds required
         // equal to ceil(log(n))
-        int n = 1;
-        int rounds = 0;
-        int numTeams = teams.size();
+        int n =1 , rounds = 0, numTeams = teams.size();
         while (n < numTeams){ rounds++; n *= 2; }
         int treeHeight = rounds-1;
 
@@ -67,19 +70,33 @@ public class MatchService {
     }
 
     /**
+     * DTO to set match result
+     * @param matchId ID of match
+     * @param matchResult result of match (reject pending)
+     */
+    public record SetMatchResultDTO(
+            Match.MatchId matchId,
+            MatchResult matchResult
+    ){
+        public SetMatchResultDTO {
+            if (matchResult.equals(MatchResult.PENDING)){
+                throw new IllegalArgumentException("Cannot set Match result to PENDING");
+            }
+        }
+
+    }
+
+    /**
      * Set who is the winner/ cancel tournament
-     * @param tournamentId of the match
-     * @param depth of the match affected
-     * @param index of the match affected
-     * @param matchResult only accepts TEAM_A, TEAM_B, CANCELLED
      */
     @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
-    public void advance(UUID tournamentId,int depth, int index,MatchResult matchResult, ZonedDateTime today){
-        Match matchBefore = matchRepository.findById(new Match.MatchId(tournamentId,depth,index)).orElseThrow();
+    public void setMatchResult(SetMatchResultDTO dto){
+        var today = dateFactory.getToday();
+        Match matchBefore = matchRepository.findById(dto.matchId).orElseThrow();
 
         // i have the team i need to move forward
-        Team winningTeam = matchBefore.setMatchResult(matchResult, today);
+        Team winningTeam = matchBefore.setMatchResult(dto.matchResult, today);
 
         // continue until reaching root
         while (true) {
@@ -110,18 +127,24 @@ public class MatchService {
     }
 
     /**
+     * DTO to forfeit a team
+     * @param matchId ID of match
+     * @param forfeitTeamA if Team A forfeits, true o/w false
+     */
+    public record ForfeitDTO(
+            Match.MatchId matchId,
+            boolean forfeitTeamA
+    ){}
+
+    /**
      * Forfeit EITHER player! To cancel match, use advance method
-     * @param tournamentId of the match
-     * @param depth of the match affected
-     * @param index of the match affected
-     * @param forfeitTeamA if false, then team B forfeit
      */
     @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
-    public void forfeit(UUID tournamentId,int depth, int index,boolean forfeitTeamA){
-
+    public void forfeit(ForfeitDTO dto){
+        boolean forfeitTeamA = dto.forfeitTeamA;
         ZonedDateTime today = dateFactory.getToday();
-        Match matchBefore = matchRepository.findById(new Match.MatchId(tournamentId,depth,index)).orElseThrow();
+        Match matchBefore = matchRepository.findById(dto.matchId).orElseThrow();
         if(matchBefore.getTimeFinalisedTeamA() == null && forfeitTeamA){
             // team A not finalised, hence cannot forfeit
             throw new IllegalArgumentException("Team A not set, hence cannot forfeit");
@@ -174,7 +197,7 @@ public class MatchService {
     }
 
     public List<MatchWrapper.MatchRoundDTO> generateFrontendFriendlyBrackets(UUID tournamentId){
-        return MatchWrapper.breadthFirstSearch(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(tournamentId)));
+        return MatchWrapper.generateDisplayableTreeViaBFS(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(tournamentId)));
     }
 
 

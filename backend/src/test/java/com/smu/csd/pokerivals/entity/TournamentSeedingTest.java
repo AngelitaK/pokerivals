@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.smu.csd.pokerivals.match.MatchService;
+import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.match.entity.MatchWrapper;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
+import com.smu.csd.pokerivals.record.Message;
 import com.smu.csd.pokerivals.security.AuthenticationController;
 import com.smu.csd.pokerivals.tournament.entity.ChosenPokemon;
 import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
@@ -32,6 +34,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -176,15 +179,25 @@ public class TournamentSeedingTest {
 
     @Test
     public void testBracket() throws JsonProcessingException, URISyntaxException {
-        matchRepository.deleteAll();
+        var factory =  restTemplate.getRestTemplate().getRequestFactory();
+        restTemplate.getRestTemplate().setRequestFactory(new JdkClientHttpRequestFactory());
 
         Admin a1 = adminRepository.findById("fake_admin").orElseThrow();
 
         // create an open tournament
-        Tournament t1 = new OpenTournament("vgc" , a1);
+        Tournament t1 = new OpenTournament("vgc" ,
+                a1,
+                new Tournament.EloLimit(
+                        0,
+                        50_000
+                ),
+                new Tournament.RegistrationPeriod(
+                        ZonedDateTime.now(),
+                        ZonedDateTime.now().plusHours(1)
+                ));
         t1 = tournamentRepository.save(t1);
 
-        // create 8 players and teams with points of 0, 100, 200 etc
+        // create players and teams with points of 0, 100, 200 etc
         for (int i = 0 ; i < numPlayers ; i++){
             Player toAdd = new Player("player" + i , "p" + i);
             toAdd.setPoints(i * 100);
@@ -192,36 +205,89 @@ public class TournamentSeedingTest {
                 toAdd = playerRepository.save(toAdd);
             } else {
                 toAdd= playerRepository.findById("player"+i).orElseThrow();
+                toAdd.setPoints(i*100);
+                toAdd=playerRepository.save(toAdd);
             }
 
             Team teamToAdd = createTeam(toAdd,t1);
             t1.addTeam(teamToAdd, ZonedDateTime.now());
 
-            tournamentRepository.save(t1);
+            t1=tournamentRepository.save(t1);
         }
 
-        var matches =  matchService.startSingleEliminationTournament(t1.getId(), ZonedDateTime.now());
-        System.out.println(MatchWrapper.reconstructTree(matches));
+        t1.setRegistrationPeriod(
+                new Tournament.RegistrationPeriod(
+                        ZonedDateTime.now().minusHours(2),
+                        ZonedDateTime.now().minusHours(1)
+                )
+        );
 
-//        var match = matchRepository.findById( new Match.MatchId(t1.getId(),3,4)).orElseThrow();
-//        assertNotNull(match);
-//        assertEquals(800.0, match.getTeamA().getPlayer().getPoints());
-//        assertEquals(100.0, match.getTeamB().getPlayer().getPoints());
+        t1 = tournamentRepository.save(t1);
+
+        URIBuilder startMatchUriBuilder =
+                new URIBuilder().setHost("localhost")
+                        .setScheme("http")
+                        .setPort(port)
+                        .setPathSegments("tournament","match", t1.getId().toString(),"start");
+
+        var result = restTemplate.exchange(startMatchUriBuilder.build(), HttpMethod.POST, createStatefulResponse(username), Message.class);
+        assertEquals(200, result.getStatusCode().value());
+
+        var match = matchRepository.findById( new Match.MatchId(t1.getId(),3,4)).orElseThrow();
+        assertNotNull(match);
+        assertEquals(800.0, match.getTeamA().getPlayer().getPoints());
+        assertEquals(100.0, match.getTeamB().getPlayer().getPoints());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
 
-        // tests
-        matchService.advance(t1.getId(),3,7,MatchResult.CANCELLED,ZonedDateTime.now());
+        URIBuilder setMatchResultUriBuilder =
+                new URIBuilder().setHost("localhost")
+                        .setScheme("http")
+                        .setPort(port)
+                        .setPathSegments("tournament","match", "result");
 
-        matchService.advance(t1.getId(),3,3, MatchResult.TEAM_A,ZonedDateTime.now());
+        var setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),3,7),
+                MatchResult.CANCELLED
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
+
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),3,3),
+                MatchResult.TEAM_A
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
 
-        matchService.advance(t1.getId(),3,4, MatchResult.TEAM_B,ZonedDateTime.now());
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),3,4),
+                MatchResult.TEAM_B
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
 
-        matchService.forfeit(t1.getId(),3,6,false);
+        URIBuilder forfeitUriBuilder =
+                new URIBuilder().setHost("localhost")
+                        .setScheme("http")
+                        .setPort(port)
+                        .setPathSegments("tournament","match", "forfeit");
 
-        matchService.advance(t1.getId(),3,5,MatchResult.TEAM_A, ZonedDateTime.now());
+        var forfeitBody = new MatchService.ForfeitDTO(
+                new Match.MatchId(t1.getId(), 3,6),
+                false
+        );
+        result = restTemplate.exchange(forfeitUriBuilder.build(), HttpMethod.DELETE, createStatefulResponse(username, forfeitBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
+
+        setResultBody =  new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),3,5),
+                MatchResult.TEAM_A
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
         URIBuilder builder = new URIBuilder()
@@ -230,28 +296,71 @@ public class TournamentSeedingTest {
                 .setPort(port)
                 .setPathSegments("tournament","match", t1.getId().toString());
 
+        System.out.println("==========================JSON===========================");
         System.out.println(restTemplate.exchange(builder.build(), HttpMethod.GET, createStatefulResponse(username),String.class).getBody());
+        System.out.println("==========================JSON===========================");
 
-        Tournament finalT = t1;
-        assertThrows(IllegalArgumentException.class, ()->{
-            matchService.advance(finalT.getId(),2,0,MatchResult.CANCELLED,ZonedDateTime.now());
-        });
-        matchService.advance(t1.getId(),2,3, MatchResult.TEAM_B,ZonedDateTime.now());
-        matchService.advance(t1.getId(),2,1, MatchResult.TEAM_A,ZonedDateTime.now());
-        matchService.forfeit(t1.getId(),2,2, true);
+
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),2,0),
+                MatchResult.CANCELLED
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(400, result.getStatusCode().value());
+
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),2,3),
+                MatchResult.TEAM_B
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
+
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),2,1),
+                MatchResult.TEAM_A
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
+
+        forfeitBody=  new MatchService.ForfeitDTO(
+                new Match.MatchId(t1.getId(),2,2),
+                true
+        );
+        result = restTemplate.exchange(forfeitUriBuilder.build(), HttpMethod.DELETE, createStatefulResponse(username, forfeitBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
 
-        matchService.advance(t1.getId(),1,0, MatchResult.TEAM_A,ZonedDateTime.now());
-        matchService.advance(t1.getId(),1,1, MatchResult.TEAM_A,ZonedDateTime.now());
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),1,0),
+                MatchResult.TEAM_A
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
+
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),1,1),
+                MatchResult.TEAM_A
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
 
-        matchService.advance(t1.getId(),0,0, MatchResult.TEAM_A,ZonedDateTime.now());
+        setResultBody = new MatchService.SetMatchResultDTO(
+                new Match.MatchId(t1.getId(),0,0),
+                MatchResult.TEAM_A
+        );
+        result = restTemplate.exchange(setMatchResultUriBuilder.build(), HttpMethod.PATCH, createStatefulResponse(username, setResultBody), Message.class);
+        assertEquals(200, result.getStatusCode().value());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
 
+        System.out.println("==========================JSON===========================");
         System.out.println(restTemplate.exchange(builder.build(), HttpMethod.GET, createStatefulResponse(username),String.class).getBody());
+        System.out.println("==========================JSON===========================");
+
+        restTemplate.getRestTemplate().setRequestFactory(factory);
     }
 
 }

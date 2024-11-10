@@ -52,7 +52,7 @@ public class MatchWrapper {
     public static MatchWrapper reconstructTree(Collection<Match> matchesSet){
         List<Match> matches = new ArrayList<>(matchesSet);
         matches.sort(Comparator.comparingInt(Match::getDepth).thenComparingInt(Match::getIndex));
-        System.out.println(matches);
+
         List<MatchWrapper> result = new ArrayList<>();
         // start from level 1
         int noOfNodesInThisLevel = 1;
@@ -108,7 +108,7 @@ public class MatchWrapper {
         return result.get(0);
     }
 
-    public static List<MatchRoundDTO>  breadthFirstSearch(MatchWrapper root){
+    public static List<MatchRoundDTO> generateDisplayableTreeViaBFS(MatchWrapper root){
         List<MatchRoundDTO> result = new ArrayList<>();
         Queue<MatchWrapper> queue = new ArrayDeque<>();
         // 0 is head, size-1 is tail

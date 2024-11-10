@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.lang.Math.round;
+
 @Entity
 @Getter
 @Setter
@@ -26,12 +28,15 @@ public class Match {
     @Override
     public String toString() {
         return "Match{" +
-                "A points=" + (teamA == null ? "EMPTY" : teamA.getPlayer().getPoints()) +
-                ", B points=" + (teamB == null ? "EMPTY" : teamB.getPlayer().getPoints()) +
+                (teamA == null ? "EMPTY" : teamA.getPlayer().getUsername())
+                +" (A)'s points=" + (teamA == null ? "EMPTY" : round(teamA.getPlayer().getPoints())) +
+                ", "+
+                (teamB == null ? "EMPTY" : teamB.getPlayer().getUsername())
+                +" (B)'s points=" + (teamB == null ? "EMPTY" : round(teamB.getPlayer().getPoints())) +
                 ", depth=" + getDepth() +
                 ", idx=" + getIndex() +
                 ", final=" + (timeFinalisedTeamA == null ? "" : "A") +  (timeFinalisedTeamB == null ? "" : "B")+
-                ", result=" + matchResult+
+                ", result=" + matchResult +
                 '}';
     }
 
@@ -250,9 +255,7 @@ public class Match {
         var matchBeforeAGotBye = matchBeforeA.createAndSeedTreeRecursive(result, teams, today);
         if (matchBeforeAGotBye){
             // no check - impossible as both cant be finalised
-            System.out.println("entered here "+ this);
             finaliseTeamA(matchBeforeA.finaliseBye(today),today);
-            System.out.println("entered here 2"+ this);
         }
         var matchBeforeBGotBye = matchBeforeB.createAndSeedTreeRecursive( result, teams,today);
         if (matchBeforeBGotBye){
