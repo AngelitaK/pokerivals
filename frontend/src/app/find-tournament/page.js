@@ -9,67 +9,99 @@ import {
   Heading,
   Text,
   Grid,
+  useToast
 } from "@chakra-ui/react";
-import { FcCalendar } from "react-icons/fc"; 
+import { FcCalendar } from "react-icons/fc";
 import { useRouter } from 'next/navigation'; 
-import Link from 'next/link'; 
+import Link from 'next/link';
 import TournamentItem from '../../components/tournamentItem';
-import axios from '../../../config/axiosInstance'; 
+import axios from '../../../config/axiosInstance';
 import SearchBar from "@/components/searchBar";
 import RegisteredItem from './../../components/registeredItem';
 
 const FindTournamentPage = () => {  
   const [tournaments, setTournaments] = useState([]); 
-  const [searchResults, setSearchResults] = useState([]); // Search results
-  const [loading, setLoading] = useState(false); // Track loading state
-  const [error, setError] = useState(null); // Track errors
-  const [page, setPage] = useState(0); // Track the current page for pagination
-  const [query, setQuery] = useState(''); // Track search query
-  const [hasMoreResults, setHasMoreResults] = useState(true); // Track if more results exist
-  const limit = 3; // Number of items per page
+  const [userId, setUserId] = useState();
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(0);
+  const [tournamentPage, setTournamentPage] = useState(0);
+  const [query, setQuery] = useState('');
+  const [hasMoreResults, setHasMoreResults] = useState(true);
+  const [totalRegisteredTournaments, setTotalRegisteredTournaments] = useState(0); // Total tournaments count
+  const limit = 3;
+  const tournamentLimit = 4;
   const router = useRouter();
+  const toast = useToast();
 
-  // Function to fetch all the tournaments the user is in
   useEffect(() => {
-    const fetchTournaments = async () => {
-      try {
-        const response = await axios.get('/player/tournament/me?page=0&limit=10'); 
-        setTournaments(response.data.tournaments);
-      } catch (err) {
-        console.error("Error fetching tournaments:", err);
-        setError("Failed to load tournaments."); // Set error message
-      } finally {
-        setLoading(false); // Set loading to false after fetching
-      }
-    };
+    // This runs only on the client
+    const userId = localStorage.getItem("username");
+    if (userId) {
+      setUserId(userId);
+    }
+  }, []);
 
-    fetchTournaments();
-  }, []); 
 
-  // Function to handle withdrawal from a tournament
+  // Function to fetch all the tournaments the user is registered in
+  const fetchTournaments = useCallback(async (newPage = 0) => {
+    setTournamentPage(newPage);
+    setLoading(true);
+
+    try {
+      const response = await axios.get('/player/tournament/me', {
+        params: {
+          page: newPage,
+          limit: tournamentLimit
+        }
+      });
+      
+      setTournaments(response.data.tournaments);
+      setTotalRegisteredTournaments(response.data.count); // Set the total tournament count
+    } catch (err) {
+      console.error("Error fetching tournaments:", err);
+      setError("Failed to load tournaments.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTournaments(); // Fetch tournaments on component mount
+  }, [fetchTournaments]);
+
+  // Calculate if there are more pages based on count and limit
+  const totalPages = Math.ceil(totalRegisteredTournaments / tournamentLimit);
+  const hasMoreTournaments = tournamentPage < totalPages - 1;
+
+  // Handle pagination for registered tournaments
+  const handleNextTournamentPage = () => {
+    if (hasMoreTournaments) {
+      fetchTournaments(tournamentPage + 1);
+    }
+  };
+  const handlePreviousTournamentPage = () => fetchTournaments(Math.max(tournamentPage - 1, 0));
+
   const handleWithdraw = async (tournamentId) => {
     try {
       const response = await axios.delete(`/player/tournament/${tournamentId}/leave`);
-
       if (response.status === 200) {
-        const data = response.data;
-        console.log(data.message);
-        // Remove the tournament from state
         setTournaments((prevTournaments) => prevTournaments.filter(tournament => tournament.id !== tournamentId));
+        setTotalRegisteredTournaments((prevTotal) => prevTotal - 1); // Adjust total after withdraw
       }
     } catch (error) {
       console.error("Error leaving tournament:", error);
     }
   };
 
-  // Function to handle search with pagination
   const handleSearch = useCallback(async (searchQuery, newPage = 0) => {
-    setQuery(searchQuery); // Update the query state
-    setPage(newPage); // Reset to page 0 on new search
-    setLoading(true); // Start loading
+    setQuery(searchQuery);
+    setPage(newPage);
+    setLoading(true);
 
     if (!searchQuery) {
-      setSearchResults([]); // Clear search results if no query
+      setSearchResults([]);
       setLoading(false);
       return;
     }
@@ -77,42 +109,52 @@ const FindTournamentPage = () => {
     try {
       const response = await axios.get(`/player/tournament/search`, {
         params: {
-          page: newPage, // Use the current page for pagination
-          limit: limit, // Change limit according to the API specification
-          query: searchQuery // This is the search term
+          page: newPage,
+          limit: limit,
+          query: searchQuery
         }
       });
       
-      // Check if the response data structure matches your expectation
       if (response.data && response.data.tournaments) {
-        setSearchResults(response.data.tournaments); // Set the search results
-        setHasMoreResults(response.data.tournaments.length === limit); // Check if there are more results
+        setSearchResults(response.data.tournaments);
+        setHasMoreResults(response.data.tournaments.length === limit);
       } else {
-        setSearchResults([]); // Handle unexpected structure
+        setSearchResults([]);
         console.error("Unexpected response structure:", response.data);
       }
     } catch (error) {
       console.error("Error searching tournaments:", error);
-      setError("Failed to search tournaments."); // Set error message
+      setError("Failed to search tournaments.");
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
     }
   }, []);
 
-  // Handle pagination
   const handleNextPage = () => handleSearch(query, page + 1);
   const handlePreviousPage = () => handleSearch(query, Math.max(page - 1, 0));
 
-  // Use effect to re-run search on page change when typing a new query
   useEffect(() => {
     if (query) {
-      handleSearch(query, page); // Re-run search with updated page
+      handleSearch(query, page);
     }
   }, [page, query, handleSearch]);
 
-  // Joining tournaments will need a Pokemon Team
-  const handleJoinTournament = (tournamentId) => { 
-    router.push(`/choose-pokemon/${tournamentId}`);
+  // Check if user is invited before attempting to join
+  const handleJoinTournament = (tournament) => {
+
+    console.log(userId)
+
+    if (!tournament.invited_players?.includes(userId)) {
+      toast({
+        title: "Not Invited",
+        description: "You are not invited to join this tournament.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } else {
+      router.push(`/choose-pokemon/${tournament.id}`);
+    }
   };
 
   const handleTournamentClick = (tournamentId) => {
@@ -120,12 +162,7 @@ const FindTournamentPage = () => {
   };
 
   return (
-    <Stack
-      minH={"100vh"}
-      bgImage="/TournamentBG.jpg"
-      bgSize="cover"
-      bgPosition="center"
-    >
+    <Stack minH={"100vh"} bgImage="/TournamentBG.jpg" bgSize="cover" bgPosition="center">
       <Flex justifyContent="center" alignItems="center" width="100%">
         <Box maxWidth="1200px" width="100%" mt={10} color={"white"}>
           <Heading
@@ -163,7 +200,7 @@ const FindTournamentPage = () => {
                 </Flex>
                 {
                   tournaments.length === 0 ? (
-                    <Text>No tournaments registered yet.</Text> // Display message if no tournaments
+                    <Text>No tournaments registered yet.</Text>
                   ) : (
                     tournaments.map((tournament) => {
                       const isRegistrationEnded = new Date() > new Date(tournament.registrationPeriod.registrationEnd);
@@ -173,13 +210,20 @@ const FindTournamentPage = () => {
                           tournament={tournament} 
                           buttonLabel="Leave"
                           onButtonClick={() => handleWithdraw(tournament.id)}
-                          isDisabled={isRegistrationEnded} // Disable button if registration has ended
+                          isDisabled={isRegistrationEnded}
                           onTournamentClick={handleTournamentClick}
                         />
                       );
                     })
                   )
                 }
+                {/* Pagination Controls - Only show if there are tournaments */}
+                {tournaments.length > 0 && (
+                  <Flex justifyContent="space-between" mt={4}>
+                    <Button onClick={handlePreviousTournamentPage} isDisabled={tournamentPage === 0}>Previous</Button>
+                    <Button onClick={handleNextTournamentPage} isDisabled={!hasMoreTournaments}>Next</Button>
+                  </Flex>
+                )}
               </Flex>
 
               {/* Right Flex Box for Joining Tournaments */}
@@ -207,7 +251,7 @@ const FindTournamentPage = () => {
                         key={tournament.id} 
                         tournament={tournament} 
                         buttonLabel="Join"
-                        onButtonClick={() => handleJoinTournament(tournament.id)} 
+                        onButtonClick={() => handleJoinTournament(tournament)} 
                       />
                     ))
                   )}
