@@ -139,7 +139,7 @@ const TournamentForm = ({ tournament = null, isEdited = false }) => {
 
         try {
             console.log(requestBody)
-            const response = isEdited ? await axios.patch(`http://localhost:8080/admin/tournament/${tournament?.id}`, requestBody) : await axios.post("http://localhost:8080/admin/tournament", requestBody);
+            const response = isEdited ? await axios.patch(`/admin/tournament/${tournament?.id}`, requestBody) : await axios.post("/admin/tournament", requestBody);
 
             if (response.status !== 200) {
                 throw new Error(`Failed to ${isEdited ? "update" : "create"} tournament`);

@@ -15,7 +15,7 @@ const BettingPage = () => {
         const fetchBetResults = async () => {
             try {
                 const response = await axios.get(
-                    `http://localhost:8080/transaction/betting/win?page=${page}&limit=${pageSize}`
+                    `/transaction/betting/win?page=${page}&limit=${pageSize}`
                 );
 
                 if (response.status !== 200) {

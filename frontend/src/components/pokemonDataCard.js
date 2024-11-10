@@ -33,11 +33,12 @@ function PokemonDataCard({ pokemonData }) {
   const { name, id, stats } = pokemon;
 
   return (
-    <Box width="250px" bg="yellow.400" borderRadius="lg" p={3} boxShadow="md">
+    <Box width="280px" bg="yellow.400" borderRadius="lg" p={3} boxShadow="md">
       {/* Pokémon Image */}
       <Image
         src={`https://pokerivals-assets.s3.ap-southeast-1.amazonaws.com/sprites/${name}.png`}
-        width={"100px"}
+        width={"180px"}
+        height={"auto"}
         alt={name}
         mx="auto"
         mb={2}

@@ -50,7 +50,7 @@ const ListComponent = ({ details, registrationEnd }) => {
   const handleKick = async () => {
     try {
       const response = await axios.delete(
-        `http://localhost:8080/admin/tournament/${details.tournament.id}/team/player/${details.playerUsername}`
+        `/admin/tournament/${details.tournament.id}/team/player/${details.playerUsername}`
       );
       if (response.status !== 200) {
         throw new Error("Failed to kick player");
@@ -135,7 +135,7 @@ const ManageTeamPage = () => {
   const handleStartMatch = async () => {
     try {
       const response = await axios.post(
-        `http://localhost:8080/tournament/match/${id}/start`
+        `/tournament/match/${id}/start`
       );
       if (response.status !== 200) {
         throw new Error("Failed to start match");
@@ -156,7 +156,7 @@ const ManageTeamPage = () => {
   const sendInvite = async () => {
     try {
       const response = await axios.post(
-        `http://localhost:8080/admin/tournament/closed/${id}/invitation`,
+        `/admin/tournament/closed/${id}/invitation`,
         {
           usernames: inviteUsername.split(","),
         }
@@ -186,7 +186,7 @@ const ManageTeamPage = () => {
     const fetchTeams = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8080/admin/tournament/${id}/team?page=${page}&limit=${pageSize}`
+          `/admin/tournament/${id}/team?page=${page}&limit=${pageSize}`
         );
         // var test_response = test_data;
         if (response.status !== 200) {

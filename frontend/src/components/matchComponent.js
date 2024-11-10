@@ -38,7 +38,7 @@ const MatchComponent = ({ seed, toast }) => {
       return;
     }
 
-    axios.post('http://localhost:8080/tournament/match/timing', {
+    axios.post('/tournament/match/timing', {
       matchId: {
         tournamentId: seed.tournament_id,
         depth: seed.depth,
@@ -60,7 +60,7 @@ const MatchComponent = ({ seed, toast }) => {
 
   const handleConfirmResult = () => {
 
-    axios.patch('http://localhost:8080/tournament/match/result', {
+    axios.patch('/tournament/match/result', {
       matchId: {
         tournamentId: seed.tournament_id,
         depth: seed.depth,
