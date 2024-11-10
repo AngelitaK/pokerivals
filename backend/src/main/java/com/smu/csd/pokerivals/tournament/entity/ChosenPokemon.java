@@ -1,5 +1,7 @@
 package com.smu.csd.pokerivals.tournament.entity;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smu.csd.pokerivals.pokemon.entity.Ability;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
@@ -12,7 +14,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -25,6 +29,7 @@ public class ChosenPokemon {
 
     @EmbeddedId
     @EqualsAndHashCode.Include
+    @JsonIgnore
     private PokemonId pokemonId;
 
     @Embeddable
@@ -47,13 +52,24 @@ public class ChosenPokemon {
 
     @ManyToOne
     @MapsId("pokemonId")
+    @JsonIgnore
     private Pokemon pokemon;
+
+    public record PokemonDetails(String name, int id, Pokemon.Stats stats){}
+
+    @JsonGetter("pokemon")
+    public PokemonDetails getPokemonDetails(){
+        return new PokemonDetails(pokemon.getName(), pokemonId.getPokemonId(), pokemon.getStats());
+    }
 
     @ManyToOne
     @MapsId("teamId")
+    @JsonIgnore
     private Team team;
 
+
     @ManyToMany
+    @JsonIgnore
     private Set <Move> movesLearnt = new HashSet<>();
 
     @Enumerated(EnumType.ORDINAL)
@@ -61,12 +77,23 @@ public class ChosenPokemon {
     private POKEMON_NATURE nature;
 
     @ManyToOne
+    @JsonIgnore
     private Ability ability;
 
     public ChosenPokemon (Team team , Pokemon pokemon){
         this.team = team;
         this.pokemon = pokemon;
         this.pokemonId = new PokemonId(team,pokemon);
+    }
+
+    @JsonGetter("moves")
+    private List<String> getMovesAsString(){
+        return new ArrayList<>(movesLearnt.stream().map(Move::getName).toList());
+    }
+
+    @JsonGetter("ability")
+    private String getAbilityAsString(){
+        return ability.getName();
     }
 
     public void learnMove(Move move){
