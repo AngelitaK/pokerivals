@@ -42,30 +42,36 @@ const ManageMatchesPage = () => {
     const searchParams = useSearchParams();
     const id = searchParams.get('id')
 
-    // Fetch tournament data on page load
-    useEffect(() => {
-        const tournaments = JSON.parse(sessionStorage.getItem("tournaments"));
-        for (var t of tournaments) {
-            if (t.id == id) {
-                setTournament(t);
-            }
-        }
-
-        try {
-            const response = axios.get(`http://localhost:8080/tournament/match/${id}`)
-
-            if (response.status !== 200) {
-                throw new Error("Failed to fetch matches");
-            }
-
-            // setTournamentData(response.data);
-            
-        } catch (error) {
-            console.error("Error fetching matches: ", error)
-        }
-
-        setTournamentData(test_data.data);
-    }, []);
+    useEffect(() => { 
+        const fetchTournamentData = async () => { 
+          const tournaments = JSON.parse(sessionStorage.getItem("tournaments")); 
+          if (Array.isArray(tournaments)) { 
+            const tournament = tournaments.find((t) => t.id === id); 
+            if (tournament) { 
+              setTournament(tournament); 
+            } else { 
+              console.error("Tournament not found in session storage."); 
+            } 
+          } else { 
+            console.error("No tournament data found or data is not an array"); 
+          } 
+       
+          // Fetch tournament match data 
+          try { 
+            const response = await axios.get(`/tournament/match/${id}`); 
+            if (response.status === 200) { 
+              setTournamentData(response.data); 
+            } else { 
+              console.error("Failed to fetch matches: Invalid status code"); 
+            } 
+          } catch (error) { 
+            console.error("Error fetching matches: ", error); 
+            setTournamentData(null);  //test placeholder 
+          } 
+        }; 
+       
+        fetchTournamentData(); 
+      }, [id]);
 
     const handleBackNavigation = () => {
         router.push('/manage-tournament');
@@ -110,12 +116,14 @@ const ManageMatchesPage = () => {
                     <TabPanels>
                         {tournamentData && tournamentData.map((round, index) => (
                             <TabPanel key={index} p={4}>
-                                {round.seeds.map((seed, seedIndex) => (
-                                    <MatchComponent
-                                        key={seedIndex}
-                                        seed={seed}
-                                        toast={toast}
-                                    />
+                                {round.seeds
+                                    .filter(seed => seed.teams && seed.teams.length === 2 && seed.teams.every(team => !team.empty))
+                                    .map((seed, seedIndex) => (
+                                        <MatchComponent
+                                            key={seedIndex}
+                                            seed={seed}
+                                            toast={toast}
+                                        />
                                 ))}
                             </TabPanel>
                         ))}

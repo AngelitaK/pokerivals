@@ -183,6 +183,7 @@ const ManageTeamPage = () => {
         setTournament(t);
       }
     }
+    
     const fetchTeams = async () => {
       try {
         const response = await axios.get(
@@ -211,6 +212,7 @@ const ManageTeamPage = () => {
 
   const totalPages = Math.ceil(count / pageSize);
 
+  console.log(tournament)
   return (
       <Box p="1%" backgroundColor="gray.100" minH="100vh">
         <Box>
