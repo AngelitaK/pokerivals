@@ -6,9 +6,12 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.domain.Persistable;
 
+import java.time.Instant;
 import java.util.Date;
 
 /**
@@ -16,11 +19,11 @@ import java.util.Date;
  * Implements {@link Persistable<String>} to prevent saving of user with the same username twice
  */
 @Entity
-@Table(name="users") 
+@Table(name="users")
 @Inheritance(strategy = InheritanceType.JOINED) // experiment with different kinds
+@NoArgsConstructor
 @Getter
 public abstract class User implements Persistable<String> {
-        public User(){}
 
         @Id
         @Column(length = 100)
@@ -89,4 +92,8 @@ public abstract class User implements Persistable<String> {
                         ", username='" + username + '\'' +
                         '}';
         }
+
+        @Column(name = "createdAt", nullable = false, updatable = false)
+        @CreationTimestamp
+        private Instant createdAt;
 }

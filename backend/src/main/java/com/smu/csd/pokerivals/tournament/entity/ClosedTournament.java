@@ -25,7 +25,7 @@ public class ClosedTournament extends Tournament {
 
     @JsonGetter("invited_players")
     public List<String> getPlayers(){
-        return invitedPlayers.stream().map(Player::getId).toList();
+        return new ArrayList<>(invitedPlayers.stream().map(Player::getId).toList());
     }
 
     @ManyToMany

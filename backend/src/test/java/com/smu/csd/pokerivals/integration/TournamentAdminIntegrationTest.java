@@ -325,7 +325,7 @@ public class TournamentAdminIntegrationTest {
                 Collections.shuffle(moveNames);
                 List<String> chosenMoves = null;
                 try {
-                    chosenMoves = moveNames.subList(0,5);
+                    chosenMoves = moveNames.subList(0,4);
                 } catch (IndexOutOfBoundsException e) {
                     continue;
                 }
@@ -436,7 +436,7 @@ public class TournamentAdminIntegrationTest {
                 Collections.shuffle(moveNames);
                 List<String> chosenMoves = null;
                 try {
-                    chosenMoves = moveNames.subList(0,5);
+                    chosenMoves = moveNames.subList(0,4);
                 } catch (IndexOutOfBoundsException e) {
                     continue;
                 }
@@ -514,7 +514,7 @@ public class TournamentAdminIntegrationTest {
             log.info("Expected total {}",numberOfPlayersRemaining);
         }
 
-        tournamentRepository.delete(tournament);
+        tournamentRepository.deleteById(tournament.getId());
 
     }
 

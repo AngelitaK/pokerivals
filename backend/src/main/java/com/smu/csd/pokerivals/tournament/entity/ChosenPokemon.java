@@ -8,10 +8,8 @@ import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -37,6 +35,7 @@ public class ChosenPokemon {
     @Setter
     @EqualsAndHashCode
     @NoArgsConstructor
+    @ToString
     public static class PokemonId implements Serializable{
         @Column(nullable = false, name = "pokemonId")
         private Integer pokemonId;
@@ -67,9 +66,9 @@ public class ChosenPokemon {
     @JsonIgnore
     private Team team;
 
-
     @ManyToMany
     @JsonIgnore
+    @Size(min=1, max=4)
     private Set <Move> movesLearnt = new HashSet<>();
 
     @Enumerated(EnumType.ORDINAL)

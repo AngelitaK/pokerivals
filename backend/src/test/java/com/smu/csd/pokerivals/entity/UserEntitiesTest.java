@@ -46,15 +46,15 @@ public class UserEntitiesTest {
 
         assertEquals(u1_found.getDescription(), u1.getDescription());
         assertEquals(u2_found.getDescription(), u2.getDescription());
-        
+
         if (u1_found instanceof Player p){
             assertEquals(p.getPoints(), 800.0);
         } else {
             assertEquals("apple", "banana");
         }
-                
+
         if (u2_found instanceof Admin a){
-           assertNull(a.getActiveSince());
+            assertNull(a.getActiveSince());
         } else {
             assertEquals("apple", "banana");
             // TODO: find better way to handle this
@@ -175,6 +175,13 @@ public class UserEntitiesTest {
         u1.addToClan(c);
         u2.addToClan(c);
 
+        Player finalU = u1;
+        Clan finalC = c;
+        assertThrows(IllegalArgumentException.class, ()-> {
+            finalU.addToClan(finalC);
+        });
+
+
         testEM.persist(u1);
         testEM.persist(u2);
         testEM.persist(c);
@@ -232,7 +239,7 @@ public class UserEntitiesTest {
         // - end get it back
 
         players.get(0).addToClan(clans.get(0));
-        
+
         // persist
 
         players.forEach( (player) -> testEM.persist(player));
@@ -257,6 +264,12 @@ public class UserEntitiesTest {
         // - end get it back
 
         assertEquals("Clan-0", players.get(0).getClan().getName());
+
+        List<Player> finalPlayers = players;
+        List<Clan> finalClans = clans;
+        assertThrows(IllegalArgumentException.class, ()->{
+            finalPlayers.get(0).addToClan(finalClans.get(1));
+        });
 
         // persist
 
@@ -291,7 +304,7 @@ public class UserEntitiesTest {
         Player u2 = new Player("marco", "456");
         userRepository.save(u1);
         userRepository.save(u2);
-        
+
         Optional<User> u1_get = userRepository.findOneByGoogleSub("123");
         Optional<User> u2_get = userRepository.findOneByGoogleSub("456");
 
@@ -317,7 +330,7 @@ public class UserEntitiesTest {
             Admin u1 = adminRepository.findById("user-0").orElseThrow();
             Admin a = adminRepository.findById("user-" + i).orElseThrow();
             u1.addInvitee(a);
-           adminRepository.save(u1);
+            adminRepository.save(u1);
         }
 
         Set<Admin> result = new HashSet<>();

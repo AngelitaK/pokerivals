@@ -14,10 +14,7 @@ import com.smu.csd.pokerivals.record.Message;
 import com.smu.csd.pokerivals.security.AuthenticationController;
 import com.smu.csd.pokerivals.tournament.TournamentPlayerService;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
-import com.smu.csd.pokerivals.tournament.entity.ChosenPokemon;
-import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
-import com.smu.csd.pokerivals.tournament.entity.Team;
-import com.smu.csd.pokerivals.tournament.entity.Tournament;
+import com.smu.csd.pokerivals.tournament.entity.*;
 import com.smu.csd.pokerivals.tournament.repository.ChosenPokemonRepository;
 import com.smu.csd.pokerivals.tournament.repository.TeamRepository;
 import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
@@ -277,7 +274,7 @@ public class TournamentPlayerIntegrationTest {
             String ability = getRandomSetElement(pokemon.getAbilities()).getName();
 
             Set<String> moveNames = new HashSet<>();
-            while(moveNames.size() < 5){
+            while(moveNames.size() < 3){
                 Move m = getRandomSetElement(pokemon.getMoves());
                 moveNames.add(m.getName());
             }
@@ -327,7 +324,7 @@ public class TournamentPlayerIntegrationTest {
                 moveNames.add(move.getName());
             });
 
-            while (chosenMoves.size() < 5){
+            while (chosenMoves.size() < 4){
                 chosenMoves.add(getRandomSetElement(moveNames));
             }
 
@@ -424,6 +421,42 @@ public class TournamentPlayerIntegrationTest {
 
         assertEquals(200,result.getStatusCode().value());
         assertEquals(1,result.getBody().count()-initialMatch);;
+    }
+
+    @Test
+    public void joinCLosedTournament_success() throws URISyntaxException {
+        ClosedTournament t =  tournamentRepository.save(
+                new ClosedTournament(
+                        "abc",
+                        (Admin) userRepository.findById("fake_admin").orElseThrow(),
+                        new Tournament.EloLimit(0,50000),
+                        new Tournament.RegistrationPeriod(
+                                ZonedDateTime.now(), ZonedDateTime.now().plusHours(1)
+                        )
+                )
+        );
+
+        Player player = playerRepository.findById(username).orElseThrow();
+
+        TournamentPlayerService.JoinTournamentDTO dto = generateJoinDTO();
+
+        URIBuilder builder = new URIBuilder()
+                .setHost(host)
+                .setPort(port)
+                .setScheme(scheme)
+                .setPathSegments("player", "tournament", t.getId().toString(), "join");
+
+        var result = restTemplate.exchange(builder.build(), HttpMethod.POST, createStatefulResponse(username, dto), Message.class);
+
+        assertEquals(400, result.getStatusCode().value());
+
+        t.addInvitedPlayer(List.of(player));
+        tournamentRepository.save(t);
+
+        result = restTemplate.exchange(builder.build(), HttpMethod.POST, createStatefulResponse(username, dto), Message.class);
+
+        assertEquals(200, result.getStatusCode().value());
+
     }
 
     private static final ThreadLocalRandom random = ThreadLocalRandom.current();

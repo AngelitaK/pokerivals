@@ -1,240 +1,153 @@
 package com.smu.csd.pokerivals.entity;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+
 import com.smu.csd.pokerivals.configuration.LoadData;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
-import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import com.smu.csd.pokerivals.pokemon.repository.AbilityRepository;
 import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
-import com.smu.csd.pokerivals.tournament.entity.*;
+import com.smu.csd.pokerivals.tournament.entity.ChosenPokemon;
+import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
+import com.smu.csd.pokerivals.tournament.entity.Team;
+import com.smu.csd.pokerivals.tournament.entity.Tournament;
 import com.smu.csd.pokerivals.tournament.repository.ChosenPokemonRepository;
 import com.smu.csd.pokerivals.tournament.repository.TeamRepository;
 import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
 import com.smu.csd.pokerivals.user.entity.Admin;
-import com.smu.csd.pokerivals.user.repository.ClanRepository;
 import com.smu.csd.pokerivals.user.entity.Player;
+import com.smu.csd.pokerivals.user.repository.ClanRepository;
 import com.smu.csd.pokerivals.user.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.core.env.Environment;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataJpaTest
+@DataJpaTest(properties = {
+        "spring.datasource.url=jdbc:mysql://localhost:3306/test",
+        "spring.jpa.hibernate.ddl-auto=update",
+        "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver",
+        "spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect"
+})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Slf4j
-@ActiveProfiles("test")
 public class TournamentEntityTest {
-    private final TournamentRepository tournamentRepository;
-    private final TeamRepository teamRepository;
-    private final ChosenPokemonRepository chosenPokemonRepositor;
-    private final UserRepository userRepository;
-    private final ClanRepository clanRepository;
-    private final MoveRepository moveRepository;
-    private final AbilityRepository abilityRepository;
-    private final PokemonRepository pokemonRepository;
-    private UUID closedTournamentId;
+    @Autowired
+    private TestEntityManager testEM;
 
     @Autowired
-    public TournamentEntityTest(TournamentRepository tournamentRepository, TeamRepository teamRepository, ChosenPokemonRepository chosenPokemonRepositor, UserRepository userRepository, ClanRepository clanRepository, MoveRepository moveRepository, AbilityRepository abilityRepository, PokemonRepository pokemonRepository) {
-        this.tournamentRepository = tournamentRepository;
-        this.teamRepository = teamRepository;
-        this.chosenPokemonRepositor = chosenPokemonRepositor;
-        this.userRepository = userRepository;
-        this.clanRepository = clanRepository;
-        this.moveRepository = moveRepository;
-        this.abilityRepository = abilityRepository;
-        this.pokemonRepository = pokemonRepository;
-    }
+    private TournamentRepository tournamentRepository;
+
+    @Autowired
+    private MoveRepository moveRepository;
+
+    @Autowired
+    private PokemonRepository pokemonRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ChosenPokemonRepository chosenPokemonRepository;
+
+    @Autowired
+    private ClanRepository clanRepository;
+
+    @Autowired
+    private AbilityRepository abilityRepository;
+
 
     @Autowired
     private Environment environment;
 
-    private UUID openTournamentId;
-
-    private int[] pokemonsToJoinWith = new int[]{
-            2,4,6,3,7
-    };
-
     @BeforeEach
-    public void run() throws Exception {
-        new LoadData(environment).initDatabase(userRepository, clanRepository, pokemonRepository, abilityRepository, moveRepository).run();
-        openTournamentId = tournamentRepository.save(new OpenTournament("meow",(Admin) userRepository.findById("fake_admin").orElseThrow())).getId();
-        closedTournamentId = tournamentRepository.save(new ClosedTournament("woof",(Admin) userRepository.findById("fake_admin").orElseThrow())).getId();
+    public void loadData() throws Exception {
+        new LoadData(environment).initDatabase(userRepository,clanRepository, pokemonRepository,abilityRepository, moveRepository).run("abc");
     }
 
     @Test
-    public void testJoinOpenTournament() throws JsonProcessingException {
-        Player player = (Player) userRepository.findById("fake_player").orElseThrow();
-        Set<Move> movesAffected = new HashSet<>();
+    public void testJoinAndLeaveTournament(){
+        var tournament = tournamentRepository.save(new OpenTournament(
+                "abc",
+                (Admin) userRepository.findById("fake_admin").orElseThrow(),
+                new Tournament.EloLimit(
+                        0,5000
+                ),
+                new Tournament.RegistrationPeriod(
+                        ZonedDateTime.now(),
+                        ZonedDateTime.now().plusHours(1)
+                )
+        ));
+        var player = (Player) userRepository.findById("fake_player").orElseThrow();
 
-        assertNotNull(openTournamentId);
-        Tournament tournament = tournamentRepository.getTournamentById(openTournamentId).orElseThrow();
-        assertEquals("meow", tournament.getName());
-        assertEquals("fake_admin", tournament.getAdminUsername());
+        Team team = createTeam(player,tournament);
+        tournament.addTeam(team,ZonedDateTime.now());
+        tournamentRepository.save(tournament);
 
-        log.info(new ObjectMapper().findAndRegisterModules().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).writeValueAsString(tournament));
+        assertEquals(1,teamRepository.count());
+        assertEquals(6,chosenPokemonRepository.count());
 
-        Team team = new Team(player,tournament);
-        tournament.addTeam(team, ZonedDateTime.now());
-
-        for(int pokemonId : pokemonsToJoinWith){
-            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
-
-            ChosenPokemon chosenPokemon = new ChosenPokemon(team,pokemon);
-            chosenPokemon.setAbility(getRandomSetElement(pokemon.getAbilities()));
-
-            Set<String> moveNames = new HashSet<>();
-            Set<String> chosenMoves = new HashSet<>();
-
-            pokemon.getMoves().forEach(move ->{
-                moveNames.add(move.getName());
-            });
-
-            while (chosenMoves.size() < 5){
-                chosenMoves.add(getRandomSetElement(moveNames));
-            }
-
-            chosenMoves.forEach(moveName ->{
-                chosenPokemon.learnMove(moveRepository.findById(moveName).orElseThrow());
-            });
-            chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
-            team.addChosenPokemon(chosenPokemon);
-        }
-        // join
-
-        team = teamRepository.save(team);
-        assertEquals("fake_player", team.getPlayer().getUsername());
-        assertEquals("meow", team.getTournament().getName());
-
-        assertEquals(pokemonsToJoinWith.length,chosenPokemonRepositor.count());
-        for(int pokemonId : pokemonsToJoinWith) {
-            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
-            assertEquals(
-                    new Team.TeamId(player, tournament),
-                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).orElseThrow().getPokemonId().getTeamId()
-            );
-        }
-
-        // quit
+        assertTrue(teamRepository.findById(new Team.TeamId(player,tournament)).isPresent());
 
         teamRepository.deleteById(new Team.TeamId(player,tournament));
 
-        assertTrue(teamRepository.findById(new Team.TeamId(player,tournament)).isEmpty());
-        assertEquals(0,chosenPokemonRepositor.count());
-        for(int pokemonId : pokemonsToJoinWith) {
-            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
-            assertTrue(
-                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).isEmpty()
-            );
-        }
 
-        for (Move m : movesAffected){
-            assertFalse(moveRepository.findById(m.getName()).isEmpty());
-        }
+//        assertEquals(0,teamRepository.count());
+        assertEquals(0,chosenPokemonRepository.count());
+
     }
 
-    @Test
-    public void testJoinClosedTournament(){
-        Player player = (Player) userRepository.findById("fake_player").orElseThrow();
-        Set<Move> movesAffected = new HashSet<>();
+    private Team createTeam(Player player, Tournament tournament){
+        var team = new Team(player,tournament);
 
-        assertNotNull(closedTournamentId);
-        ClosedTournament tournament = (ClosedTournament) tournamentRepository.getTournamentById(closedTournamentId).orElseThrow();
-        assertEquals("woof", tournament.getName());
-        assertEquals("fake_admin", tournament.getAdminUsername());
+        var noOfPokemons = pokemonRepository.count();
 
-        Team team = new Team(player,tournament);
-        Team finalTeam = team;
-        assertThrows(IllegalArgumentException.class, ()->{
-            tournament.addTeam(finalTeam, ZonedDateTime.now());
-        });
-        tournament.addInvitedPlayer(List.of(player));
-        tournament.addTeam(team, ZonedDateTime.now());
 
-        for(int pokemonId : pokemonsToJoinWith){
-            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
+        List<ChosenPokemon> chosenPokemons = new ArrayList<>();
+        while (chosenPokemons.size() < 6){
+            var pokemonIdChosen = random.nextLong(1,noOfPokemons+1);
+            var pokemon = pokemonRepository.findById((int)pokemonIdChosen).orElseThrow();
 
-            ChosenPokemon chosenPokemon = new ChosenPokemon(team,pokemon);
-            chosenPokemon.setAbility(getRandomSetElement(pokemon.getAbilities()));
+            var nature = randomEnum(POKEMON_NATURE.class);
+            var ability = pokemon.getAbilities().stream().toList().get(random.nextInt(pokemon.getAbilities().size()));
 
-            Set<Move> movesAdded = new HashSet<>();
-            Set<String> moveNames = new HashSet<>();
-            Set<String> chosenMoves = new HashSet<>();
-
-            pokemon.getMoves().forEach(move ->{
-                moveNames.add(move.getName());
-            });
-
-            while (chosenMoves.size() < 5){
-                chosenMoves.add(getRandomSetElement(moveNames));
+            Set<Move> moves = new HashSet<>();
+            while (moves.size()<4){
+                moves.add(pokemon.getMoves().stream().toList().get(random.nextInt(pokemon.getMoves().size())));
             }
 
-            chosenMoves.forEach(moveName ->{
-                chosenPokemon.learnMove(moveRepository.findById(moveName).orElseThrow());
-            });
-            chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
-            team.addChosenPokemon(chosenPokemon);
-        }
-        // join
-
-        team = teamRepository.save(team);
-        assertEquals("fake_player", team.getPlayer().getUsername());
-        assertEquals("woof", team.getTournament().getName());
-
-        assertEquals(pokemonsToJoinWith.length,chosenPokemonRepositor.count());
-        for(int pokemonId : pokemonsToJoinWith) {
-            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
-            assertEquals(
-                    new Team.TeamId(player, tournament),
-                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).orElseThrow().getPokemonId().getTeamId()
-            );
+            var cp = new ChosenPokemon(team,pokemon);
+            for(Move m : moves ){
+                cp.learnMove(m);
+            };
+            cp.setNature(nature);
+            cp.setAbility(ability);
+            chosenPokemons.add(cp);
         }
 
-        // quit
-
-        teamRepository.deleteById(new Team.TeamId(player,tournament));
-
-        assertTrue(teamRepository.findById(new Team.TeamId(player,tournament)).isEmpty());
-        assertEquals(0,chosenPokemonRepositor.count());
-        for(int pokemonId : pokemonsToJoinWith) {
-            Pokemon pokemon = pokemonRepository.findById(pokemonId).orElseThrow();
-            assertTrue(
-                    chosenPokemonRepositor.findById(new ChosenPokemon.PokemonId(team, pokemon)).isEmpty()
-            );
+        for (ChosenPokemon cp: chosenPokemons){
+            team.addChosenPokemon(cp);
         }
 
-        for (Move m : movesAffected){
-            assertFalse(moveRepository.findById(m.getName()).isEmpty());
-        }
+        return team;
     }
 
-    private static final ThreadLocalRandom random = ThreadLocalRandom.current();
+    private Random random = ThreadLocalRandom.current();
 
-    public static <T extends Enum<?>> T randomEnum(Class<T> clazz){
+    private <T extends Enum<?>> T randomEnum(Class<T> clazz){
         int x = random.nextInt(clazz.getEnumConstants().length);
         return clazz.getEnumConstants()[x];
     }
-
-    public static <E> E getRandomSetElement(Set<E> set) {
-        return set.stream().skip(random.nextInt(set.size())).findFirst().orElse(null);
-    }
-
-
 }

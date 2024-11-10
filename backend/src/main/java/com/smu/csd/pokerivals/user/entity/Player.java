@@ -77,23 +77,10 @@ public class Player extends User {
         return befriendedBy.size();
     }
 
-    public void changeElo(Player enemy, boolean enemyWin){
-        if (enemy instanceof DummyPlayer){
-            return;
-        }
+    public void changeElo(Player enemy, boolean enemyWin) {
         if(enemyWin){
             this.points += 10.0;
             enemy.points -= 10.0;
-        }
-    }
-
-    private static final class DummyPlayer extends Player{
-        private String Username = "dummy";
-        private final double rating = 0.0;
-
-        @Override
-        public void changeElo(Player enemy, boolean enemyWin){
-            return;
         }
     }
 }

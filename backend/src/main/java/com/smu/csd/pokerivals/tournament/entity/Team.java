@@ -5,10 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smu.csd.pokerivals.user.entity.Player;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -32,12 +29,14 @@ public class Team {
     @Setter
     @EqualsAndHashCode
     @NoArgsConstructor
+    @ToString
     public static class TeamId implements Serializable{
 
-        @Column(nullable = false, name = "playerName", length=100)
+        @Column(length=100)
+        @Size(max=100)
         private String playerName;
 
-        @Column(nullable = false, name = "tournamentId")
+        @Column(nullable = false)
         private UUID tournamentId;
 
         public TeamId(Player player, Tournament tournament){
@@ -85,5 +84,10 @@ public class Team {
     @JsonGetter("playerUsername")
     public String getPlayerUsername(){
         return teamId.getPlayerName();
+    }
+
+    @PreRemove
+    public void deleteAllPokemons(){
+        chosenPokemons.clear();
     }
 }
