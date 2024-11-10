@@ -51,8 +51,8 @@ public class TournamentAdminController {
             "NOTE: even though this accepts OPEN tournament, it also works for closed" +
             "name, description, max team capacity, and estimated tournament period can be modified freely" +
             " and registration period can only be modified during or before registration period")
-    public Message createClosedTournament(@RequestBody @Valid OpenTournament openTournament, @PathVariable String id){
-        tournamentAdminService.modifyTournament(UUID.fromString(id), openTournament);
+    public Message createClosedTournament(@RequestBody @Valid OpenTournament openTournament, @PathVariable String id,@AuthenticationPrincipal UserDetails userDetails){
+        tournamentAdminService.modifyTournament(UUID.fromString(id), openTournament, userDetails.getUsername());
         return new Message("Success!");
     }
 
@@ -60,8 +60,8 @@ public class TournamentAdminController {
 
     @PostMapping("/closed/{id}/invitation")
     @Operation(summary = "invite players", description = "only for admins")
-    public Message createClosedTournament(@RequestBody InviteDTO dto, @PathVariable String id){
-        tournamentAdminService.invitePlayerToClosedTournament(UUID.fromString(id),dto.usernames() );
+    public Message createClosedTournament(@RequestBody InviteDTO dto, @PathVariable String id, @AuthenticationPrincipal UserDetails userDetails){
+        tournamentAdminService.invitePlayerToClosedTournament(UUID.fromString(id),dto.usernames() , userDetails.getUsername());
         return new Message("Success!");
     }
 
@@ -75,7 +75,7 @@ public class TournamentAdminController {
     }
 
     @DeleteMapping("/{id}/team/player/{playerUsername}")
-    @Operation(summary = "get all teams of a tournament that an admin is managing", description = "only for admins")
+    @Operation(summary = "delete  a team of a tournament that an admin is managing", description = "only for admins")
     public Message deleteTeamOfMyTournament(@AuthenticationPrincipal UserDetails userDetails,
                                             @PathVariable String id,
                                             @PathVariable String playerUsername){

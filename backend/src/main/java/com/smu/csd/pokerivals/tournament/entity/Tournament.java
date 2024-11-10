@@ -263,5 +263,7 @@ public abstract class Tournament {
         this.matches.add(match);
     }
 
-
+    public boolean hasStarted(){
+        return !this.matches.isEmpty();
+    }
 }

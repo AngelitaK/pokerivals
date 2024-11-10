@@ -60,8 +60,11 @@ public class TournamentAdminService {
         return tournament.getId();
     }
 
-    public void modifyTournament(UUID tournamentId, Tournament tournamentToTakeAttributesFrom){
+    public void modifyTournament(UUID tournamentId, Tournament tournamentToTakeAttributesFrom, String adminUsername){
         Tournament tournament = tournamentRepository.getTournamentById(tournamentId).orElseThrow();
+        if (!tournament.getAdmin().getUsername().equals(adminUsername)){
+            throw new IllegalArgumentException("You are not manager of this tournament");
+        }
         tournament.modify(tournamentToTakeAttributesFrom, dateFactory.getToday());
         tournamentRepository.save(tournament);
     }
@@ -74,8 +77,11 @@ public class TournamentAdminService {
         );
     }
 
-    public void invitePlayerToClosedTournament(UUID tournamentId,Collection<String> usernames){
+    public void invitePlayerToClosedTournament(UUID tournamentId,Collection<String> usernames, String adminUsername){
         if( tournamentRepository.getTournamentById(tournamentId).orElseThrow() instanceof ClosedTournament ct){
+            if (!ct.getAdmin().getUsername().equals(adminUsername)){
+                throw new IllegalArgumentException("You are not manager of this tournament");
+            }
             List<Player> players = playerRepository.findAllById(usernames);
             ct.addInvitedPlayer(players);
             players.forEach(p -> {
@@ -89,21 +95,30 @@ public class TournamentAdminService {
 
     /**
      * Informs you of the teams in a tournament
+     * If the registration has passed you can modify but only before you start it
      * @param teams
      * @param count
-     * @param mutable whether the list can be changed (by deleting) only after registration is over
+     * @param postRegistration whether the list can be changed (by deleting) only after registration is over
+     * @param hasStarted whether tournament has started
      */
-    public record TeamPageDTO(List<Team> teams, long count, boolean mutable){}
+    public record TeamPageDTO(List<Team> teams, long count, boolean postRegistration, boolean hasStarted){}
 
     public TeamPageDTO getTeamsOfATournament(UUID tournamentId, String adminUsername,int page, int limit){
+        var tournament = tournamentRepository.getTournamentById(tournamentId).orElseThrow();
         return new TeamPageDTO(
                 teamPagingRepository.findByTournamentIdAndAdminUsername(tournamentId,adminUsername, PageRequest.of(page,limit)),
                 teamRepository.countByTournamentIdAndAdminUsername(tournamentId,adminUsername),
-                tournamentRepository.getTournamentById(tournamentId).orElseThrow().getRegistrationPeriod().isBefore(dateFactory.getToday())
+                tournament.getRegistrationPeriod().isBefore(dateFactory.getToday()),
+                tournament.hasStarted()
         );
     }
 
-
+    /**
+     * Don't allow if tournament not managed by this admin, registration period hasnt passed, or tournament has started
+     * @param adminUsername admin username
+     * @param playerUsernameToRemove username of player to remove
+     * @param tournamentID id of tournament
+     */
     public void kickPlayerFromTournament(String adminUsername, String playerUsernameToRemove, UUID tournamentID){
         Admin admin = adminRepository.findById(adminUsername).orElseThrow();
         Player player = playerRepository.findById(playerUsernameToRemove).orElseThrow();
@@ -111,7 +126,10 @@ public class TournamentAdminService {
         Tournament tournament = tournamentRepository.getTournamentById(tournamentID).orElseThrow();
 
         //TODO Checking for whether the first round has been started
-        if (!tournament.getAdmin().getId().equals(adminUsername) || !tournament.getRegistrationPeriod().isBefore(dateFactory.getToday())){
+        if (!tournament.getAdmin().getId().equals(adminUsername)
+                || !tournament.getRegistrationPeriod().isBefore(dateFactory.getToday())
+                || tournament.hasStarted()
+        ){
             throw new IllegalArgumentException("Tournament not managed by this admin");
         }
         teamRepository.deleteById(new Team.TeamId(player,tournament));
