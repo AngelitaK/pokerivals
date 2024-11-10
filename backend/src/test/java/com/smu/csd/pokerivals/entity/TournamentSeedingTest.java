@@ -1,29 +1,24 @@
 package com.smu.csd.pokerivals.entity;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.smu.csd.pokerivals.match.MatchService;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.match.entity.MatchWrapper;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
-import com.smu.csd.pokerivals.pokemon.repository.AbilityRepository;
-import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.tournament.entity.ChosenPokemon;
 import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
 import com.smu.csd.pokerivals.tournament.entity.Team;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
-import com.smu.csd.pokerivals.tournament.repository.TeamRepository;
 import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import com.smu.csd.pokerivals.user.entity.Player;
-import com.smu.csd.pokerivals.user.repository.*;
+import com.smu.csd.pokerivals.user.repository.AdminRepository;
+import com.smu.csd.pokerivals.user.repository.PlayerRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.env.Environment;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -38,12 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class TournamentSeedingTest {
 
     //tournament creation
-
     @Autowired
     private TournamentRepository tournamentRepository;
-
-    @Autowired
-    private TeamRepository teamRepository;
 
     @Autowired
     private AdminRepository adminRepository;
@@ -52,33 +43,10 @@ public class TournamentSeedingTest {
     private PokemonRepository pokemonRepository;
 
     @Autowired
-    private PlayerPagingRepository playerPagingRepository;
-
-    @Autowired
-    private Environment environment;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AbilityRepository abilityRepository;
-
-    @Autowired
-    private MoveRepository moveRepository;
-
-    @Autowired
     private MatchService matchService;
 
-    //------------------------- for player service-----------------
     @Autowired
     private PlayerRepository playerRepository;
-
-    @MockBean
-    private GoogleIdTokenVerifier googleIdTokenVerifier;
-
-    @Autowired
-    private ClanRepository clanRepository;
-    //------------------------------------------------------------------------
 
     @Autowired
     private MatchRepository matchRepository;
@@ -159,7 +127,7 @@ public class TournamentSeedingTest {
             tournamentRepository.save(t1);
         }
 
-        var matches =  matchService.startSingleElimTournament(t1.getId(), ZonedDateTime.now());
+        var matches =  matchService.startSingleEliminationTournament(t1.getId(), ZonedDateTime.now());
         System.out.println(MatchWrapper.reconstructTree(matches));
 
 //        var match = matchRepository.findById( new Match.MatchId(t1.getId(),3,4)).orElseThrow();
@@ -177,7 +145,7 @@ public class TournamentSeedingTest {
 
         matchService.advance(t1.getId(),3,4, MatchResult.TEAM_B,ZonedDateTime.now());
 
-        matchService.forfeit(t1.getId(),3,6,false,ZonedDateTime.now());
+        matchService.forfeit(t1.getId(),3,6,false);
 
         matchService.advance(t1.getId(),3,5,MatchResult.TEAM_A, ZonedDateTime.now());
 
@@ -189,7 +157,7 @@ public class TournamentSeedingTest {
         });
         matchService.advance(t1.getId(),2,3, MatchResult.TEAM_B,ZonedDateTime.now());
         matchService.advance(t1.getId(),2,1, MatchResult.TEAM_A,ZonedDateTime.now());
-        matchService.forfeit(t1.getId(),2,2, true,ZonedDateTime.now());
+        matchService.forfeit(t1.getId(),2,2, true);
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
 

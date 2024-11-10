@@ -77,13 +77,6 @@ public class Player extends User {
         return befriendedBy.size();
     }
 
-    public void changeElo(Player enemy, boolean enemyWin) {
-        if(enemyWin){
-            this.points += 10.0;
-            enemy.points -= 10.0;
-        }
-    }
-
     private static final int AdjustmentRating = 20;
 
     /**

@@ -1,12 +1,13 @@
 package com.smu.csd.pokerivals.match.entity;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.*;
 
+/**
+ * This class is used to help reconstruct the Match tree
+ */
 @Getter
-@Setter
 public class MatchWrapper {
     private final Match match;
 
@@ -94,11 +95,11 @@ public class MatchWrapper {
 
             if (noOfNodesInThisLevel >1){
                 for (int i = 0; i < noOfNodesInThisLevel; i+=2){
-                    lastLevel.get(i/2).setMatchBeforeA(currentLevel.get(i));
-                    currentLevel.get(i).setMatchAfter(lastLevel.get(i/2));
+                    lastLevel.get(i/2).matchBeforeA = currentLevel.get(i);
+                    currentLevel.get(i).matchAfter = lastLevel.get(i/2);
 
-                    lastLevel.get(i/2).setMatchBeforeB(currentLevel.get(i+1));
-                    currentLevel.get(i+1).setMatchAfter(lastLevel.get(i/2));
+                    lastLevel.get(i/2).matchBeforeB = currentLevel.get(i+1);
+                    currentLevel.get(i+1).matchAfter = lastLevel.get(i/2);
                 }
             }
             lastLevel = currentLevel;

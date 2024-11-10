@@ -57,11 +57,14 @@ public class Match {
         @ToString.Include
         private int depth;
 
+        /**
+         * Index of two sibling nodes of depth d must be summed up to be 2^d -1
+         * Node that gives team A to parent has same index as parent
+         * Node that gives team B to parent has index = 2^d -1 - parent's node
+         */
         @ToString.Include
         @Column(name = "idx")
         private int index;
-
-
     }
 
     /**
@@ -69,6 +72,10 @@ public class Match {
      */
     private int treeHeight;
 
+    /**
+     * Round is depth but counting backwards
+     * @return which round this match belongs to
+     */
     private int getRound(){
         return treeHeight - getDepth();
     }
@@ -77,49 +84,38 @@ public class Match {
     @ManyToOne
     protected Tournament tournament;
 
-    /**
-     * FOR JACKSON
-     * @return round from 0
-     */
-    @JsonGetter("round")
-    private int getRoundJackson(){
-        return getRound() + 1;
-    };
-
     @JsonGetter("index")
     public int getIndex(){
         return matchId.getIndex();
     };
 
-
     public int getDepth(){
         return matchId.getDepth();
     }
-
 
     @JsonGetter("tournament_id")
     public UUID getTournamentId(){
         return matchId.getTournamentId();
     };
 
-    public boolean isLeaf(){
-        return  getRound() == 0;
-    }
+    public boolean isLeaf(){ return  getRound() == 0;}
 
-    public boolean isRoot(){
-        return  matchId.getDepth() == 0;
-    }
+    public boolean isRoot(){ return  matchId.getDepth() == 0; }
 
     @ManyToOne
     @Setter(AccessLevel.NONE)
     private Team teamA;
+
     @Setter(AccessLevel.NONE)
     private ZonedDateTime timeFinalisedTeamA;
+
+    @Setter(AccessLevel.NONE)
+    private double changeInPointsTeamA;
     /**
      * Not only set team but mark down the time
-     * @param team may be null indicating previoys player forfeit
+     * @param team may be null indicating previous player forfeit
      * @param today today's date
-     * @return whether a Bye occured
+     * @return whether a Bye occurred
      */
     public boolean finaliseTeamA(Team team, ZonedDateTime today){
         this.teamA = team;
@@ -136,11 +132,14 @@ public class Match {
     @Setter(AccessLevel.NONE)
     private ZonedDateTime timeFinalisedTeamB;
 
+    @Setter(AccessLevel.NONE)
+    private double changeInPointsTeamB;
+
     /**
      * Not only set team but mark down the time
      * @param team may be null indicate no player/forfeit
      * @param today today's date
-     * @return whether a Bye occured
+     * @return whether a Bye occurred
      */
     public boolean finaliseTeamB(Team team, ZonedDateTime today){
         this.teamB = team;
@@ -170,7 +169,7 @@ public class Match {
      * @param callingMatch parent match of this match - ONLY READ NOT WRITTEN TO
      * @param isMatchBeforeA if true, this will be callingMatch's before A o/w is before B
      */
-    public Match (Match callingMatch, boolean isMatchBeforeA){
+    private Match (Match callingMatch, boolean isMatchBeforeA){
         this.tournament = callingMatch.tournament;
         int index = isMatchBeforeA ? callingMatch.getIndex() : (int)Math.pow(2, callingMatch.matchId.getDepth() + 1) - 1 - callingMatch.matchId.getIndex();
         this.matchId = new MatchId(callingMatch.tournament.getId(),callingMatch.matchId.depth+1,index);
@@ -195,14 +194,12 @@ public class Match {
      */
     public Set<Match> createAndSeedTree(List<Team> teams, ZonedDateTime today){
         if(!isRoot()){
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("cannot create tree from non-root node");
         }
-
         Set<Match> result = new HashSet<>();
         createAndSeedTreeRecursive(result, teams, today);
         return result;
     }
-
 
     /**
      * Recursively create a tree, edge case is leaf nodes - here you seed from list of teams
@@ -252,7 +249,7 @@ public class Match {
      * Set the match result of this match
      * @param matchResult result of this match (cannot be pending)
      * @param today today date
-     * @return the "winning" team (may be null! in the case of double forfeit)
+     * @return the "winning" team (maybe null! in the case of double forfeit)
      */
     public Team setMatchResult(MatchResult matchResult, ZonedDateTime today) {
         if(matchResultRecordedAt != null){
@@ -262,22 +259,17 @@ public class Match {
             throw new IllegalArgumentException("both teams not finalised!");
         }
         if (matchResult.equals(MatchResult.PENDING)){
-            throw new IllegalArgumentException("cannot set to pending");
+            throw new IllegalArgumentException("cannot set match result to pending");
         }
 
-
-        // both teams finalised
         this.matchResult = matchResult;
         this.matchResultRecordedAt = today;
 
-        Team toAdvance = null;
         // if both are not null
         if (teamA != null && teamB != null) {
-            double differenceBetweenBAndA = teamB.getPlayer().getPoints() - teamA.getPlayer().getPoints();
+            if (matchResult.equals(MatchResult.CANCELLED)){ return null; }
 
-            if (matchResult.equals(MatchResult.CANCELLED)){
-                return null;
-            }
+            double differenceBetweenBAndA = teamB.getPlayer().getPoints() - teamA.getPlayer().getPoints();
             // calculate both side win rate
             double teamAWinRate = getWinRate(differenceBetweenBAndA);
             double teamBWinRate = 1 - teamAWinRate;
@@ -285,16 +277,32 @@ public class Match {
             // change elo based on who won
             return switch (matchResult) {
                 case TEAM_A -> {
+                    double teamAInitialPoints = teamA.getPlayer().getPoints();
+                    double teamBInitialPoints = teamB.getPlayer().getPoints();
+
                     teamA.getPlayer().changeElo(teamAWinRate, true);
                     teamB.getPlayer().changeElo(teamBWinRate, false);
+
+                    changeInPointsTeamA = teamA.getPlayer().getPoints() - teamAInitialPoints;
+                    changeInPointsTeamB = teamB.getPlayer().getPoints() - teamBInitialPoints;
+
                     yield teamA;
                 }
                 case TEAM_B -> {
+                    double teamAInitialPoints = teamA.getPlayer().getPoints();
+                    double teamBInitialPoints = teamB.getPlayer().getPoints();
+
                     teamB.getPlayer().changeElo(teamAWinRate, true);
                     teamA.getPlayer().changeElo(teamBWinRate, false);
+
+                    changeInPointsTeamA = teamA.getPlayer().getPoints() - teamAInitialPoints;
+                    changeInPointsTeamB = teamB.getPlayer().getPoints() - teamBInitialPoints;
+
                     yield teamB;
                 }
                 default -> {
+                    // pending already accounted for above
+                    // cancelled already results in immediate return
                     throw new IllegalArgumentException("cannot set match result to PENDING/CANCELLED when both present");
                 }
             };
@@ -318,7 +326,6 @@ public class Match {
         if (timeFinalisedTeamA == null || timeFinalisedTeamB == null){
             throw new IllegalArgumentException("Match teams are not finalised");
         }
-        // both are finalised
 
         // both are null
         if (teamA == null && teamB == null ){

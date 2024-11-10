@@ -1,6 +1,7 @@
 package com.smu.csd.pokerivals.match;
 
 
+import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
@@ -23,22 +24,29 @@ public class MatchService {
 
     private final TournamentRepository tournamentRepository;
     private final MatchRepository matchRepository;
+    private final DateFactory dateFactory;
 
     @Autowired
-    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository) {
+    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory) {
         this.tournamentRepository = tournamentRepository;
         this.matchRepository = matchRepository;
+        this.dateFactory = dateFactory;
     }
 
+    /**
+     * Start tournament for a tournament
+     * @param uuid ID of tournament that has not been started
+     * @return all the matches within the tournament
+     */
     @Transactional
-    public Set<Match> startSingleElimTournament(UUID uuid, ZonedDateTime today){
+    public Set<Match> startSingleEliminationTournament(UUID uuid, ZonedDateTime today){
         Tournament tournament = tournamentRepository.getTournamentById(uuid).orElseThrow();
         if (!tournament.getMatches().isEmpty()){
             throw new IllegalArgumentException("Tournament already started");
         }
 
+        // sort in reverse order
         List<Team> teams = new ArrayList<>(tournament.getTeams().stream().toList());
-        // Sort by points
         teams.sort(Comparator.comparing(t -> -t.getPlayer().getPoints()));
 
         // find total number of rounds required
@@ -46,26 +54,25 @@ public class MatchService {
         int n = 1;
         int rounds = 0;
         int numTeams = teams.size();
-        while (n < numTeams){
-            rounds++;
-            n *= 2;
-        }
+        while (n < numTeams){ rounds++; n *= 2; }
         int treeHeight = rounds-1;
 
         Match finalMatch = new Match(tournament,treeHeight);
-
         Set<Match> matches = finalMatch.createAndSeedTree(teams, today);
         tournament.addMatches(matches);
 
         return matches;
     }
 
-    // need to put the winningTeam forward
+    /**
+     * Set who is the winner/ cancel tournament
+     * @param tournamentId of the match
+     * @param depth of the match affected
+     * @param index of the match affected
+     * @param matchResult only accepts TEAM_A, TEAM_B, CANCELLED
+     */
     @Transactional
     public void advance(UUID tournamentId,int depth, int index,MatchResult matchResult, ZonedDateTime today){
-//        if (matchResult.equals(MatchResult.CANCELLED)) {
-//            throw new IllegalArgumentException("Cannot set match to cancelled");
-//        }
         Match matchBefore = matchRepository.findById(new Match.MatchId(tournamentId,depth,index)).orElseThrow();
 
         // i have the team i need to move forward
@@ -73,7 +80,7 @@ public class MatchService {
 
         // continue until reaching root
         while (true) {
-            // if root dont attempt to move forward
+            // if root don't attempt to move forward
             if (matchBefore.isRoot()){
                 break;
             }
@@ -100,16 +107,16 @@ public class MatchService {
     }
 
     /**
-     * Forfeit EITHER player!
-     * @param tournamentId
-     * @param depth
-     * @param index
+     * Forfeit EITHER player! To cancel match, use advance method
+     * @param tournamentId of the match
+     * @param depth of the match affected
+     * @param index of the match affected
      * @param teamA if false, then team B forfeit
-     * @param today
      */
     @Transactional
-    public void forfeit(UUID tournamentId,int depth, int index,boolean teamA, ZonedDateTime today){
+    public void forfeit(UUID tournamentId,int depth, int index,boolean teamA){
 
+        ZonedDateTime today = dateFactory.getToday();
         Match matchBefore = matchRepository.findById(new Match.MatchId(tournamentId,depth,index)).orElseThrow();
 
         boolean bye;

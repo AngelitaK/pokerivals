@@ -188,16 +188,11 @@ public class LoadData {
         if(isTest && ++noPokemonsInserted > noPokemonsForTest){
           break;
         }
-
       }
-
-
-
-
     };
   }
 
-  private Environment environment;
+  private final Environment environment;
 
   private <K,V> Map<K,V> convertArraysToMap(K[] keys, V[] values){
     Map<K,V> result = new HashMap<>();
