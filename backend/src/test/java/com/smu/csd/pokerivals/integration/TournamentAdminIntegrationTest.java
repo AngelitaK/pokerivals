@@ -33,7 +33,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,7 +47,7 @@ import static org.mockito.Mockito.when;
 
 /** Start an actual HTTP server listening at a random port */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test") // remove me and u will use the real database
+//@ActiveProfiles("test") // remove me and u will use the real database
 @Slf4j
 public class TournamentAdminIntegrationTest {
 

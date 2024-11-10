@@ -15,7 +15,7 @@ import com.smu.csd.pokerivals.tournament.repository.ChosenPokemonRepository;
 import com.smu.csd.pokerivals.tournament.repository.TeamRepository;
 import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
 import com.smu.csd.pokerivals.user.entity.Admin;
-import com.smu.csd.pokerivals.user.entity.ClanRepository;
+import com.smu.csd.pokerivals.user.repository.ClanRepository;
 import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;

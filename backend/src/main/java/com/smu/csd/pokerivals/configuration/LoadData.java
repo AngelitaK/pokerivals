@@ -9,7 +9,7 @@ import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import com.smu.csd.pokerivals.user.entity.Clan;
-import com.smu.csd.pokerivals.user.entity.ClanRepository;
+import com.smu.csd.pokerivals.user.repository.ClanRepository;
 import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
