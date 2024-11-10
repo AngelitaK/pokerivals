@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "../../config/axiosInstance";
 import SearchBar from "@/components/searchBar";
 import {
+  Flex,
   Box,
   VStack,
   Text,
@@ -17,8 +18,10 @@ import {
   ModalBody,
   Button,
   Wrap,
+  Image,
 } from "@chakra-ui/react";
-import { AddIcon, CheckIcon } from "@chakra-ui/icons";
+import { AddIcon } from "@chakra-ui/icons";
+import { MdOutlineModeEdit } from "react-icons/md";
 
 // for pokemon stats
 function StatRow({ label, value }) {
@@ -43,6 +46,22 @@ function PokemonCard({ addToTeam }) {
   const [natures, setNatures] = useState([]);
   const [selectedAbility, setSelectedAbility] = useState(null);
 
+  //pagination
+  const [currentSearchResults, setCurrentSearchResults] = useState(1);
+  const itemsPerPage = 10;
+
+  // Slice for pagination
+  const paginatedSearchList = searchResults.slice(
+    (currentSearchResults - 1) * itemsPerPage,
+    currentSearchResults * itemsPerPage
+  );
+  // Pagination handlers
+  const handleSearchPageChange = (direction) => {
+    setCurrentSearchResults((prev) =>
+      direction === "next" ? prev + 1 : Math.max(prev - 1, 1)
+    );
+  };
+
   // Fetch available natures
   useEffect(() => {
     const fetchNatures = async () => {
@@ -62,10 +81,11 @@ function PokemonCard({ addToTeam }) {
       setSearchResults([]);
       return;
     }
+    setCurrentSearchResults(1);
 
     try {
       const response = await axios.get("/pokemon/search", {
-        params: { query: query, page: 0, limit: 10 },
+        params: { query: query, page: 0, limit: 100 },
       });
       setSearchResults(response.data.pokemons);
     } catch (error) {
@@ -115,6 +135,20 @@ function PokemonCard({ addToTeam }) {
     }
   };
 
+  const resetSelections = () => {
+    setSearchResults([]); // Clear search results
+    setPokemon(null); // Reset selected Pokémon
+    setSelectedMoves([]); // Clear selected moves
+    setSelectedNature(null); // Clear selected nature
+    setSelectedAbility(null); // Clear selected ability
+    setCurrentStep(1); // Reset to the first step
+  };
+
+  const handleOpenModal = () => {
+    resetSelections();
+    setIsOpen(true); // Open the modal after resetting selections
+  };
+
   const stats = pokemon
     ? pokemon.stats
     : {
@@ -127,7 +161,7 @@ function PokemonCard({ addToTeam }) {
       };
 
   return (
-    <Box position="relative" width="200px">
+    <Box position="relative" width="250px">
       <Box
         position="absolute"
         top="-60px"
@@ -144,8 +178,9 @@ function PokemonCard({ addToTeam }) {
             display="flex"
             alignItems="center"
             justifyContent="center"
+            onClick={handleOpenModal}
           >
-            <CheckIcon />
+            <MdOutlineModeEdit />
           </Box>
         ) : (
           <Box
@@ -168,16 +203,23 @@ function PokemonCard({ addToTeam }) {
       <Box
         bg={pokemon ? "yellow.400" : "white"}
         borderRadius="lg"
-        px={5}
-        py={5}
+        p={3}
         boxShadow="md"
       >
         {loading ? (
           <Spinner />
         ) : (
           <VStack spacing={4} align="stretch">
+            {pokemon?.name && (
+              <Image
+                src={`https://pokerivals-assets.s3.ap-southeast-1.amazonaws.com/sprites/${pokemon.name}.png`}
+                width={"500px"}
+                alt={pokemon.name}
+              />
+            )}
+
             <Text fontSize="xl" fontWeight="bold" textAlign="center">
-            {pokemon ? pokemon.name : "Choose Your Pokémon"}
+              {pokemon ? pokemon.name : "Choose Your Pokémon"}
             </Text>
 
             {pokemon && (
@@ -258,8 +300,8 @@ function PokemonCard({ addToTeam }) {
               <>
                 <SearchBar handleSearch={handleSearch} />
                 <VStack align="stretch" spacing={2} mb={3}>
-                  {searchResults.length > 0 ? (
-                    searchResults.map((p) => (
+                  {paginatedSearchList.length > 0 ? (
+                    paginatedSearchList.map((p) => (
                       <HStack
                         key={p.id}
                         p={3}
@@ -276,6 +318,24 @@ function PokemonCard({ addToTeam }) {
                     <Text fontSize="lg">No Pokémon found</Text>
                   )}
                 </VStack>
+
+                {/* Pagination Controls */}
+                <Flex justify="space-between" mt={4}>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSearchPageChange("prev")}
+                    disabled={currentSearchResults === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSearchPageChange("next")}
+                    disabled={paginatedSearchList.length < itemsPerPage}
+                  >
+                    Next
+                  </Button>
+                </Flex>
               </>
             )}
 

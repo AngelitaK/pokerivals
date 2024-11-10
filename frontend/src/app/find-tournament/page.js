@@ -140,6 +140,25 @@ const FindTournamentPage = () => {
           >
             Find a Tournament
           </Heading>  
+    <Stack
+      minH={"100vh"}
+      bgImage="/TournamentBG.jpg"
+      bgSize="cover"
+      bgPosition="center"
+    >
+      <Flex justifyContent="center" alignItems="center" width="100%">
+        <Box maxWidth="1200px" width="100%" mt={10} color={"white"}>
+          <Heading
+            textAlign="center"
+            textShadow="2px 2px 4px rgba(0, 0, 0, 0.4)"
+            mb={4}
+            sx={{
+              WebkitTextStroke: "1px black",  
+              color: "white"
+            }}
+          >
+            Find a Tournament
+          </Heading>  
 
           <Flex p="50px">
             <Grid templateColumns="repeat(2, 1fr)" gap={6} w="100%" h="100%">
@@ -227,7 +246,21 @@ const FindTournamentPage = () => {
         </Box>
       </Flex>
     </Stack>
+                {/* Pagination Controls - Only show if there are search results */}
+                {searchResults.length > 0 && (
+                  <Flex justifyContent="space-between" mt={4}>
+                    <Button onClick={handlePreviousPage} isDisabled={page === 0}>Previous</Button>
+                    <Button onClick={handleNextPage} isDisabled={!hasMoreResults}>Next</Button>
+                  </Flex>
+                )}
+              </Flex>
+            </Grid>
+          </Flex>               
+        </Box>
+      </Flex>
+    </Stack>
   );
 };
 
 export default FindTournamentPage;
+
