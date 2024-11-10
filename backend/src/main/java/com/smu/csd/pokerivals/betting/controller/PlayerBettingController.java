@@ -56,8 +56,8 @@ public class PlayerBettingController {
         playerBettingService.placeBet(userDetails.getUsername(),dto);
     }
 
-    @GetMapping("/bet")
-    @Operation(summary = "predict bet win")
+    @PatchMapping("/bet")
+    @Operation(summary = "predict bet win, this is patch because javascript dont support body with get request")
     public PlayerBettingService.WinPredictionDTO predictBet(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody @Valid PlayerBettingService.PlaceOrModifyBetDTO dto
