@@ -1,5 +1,6 @@
 package com.smu.csd.pokerivals.betting.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.user.entity.Player;
@@ -35,6 +36,7 @@ public class PlaceBetTransaction extends Transaction{
 
     @ManyToOne
     @NotNull
+    @JsonIgnore
     private Match match;
 
     @Enumerated(EnumType.ORDINAL)
@@ -46,6 +48,14 @@ public class PlaceBetTransaction extends Transaction{
             this.changeInCents=0;
             this.cancelled = true;
         }
+    }
+
+    public void modifyBetAmount(@Positive long betAmount){
+        if (!match.getMatchResult().equals(MatchResult.PENDING)){
+            throw new IllegalArgumentException("Match has concluded");
+        }
+        this.betAmount = betAmount;
+        this.changeInCents  = -betAmount;
     }
 
     @Positive

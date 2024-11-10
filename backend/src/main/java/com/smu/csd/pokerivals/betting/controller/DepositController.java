@@ -1,4 +1,4 @@
-package com.smu.csd.pokerivals.betting;
+package com.smu.csd.pokerivals.betting.controller;
 
 import com.google.gson.JsonSyntaxException;
 import com.smu.csd.pokerivals.betting.service.DepositService;
