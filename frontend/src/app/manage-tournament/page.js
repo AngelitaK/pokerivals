@@ -91,7 +91,7 @@ const ManageTournamentPage = () => {
         const fetchTournaments = async () => {
             try {
                 const response = await axios.get(
-                    `http://localhost:8080/admin/tournament/me?page=${page}&limit=${pageSize}`
+                    `/admin/tournament/me?page=${page}&limit=${pageSize}`
                 );
 
                 if (response.status !== 200) {

@@ -241,10 +241,10 @@ const TournamentDetails = ({ params }) => {
                 <Text>Loading team data...</Text>
               </VStack>
             ) : (
-              <Flex gap={3} wrap="wrap" justify="center" maxW="100%" mx="auto">
+              <Flex gap={2} wrap="wrap" justify="center" maxW="100%" mx="auto">
                 {teamData.length > 0 ? (
                   teamData.map((pokemonData, index) => (
-                    <Box key={index} width="calc(33.33% - 16px)" mb={3}>
+                    <Box key={index} width="calc(33.33% - 16px)" mb={4}>
                       <PokemonDataCard pokemonData={pokemonData} />
                     </Box>
                   ))

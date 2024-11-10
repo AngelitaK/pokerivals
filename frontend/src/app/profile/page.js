@@ -136,7 +136,7 @@ const ProfilePage = () => {
                 <Text fontWeight="bold" fontSize="xl">
                   Points
                 </Text>
-                <Text color="gray.600" fontSize="lg">{userInfo?.points}</Text>
+                <Text color="gray.600" fontSize="lg">{userInfo?.points.toFixed(0)}</Text>
               </Box>
           </SimpleGrid>
 

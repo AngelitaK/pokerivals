@@ -1,19 +1,36 @@
 "use client"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Flex, Text, Button, Stack, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Select, Input } from "@chakra-ui/react";
 import axios from "../../config/axiosInstance";
 
-const BetModal = ({ isOpen, onClose, player1, player2, odds1, odds2, matchId }) => {
-    const [selectedPlayer, setSelectedPlayer] = useState(player1);
+const BetModal = ({ isOpen, onClose, details }) => {
+    const teamA = details.teams[0].id
+    const teamB = details.teams[1].id
+    const odds1 = details.teams[0].winRate
+    const odds2 = details.teams[1].winRate
+
+    const [selectedPlayer, setSelectedPlayer] = useState(teamA);
     const [betAmount, setBetAmount] = useState("");
+    const [expectedWin, setExpectedWin] = useState(0);
+
+    useEffect(() => {
+        const response = axios.get(`/transaction/betting/bet?matchId=%7B%22tournamentId%22%3A%22${details.tournamentId}%22%2C%22depth%22%3A${details.depth}%2C%22index%22%3A${details.index}%7D&betAmountInCents=${betAmount}&side=${selectedPlayer}`)
+
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch data`);
+        }
+
+        const data = response.data
+        setExpectedWin(data.winAmountInCents);
+    })
 
     const handleConfirm = async () => {
         try {
             const requestBody = {
                 matchId: {
-                    tournamentId: matchId.tournamentId, // Pass the tournament ID dynamically
-                    depth: matchId.depth,
-                    index: matchId.index
+                    tournamentId: details.tournamentId, // Pass the tournament ID dynamically
+                    depth: details.depth,
+                    index: details.index
                 },
                 betAmountInCents: parseInt(betAmount) * 100, // Assuming betAmount is in dollars, convert to cents
                 side: selectedPlayer
@@ -43,12 +60,12 @@ const BetModal = ({ isOpen, onClose, player1, player2, odds1, odds2, matchId }) 
                 <ModalHeader textAlign="center">
                     <Flex justify="space-between" align="center">
                         <Stack align="center" ml="10">
-                            <Text fontWeight="bold" fontSize="lg">{player1}</Text>
+                            <Text fontWeight="bold" fontSize="lg">{teamA}</Text>
                             <Text fontSize="sm">Odds: {odds1}</Text>
                         </Stack>
                         <Text fontSize="2xl" fontWeight="bold" color="red.500">VS</Text>
                         <Stack align="center" mr="10">
-                            <Text fontWeight="bold" fontSize="lg">{player2}</Text>
+                            <Text fontWeight="bold" fontSize="lg">{teamB}</Text>
                             <Text fontSize="sm">Odds: {odds2}</Text>
                         </Stack>
                     </Flex>
@@ -59,8 +76,8 @@ const BetModal = ({ isOpen, onClose, player1, player2, odds1, odds2, matchId }) 
                         <Flex align="center" justify="space-between">
                             <Text>Bet Player</Text>
                             <Select value={selectedPlayer} onChange={(e) => setSelectedPlayer(e.target.value)} width="60%">
-                                <option value={player1}>{player1}</option>
-                                <option value={player2}>{player2}</option>
+                                <option value="TEAM_A">{teamA}</option>
+                                <option value="TEAM_B">{teamB}</option>
                             </Select>
                         </Flex>
                         <Flex align="center" justify="space-between">
@@ -72,6 +89,7 @@ const BetModal = ({ isOpen, onClose, player1, player2, odds1, odds2, matchId }) 
                                 width="60%"
                             />
                         </Flex>
+                        <Text>Expected Reward: 🪙{expectedWin}</Text>
                     </Flex>
                 </ModalBody>
                 <ModalFooter>

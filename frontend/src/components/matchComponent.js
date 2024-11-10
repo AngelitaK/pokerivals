@@ -1,4 +1,3 @@
-"use client"
 import React, { useState, useRef } from 'react';
 import {
   Box,
@@ -38,7 +37,7 @@ const MatchComponent = ({ seed, toast }) => {
       return;
     }
 
-    axios.post('http://localhost:8080/tournament/match/timing', {
+    axios.post('/tournament/match/timing', {
       matchId: {
         tournamentId: seed.tournament_id,
         depth: seed.depth,
@@ -60,7 +59,7 @@ const MatchComponent = ({ seed, toast }) => {
 
   const handleConfirmResult = () => {
 
-    axios.patch('http://localhost:8080/tournament/match/result', {
+    axios.patch('/tournament/match/result', {
       matchId: {
         tournamentId: seed.tournament_id,
         depth: seed.depth,
@@ -76,7 +75,7 @@ const MatchComponent = ({ seed, toast }) => {
           duration: 3000,
           isClosable: true,
         });
-        onClose(); // Close the modal after submission
+        onClose();
       })
       .catch(error => console.error('Error updating result:', error));
   };
@@ -92,13 +91,18 @@ const MatchComponent = ({ seed, toast }) => {
       });
       return;
     }
-    onOpen(); // Open the confirmation modal
+    onOpen();
   };
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="md" boxShadow="md" mb={4} bg="gray.50">
-      <fieldset disabled={seed.forfeited}>
-        <VStack align="start" spacing={2}>
+      <HStack
+        spacing={4}
+        align="start"
+        flexDirection={{ base: 'column', md: 'row' }} // Responsive layout: column on small screens, row on larger screens
+      >
+        {/* Left Column */}
+        <VStack align="start" spacing={2} width={{ base: '100%', md: '50%' }}>
           <HStack>
             <Text fontWeight="bold">{seed.teams[0].id}</Text>
             <Text color="red.500">VS</Text>
@@ -108,7 +112,11 @@ const MatchComponent = ({ seed, toast }) => {
           <Text>{seed.teams[0].id} Status: {seed.team_a_agree_timing}</Text>
           <Text>{seed.teams[1].id} Status: {seed.team_b_agree_timing}</Text>
           <Text>Overall Status: {seed.both_agree_timing}</Text>
-          <HStack>
+        </VStack>
+
+        {/* Right Column */}
+        <VStack align="start" spacing={2} width={{ base: '100%', md: '50%' }}>
+          <HStack width="100%">
             <Input
               placeholder="Propose Time"
               value={proposedTime}
@@ -121,7 +129,11 @@ const MatchComponent = ({ seed, toast }) => {
               colorScheme="blue"
               onClick={handleProposeTime}
               isDisabled={bothPlayersAccepted}
-              width={'fit-content'}
+              width="fit-content"
+              minWidth="120px"
+              padding="0.5rem 1rem" 
+              minW="120px" 
+              minH="40px"
             >
               Propose Time
             </Button>
@@ -141,41 +153,30 @@ const MatchComponent = ({ seed, toast }) => {
             onClick={handleSubmitClick}
             isDisabled={!seed.can_set_result}
             mt={2}
+            alignSelf="flex-end"
           >
             Submit
           </Button>
         </VStack>
+      </HStack>
 
-        {/* Confirmation Modal */}
-        <AlertDialog
-          isOpen={isOpen}
-          leastDestructiveRef={cancelRef}
-          onClose={onClose}
-        >
-          <AlertDialogOverlay>
-            <AlertDialogContent>
-              <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                Confirm Result
-              </AlertDialogHeader>
-
-              <AlertDialogBody>
-                Are you sure you want to submit the result with <b>{selectedWinner}</b> as the winner?
-              </AlertDialogBody>
-
-              <AlertDialogFooter>
-                <Button colorScheme="red" ref={cancelRef} onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button colorScheme="green" onClick={handleConfirmResult} ml={3}>
-                  Confirm
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialogOverlay>
-        </AlertDialog>
-      </fieldset>
+      {/* Confirmation Modal */}
+      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">Confirm Result</AlertDialogHeader>
+            <AlertDialogBody>
+              Are you sure you want to submit the result with <b>{selectedWinner}</b> as the winner?
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button colorScheme="red" ref={cancelRef} onClick={onClose}>Cancel</Button>
+              <Button colorScheme="green" onClick={handleConfirmResult} ml={3}>Confirm</Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
-}
+};
 
 export default MatchComponent;
