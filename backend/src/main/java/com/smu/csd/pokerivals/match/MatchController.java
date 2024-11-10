@@ -3,12 +3,15 @@ package com.smu.csd.pokerivals.match;
 import com.smu.csd.pokerivals.match.entity.MatchWrapper;
 import com.smu.csd.pokerivals.record.Message;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,5 +65,17 @@ public class MatchController {
     public Message suggestMatchTiming(@RequestBody @Valid MatchService.ApproveRejectMatchTimingDTO dto,@AuthenticationPrincipal UserDetails userDetail){
         matchService.approveOrRejectMatchTiming(dto,userDetail.getUsername());
         return new Message("Result set");
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get my (admin) matches between two times (i.e. point in time)")
+    public MatchService.MatchPageDTO getMatchesForPlayerBetweenDates(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "start of period to search ISO-8601 compliant") @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime start,
+            @Parameter(description = "end of period to search ISO-8601 compliant") @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime end,
+            @Parameter(description = "page of pokemon to get (start from zero)") @RequestParam("page") Integer page,
+            @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize
+    ) {
+        return matchService.getMatchesForAdminBetweenDates(userDetails.getUsername(),start,end,page,pageSize);
     }
 }

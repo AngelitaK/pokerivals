@@ -6,6 +6,7 @@ import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.match.entity.MatchWrapper;
+import com.smu.csd.pokerivals.match.repository.MatchPagingRepository;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
 import com.smu.csd.pokerivals.tournament.entity.Team;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
@@ -13,6 +14,7 @@ import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -29,13 +31,15 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final DateFactory dateFactory;
     private final NotificationService notificationService;
+    private final MatchPagingRepository matchPagingRepository;
 
     @Autowired
-    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory, NotificationService notificationService) {
+    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory, NotificationService notificationService, MatchPagingRepository matchPagingRepository) {
         this.tournamentRepository = tournamentRepository;
         this.matchRepository = matchRepository;
         this.dateFactory = dateFactory;
         this.notificationService = notificationService;
+        this.matchPagingRepository = matchPagingRepository;
     }
 
     /**
@@ -258,6 +262,17 @@ public class MatchService {
         } else {
             throw new IllegalArgumentException("You are not admin for this match");
         }
+    }
+
+    public record MatchPageDTO(List<Match> matches, long count){}
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Transactional
+    public MatchPageDTO getMatchesForAdminBetweenDates(String username, ZonedDateTime start, ZonedDateTime end , int page, int limit){
+        return new MatchPageDTO(
+                matchPagingRepository.findByTimeMatchOccursBetweenAndTournament_Admin_Username(start,end, username, PageRequest.of(page, limit)),
+                matchRepository.countByTimeMatchOccursBetweenAndTournament_Admin_Username(start,end,username)
+        );
     }
 
 }

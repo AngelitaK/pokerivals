@@ -9,10 +9,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static java.lang.Math.round;
 
@@ -138,16 +135,18 @@ public class Match {
             teamA = this.teamA;
             teamB = this.teamB;
         }
-        return List.of(
-                new MatchWrapper.TeamInMatchDTO(
-                        (teamA == null ? "" : teamA.getPlayerUsername()),
-                        (teamA == null ? 0.0 : teamA.getPlayer().getPoints()),
-                        teamA == null
-                ),
-                new MatchWrapper.TeamInMatchDTO(
-                        (teamB == null ? "" : teamB.getPlayerUsername()),
-                        (teamB == null ? 0.0 : teamB.getPlayer().getPoints()),
-                        teamB == null
+        return new ArrayList<>(
+                List.of(
+                        new MatchWrapper.TeamInMatchDTO(
+                                (teamA == null ? "" : teamA.getPlayerUsername()),
+                                (teamA == null ? 0.0 : teamA.getPlayer().getPoints()),
+                                teamA == null
+                        ),
+                        new MatchWrapper.TeamInMatchDTO(
+                                (teamB == null ? "" : teamB.getPlayerUsername()),
+                                (teamB == null ? 0.0 : teamB.getPlayer().getPoints()),
+                                teamB == null
+                        )
                 )
         );
     }
@@ -170,7 +169,9 @@ public class Match {
      * @return whether a Bye occurred
      */
     public boolean finaliseTeamA(Team team, ZonedDateTime today){
-        if (teamA != null){
+        if (teamA != null && team != null) {
+            throw new IllegalArgumentException("You are not allowed to overwrite the team");
+        } else if (teamA != null){
             // Forfeit
             forfeitedTeam = teamA;
         }
@@ -205,7 +206,9 @@ public class Match {
      * @return whether a Bye occurred
      */
     public boolean finaliseTeamB(Team team, ZonedDateTime today){
-        if (teamB != null){
+        if (teamB != null && team != null) {
+            throw new IllegalArgumentException("You are not allowed to overwrite the team");
+        } else if (teamB != null){
             // Forfeit
             forfeitedTeam = teamB;
         }
@@ -410,6 +413,7 @@ public class Match {
     private ZonedDateTime timeMatchOccurs;
     @Setter(AccessLevel.NONE)
     private ZonedDateTime timeMatchOccursSetOn;
+
 
     public void setTimeMatchOccursAndResetAgreement(ZonedDateTime eventTime, ZonedDateTime today){
         if (!matchResult.equals(MatchResult.PENDING)){
