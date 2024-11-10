@@ -12,7 +12,8 @@ import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.record.Message;
 import com.smu.csd.pokerivals.security.AuthenticationController;
-import com.smu.csd.pokerivals.tournament.TournamentAdminService;
+import com.smu.csd.pokerivals.tournament.service.TournamentAdminService;
+import com.smu.csd.pokerivals.tournament.controller.TournamentAdminController;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
 import com.smu.csd.pokerivals.tournament.entity.*;
 import com.smu.csd.pokerivals.tournament.repository.TeamRepository;
@@ -146,7 +147,7 @@ public class TournamentAdminIntegrationTest {
                         ZonedDateTime.now().plusHours(1)
                 ));
 
-        var result = restTemplate.exchange(uri,HttpMethod.POST,createStatefulResponse(username,tournament) , com.smu.csd.pokerivals.tournament.TournamentAdminController.TournamentIDMessage.class);
+        var result = restTemplate.exchange(uri,HttpMethod.POST,createStatefulResponse(username,tournament) , TournamentAdminController.TournamentIDMessage.class);
 
         assertEquals(200, result.getStatusCode().value());
         Tournament t = tournamentRepository.getTournamentById(result.getBody().tournamentId()).get();
@@ -201,7 +202,7 @@ public class TournamentAdminIntegrationTest {
                         ZonedDateTime.now().minusHours(3)
                 ));
 
-        var result = restTemplate.exchange(uri,HttpMethod.POST,createStatefulResponse(username,tournament) , com.smu.csd.pokerivals.tournament.TournamentAdminController.TournamentIDMessage.class);
+        var result = restTemplate.exchange(uri,HttpMethod.POST,createStatefulResponse(username,tournament) , TournamentAdminController.TournamentIDMessage.class);
 
         assertEquals(200, result.getStatusCode().value());
         Tournament t = tournamentRepository.getTournamentById(result.getBody().tournamentId()).get();
@@ -244,7 +245,7 @@ public class TournamentAdminIntegrationTest {
                         ZonedDateTime.now().plusHours(2)
                 ));
 
-        var result = restTemplate.exchange(uri,HttpMethod.POST,createStatefulResponse(username,tournament) , com.smu.csd.pokerivals.tournament.TournamentAdminController.TournamentIDMessage.class);
+        var result = restTemplate.exchange(uri,HttpMethod.POST,createStatefulResponse(username,tournament) , TournamentAdminController.TournamentIDMessage.class);
 
         assertEquals(200, result.getStatusCode().value());
         Tournament t = tournamentRepository.getTournamentById(result.getBody().tournamentId()).get();
@@ -256,7 +257,7 @@ public class TournamentAdminIntegrationTest {
                 "Mary Woodard","Samantha Brooks","Gerald Marsh"
         };
 
-        var dto = new com.smu.csd.pokerivals.tournament.TournamentAdminController.InviteDTO(List.of(playersToInvite));
+        var dto = new TournamentAdminController.InviteDTO(List.of(playersToInvite));
 
         builder.setPathSegments("admin", "tournament", "closed", t.getId().toString(),"invitation");
 

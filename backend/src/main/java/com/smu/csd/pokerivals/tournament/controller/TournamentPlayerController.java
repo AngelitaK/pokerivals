@@ -1,6 +1,7 @@
-package com.smu.csd.pokerivals.tournament;
+package com.smu.csd.pokerivals.tournament.controller;
 
 import com.smu.csd.pokerivals.record.Message;
+import com.smu.csd.pokerivals.tournament.service.TournamentPlayerService;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

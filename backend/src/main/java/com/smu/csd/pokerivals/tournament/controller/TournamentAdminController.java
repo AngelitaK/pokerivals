@@ -1,6 +1,7 @@
-package com.smu.csd.pokerivals.tournament;
+package com.smu.csd.pokerivals.tournament.controller;
 
 import com.smu.csd.pokerivals.record.Message;
+import com.smu.csd.pokerivals.tournament.service.TournamentAdminService;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
 import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;

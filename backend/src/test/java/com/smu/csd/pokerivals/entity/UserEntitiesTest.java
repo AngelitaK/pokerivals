@@ -53,12 +53,8 @@ public class UserEntitiesTest {
             assertEquals("apple", "banana");
         }
 
-        if (u2_found instanceof Admin a){
-            assertNull(a.getActiveSince());
-        } else {
-            assertEquals("apple", "banana");
-            // TODO: find better way to handle this
-        }
+        assertInstanceOf(Admin.class, u2_found);
+        assertNull( ((Admin) u2_found).getActiveSince());
 
     }
 

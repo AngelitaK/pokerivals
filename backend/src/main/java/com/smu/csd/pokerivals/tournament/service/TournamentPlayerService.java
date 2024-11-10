@@ -1,4 +1,4 @@
-package com.smu.csd.pokerivals.tournament;
+package com.smu.csd.pokerivals.tournament.service;
 
 
 import com.smu.csd.pokerivals.NotificationService;

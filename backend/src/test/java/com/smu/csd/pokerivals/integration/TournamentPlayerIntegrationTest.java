@@ -12,7 +12,7 @@ import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.record.Message;
 import com.smu.csd.pokerivals.security.AuthenticationController;
-import com.smu.csd.pokerivals.tournament.TournamentPlayerService;
+import com.smu.csd.pokerivals.tournament.service.TournamentPlayerService;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
 import com.smu.csd.pokerivals.tournament.entity.*;
 import com.smu.csd.pokerivals.tournament.repository.ChosenPokemonRepository;
