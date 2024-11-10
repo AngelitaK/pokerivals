@@ -16,7 +16,13 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest()
+@DataJpaTest(properties = {
+//        "spring.datasource.url=jdbc:mysql://localhost:3306/test",
+//        "spring.jpa.hibernate.ddl-auto=update",
+//        "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver",
+//        "spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect"
+})
+//@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 public class PokemonEntityTest {
     @Autowired

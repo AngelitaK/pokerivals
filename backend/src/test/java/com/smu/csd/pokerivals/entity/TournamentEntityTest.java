@@ -36,8 +36,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataJpaTest()
 @ActiveProfiles("test")
+@DataJpaTest(properties = {
+//        "spring.datasource.url=jdbc:mysql://localhost:3306/test",
+//        "spring.jpa.hibernate.ddl-auto=update",
+//        "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver",
+//        "spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect"
+})
+//@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class TournamentEntityTest {
     @Autowired
     private TestEntityManager testEM;
@@ -79,7 +85,6 @@ public class TournamentEntityTest {
     }
 
     @Test
-    @DirtiesContext
     public void testJoinAndLeaveTournament(){
         long initialNoOfTeams = teamRepository.count();
         long initialNoOfChosenPokemon = chosenPokemonRepository.count();
@@ -154,3 +159,4 @@ public class TournamentEntityTest {
         return clazz.getEnumConstants()[x];
     }
 }
+
