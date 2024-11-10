@@ -1,5 +1,8 @@
 package com.smu.csd.pokerivals.entity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.smu.csd.pokerivals.configuration.LoadData;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
@@ -22,16 +25,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.core.env.Environment;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Slf4j
-//@ActiveProfiles("test")
+@ActiveProfiles("test")
 public class TournamentEntityTest {
     private final TournamentRepository tournamentRepository;
     private final TeamRepository teamRepository;
@@ -72,7 +80,7 @@ public class TournamentEntityTest {
     }
 
     @Test
-    public void testJoinOpenTournament(){
+    public void testJoinOpenTournament() throws JsonProcessingException {
         Player player = (Player) userRepository.findById("fake_player").orElseThrow();
         Set<Move> movesAffected = new HashSet<>();
 
@@ -80,6 +88,8 @@ public class TournamentEntityTest {
         Tournament tournament = tournamentRepository.getTournamentById(openTournamentId).orElseThrow();
         assertEquals("meow", tournament.getName());
         assertEquals("fake_admin", tournament.getAdminUsername());
+
+        log.info(new ObjectMapper().findAndRegisterModules().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).writeValueAsString(tournament));
 
         Team team = new Team(player,tournament);
         tournament.addTeam(team, ZonedDateTime.now());
@@ -90,15 +100,20 @@ public class TournamentEntityTest {
             ChosenPokemon chosenPokemon = new ChosenPokemon(team,pokemon);
             chosenPokemon.setAbility(getRandomSetElement(pokemon.getAbilities()));
 
-            Set<Move> movesAdded = new HashSet<>();
-            while(movesAdded.size() < 5){
-                Move m = getRandomSetElement(pokemon.getMoves());
-                if(!movesAdded.contains(m)){
-                    movesAdded.add(m);
-                    chosenPokemon.learnMove(m);
-                    movesAffected.add(m);
-                }
+            Set<String> moveNames = new HashSet<>();
+            Set<String> chosenMoves = new HashSet<>();
+
+            pokemon.getMoves().forEach(move ->{
+                moveNames.add(move.getName());
+            });
+
+            while (chosenMoves.size() < 5){
+                chosenMoves.add(getRandomSetElement(moveNames));
             }
+
+            chosenMoves.forEach(moveName ->{
+                chosenPokemon.learnMove(moveRepository.findById(moveName).orElseThrow());
+            });
             chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
             team.addChosenPokemon(chosenPokemon);
         }
@@ -160,14 +175,20 @@ public class TournamentEntityTest {
             chosenPokemon.setAbility(getRandomSetElement(pokemon.getAbilities()));
 
             Set<Move> movesAdded = new HashSet<>();
-            while(movesAdded.size() < 5){
-                Move m = getRandomSetElement(pokemon.getMoves());
-                if(!movesAdded.contains(m)){
-                    movesAdded.add(m);
-                    chosenPokemon.learnMove(m);
-                    movesAffected.add(m);
-                }
+            Set<String> moveNames = new HashSet<>();
+            Set<String> chosenMoves = new HashSet<>();
+
+            pokemon.getMoves().forEach(move ->{
+                moveNames.add(move.getName());
+            });
+
+            while (chosenMoves.size() < 5){
+                chosenMoves.add(getRandomSetElement(moveNames));
             }
+
+            chosenMoves.forEach(moveName ->{
+                chosenPokemon.learnMove(moveRepository.findById(moveName).orElseThrow());
+            });
             chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
             team.addChosenPokemon(chosenPokemon);
         }
@@ -204,14 +225,14 @@ public class TournamentEntityTest {
         }
     }
 
-    private static final Random random = new Random();
+    private static final ThreadLocalRandom random = ThreadLocalRandom.current();
 
     public static <T extends Enum<?>> T randomEnum(Class<T> clazz){
         int x = random.nextInt(clazz.getEnumConstants().length);
         return clazz.getEnumConstants()[x];
     }
 
-    static <E> E getRandomSetElement(Set<E> set) {
+    public static <E> E getRandomSetElement(Set<E> set) {
         return set.stream().skip(random.nextInt(set.size())).findFirst().orElse(null);
     }
 
