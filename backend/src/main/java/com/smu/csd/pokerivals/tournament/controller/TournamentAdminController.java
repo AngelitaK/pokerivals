@@ -1,10 +1,9 @@
 package com.smu.csd.pokerivals.tournament.controller;
 
 import com.smu.csd.pokerivals.record.Message;
-import com.smu.csd.pokerivals.tournament.service.TournamentAdminService;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
-import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
+import com.smu.csd.pokerivals.tournament.service.TournamentAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
@@ -46,13 +45,12 @@ public class TournamentAdminController {
     }
 
 
-    @PutMapping("/{id}")
-    @Operation(summary = "modify a tournament (BOTH OPEN AND CLOSE)", description = "only for admins" +
-            "NOTE: even though this accepts OPEN tournament, it also works for closed" +
+    @PatchMapping("/{id}")
+    @Operation(summary = "modify a tournament (BOTH OPEN AND CLOSED)", description = "only for admins" +
             "name, description, max team capacity, and estimated tournament period can be modified freely" +
             " and registration period can only be modified during or before registration period")
-    public Message createClosedTournament(@RequestBody @Valid OpenTournament openTournament, @PathVariable String id,@AuthenticationPrincipal UserDetails userDetails){
-        tournamentAdminService.modifyTournament(UUID.fromString(id), openTournament, userDetails.getUsername());
+    public Message modifyTournament(@RequestBody @Valid TournamentAdminService.ModifyTournamentDTO dto, @PathVariable String id, @AuthenticationPrincipal UserDetails userDetails){
+        tournamentAdminService.modifyTournament(UUID.fromString(id), dto, userDetails.getUsername());
         return new Message("Success!");
     }
 

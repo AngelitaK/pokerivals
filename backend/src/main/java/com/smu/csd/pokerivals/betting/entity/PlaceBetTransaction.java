@@ -21,7 +21,7 @@ import java.time.ZonedDateTime;
 public class PlaceBetTransaction extends Transaction{
 
     public static PlaceBetTransaction createBet(Match match, Player player, @Positive long betAmount, BettingSide bettingSide ,ZonedDateTime today){
-        if (match.isBothTeamsFinalisedAndNotNull() && match.getMatchResult().equals(MatchResult.PENDING)){
+        if (!match.isBothTeamsFinalisedAndNotNull() || !match.getMatchResult().equals(MatchResult.PENDING) || match.isPlayerInMatch(player.getUsername())){
             throw new IllegalArgumentException("Match is not eligible to bet on");
         }
         return  new PlaceBetTransaction(match,player, betAmount,bettingSide,today);

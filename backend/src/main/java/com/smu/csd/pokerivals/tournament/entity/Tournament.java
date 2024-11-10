@@ -2,12 +2,10 @@ package com.smu.csd.pokerivals.tournament.entity;
 
 import com.fasterxml.jackson.annotation.*;
 import com.smu.csd.pokerivals.match.entity.Match;
+import com.smu.csd.pokerivals.tournament.service.TournamentAdminService;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -68,7 +66,7 @@ public abstract class Tournament {
      * Modifiable but only upwards not downwards
      * Use {@link Tournament#setMaxTeamCapacity(int)} to modify
      */
-    @Min(value = 0, message = "The value must be positive")
+    @Positive
     private int maxTeamCapacity = 32;
 
     @JsonSetter("maxTeamCapacity")
@@ -240,16 +238,16 @@ public abstract class Tournament {
      *
      * @param t tournament to overwrite this attrubute with
      */
-    public void modify(Tournament t, ZonedDateTime today){
+    public void modify(TournamentAdminService.ModifyTournamentDTO t, ZonedDateTime today){
         if (registrationPeriod.isBefore(today)){
             throw new IllegalArgumentException("cannot modify tournament after registration period");
         }
 
-        this.registrationPeriod = t.getRegistrationPeriod();
-        this.name = t.getName();
-        this.description = t.getDescription();
-        this.setMaxTeamCapacity(t.getMaxTeamCapacity());
-        this.estimatedTournamentPeriod = t.getEstimatedTournamentPeriod();
+        this.registrationPeriod = t.registrationPeriod();
+        this.name = t.name();
+        this.description = t.description();
+        this.setMaxTeamCapacity(t.maxTeamCapacity());
+        this.estimatedTournamentPeriod = t.estimatedTournamentPeriod();
     }
 
     @OneToMany (mappedBy = "tournament", cascade = CascadeType.ALL,orphanRemoval = true)

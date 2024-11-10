@@ -34,6 +34,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -129,6 +130,7 @@ public class TournamentAdminIntegrationTest {
 
     @Test
     public void createAndModifyOpenTournament_success() throws URISyntaxException, JsonProcessingException {
+        restTemplate.getRestTemplate().setRequestFactory(new JdkClientHttpRequestFactory());
         when(dateFactory.getToday()).thenReturn(ZonedDateTime.now());
 
         URIBuilder builder = new URIBuilder()
@@ -158,14 +160,18 @@ public class TournamentAdminIntegrationTest {
 
         //modify during registration
         uri = builder.build();
-        tournament = new OpenTournament("changed_tournament", null,
-                null, // will be converted by jackson mapper!
+        var dto = new TournamentAdminService.ModifyTournamentDTO(
                 new Tournament.RegistrationPeriod(
                         ZonedDateTime.now().plusHours(2),
                         ZonedDateTime.now().plusHours(2).plusMinutes(30)
-                ));
+                ),"changed_tournament", null,
+                40,
+                new Tournament.EstimatedTournamentPeriod(
+                        ZonedDateTime.now().plusHours(3),
+                        ZonedDateTime.now().plusHours(3).plusMinutes(30)
+                )); // will be converted by jackson mapper!
 
-        var result2 = restTemplate.exchange(uri,HttpMethod.PUT,createStatefulResponse(username, tournament) , Message.class);
+        var result2 = restTemplate.exchange(uri,HttpMethod.PATCH,createStatefulResponse(username, dto) , Message.class);
         assertEquals(200, result2.getStatusCode().value());
         t = tournamentRepository.getTournamentById(result.getBody().tournamentId()).get();
         assertNotNull(t);
@@ -181,12 +187,13 @@ public class TournamentAdminIntegrationTest {
 
         //modify before registration
         builder.setPathSegments("admin","tournament",t.getId().toString());
-        result2 = restTemplate.exchange(builder.build(),HttpMethod.PUT,createStatefulResponse(username, tournament) , Message.class);
+        result2 = restTemplate.exchange(builder.build(),HttpMethod.PATCH,createStatefulResponse(username, dto) , Message.class);
         assertEquals(200, result2.getStatusCode().value());
     }
 
     @Test
     public void createAndModifyOpenTournament_fail_afterClosed() throws URISyntaxException, JsonProcessingException {
+        restTemplate.getRestTemplate().setRequestFactory(new JdkClientHttpRequestFactory());
         when(dateFactory.getToday()).thenReturn(ZonedDateTime.now());
         URIBuilder builder = new URIBuilder()
                 .setHost("localhost")
@@ -213,14 +220,18 @@ public class TournamentAdminIntegrationTest {
         builder.setPathSegments("admin","tournament",t.getId().toString());
 
         uri = builder.build();
-        tournament = new OpenTournament("changed_tournament", null,
-                null, // will be converted by jackson mapper!
+        var dto = new TournamentAdminService.ModifyTournamentDTO(
                 new Tournament.RegistrationPeriod(
-                        ZonedDateTime.now().plusHours(0),
-                        ZonedDateTime.now().plusHours(1)
-                ));
+                        ZonedDateTime.now().plusHours(2),
+                        ZonedDateTime.now().plusHours(2).plusMinutes(30)
+                ),"changed_tournament", null,
+                40,
+                new Tournament.EstimatedTournamentPeriod(
+                        ZonedDateTime.now().plusHours(3),
+                        ZonedDateTime.now().plusHours(3).plusMinutes(30)
+                )); // will be converted by jackson mapper!
 
-        var result2 = restTemplate.exchange(uri,HttpMethod.PUT,createStatefulResponse(username, tournament) , Message.class);
+        var result2 = restTemplate.exchange(uri,HttpMethod.PATCH,createStatefulResponse(username, dto) , Message.class);
         assertEquals(400, result2.getStatusCode().value());
         t = tournamentRepository.getTournamentById(result.getBody().tournamentId()).get();
         assertNotNull(t);

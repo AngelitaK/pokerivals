@@ -1,8 +1,12 @@
 package com.smu.csd.pokerivals.betting.service;
 
 import com.smu.csd.pokerivals.betting.dto.TransactionPageDTO;
+import com.smu.csd.pokerivals.betting.entity.BettingSide;
+import com.smu.csd.pokerivals.betting.entity.PlaceBetTransaction;
 import com.smu.csd.pokerivals.betting.repository.*;
 import com.smu.csd.pokerivals.configuration.DateFactory;
+import com.smu.csd.pokerivals.match.entity.Match;
+import com.smu.csd.pokerivals.match.repository.MatchRepository;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -14,11 +18,13 @@ import org.springframework.stereotype.Service;
 public class PlayerBettingService {
     private final PlayerRepository playerRepository;
     private final DateFactory dateFactory;
+    private final MatchRepository matchRepository;
 
     @Autowired
-    public PlayerBettingService(PlayerRepository playerRepository, DateFactory dateFactory, PlaceBetTransactionRepository placeBetTransactionRepository, PlaceBetTransactionPagingRepository placeBetTransactionPagingRepository, WinBetTransactionRepository winBetTransactionRepository, WinBetTransactionPagingRepository winBetTransactionPagingRepository, TransactionRepository transactionRepository) {
+    public PlayerBettingService(PlayerRepository playerRepository, DateFactory dateFactory, MatchRepository matchRepository, PlaceBetTransactionRepository placeBetTransactionRepository, PlaceBetTransactionPagingRepository placeBetTransactionPagingRepository, WinBetTransactionRepository winBetTransactionRepository, WinBetTransactionPagingRepository winBetTransactionPagingRepository, TransactionRepository transactionRepository) {
         this.playerRepository = playerRepository;
         this.dateFactory = dateFactory;
+        this.matchRepository = matchRepository;
         this.placeBetTransactionRepository = placeBetTransactionRepository;
         this.placeBetTransactionPagingRepository = placeBetTransactionPagingRepository;
         this.winBetTransactionRepository = winBetTransactionRepository;
@@ -55,8 +61,13 @@ public class PlayerBettingService {
         );
     }
 
-    public void placeBet(){
+    public record PlaceOrModifyBetDTO(Match.MatchId matchId, long betAmountInCents, BettingSide side){}
+    public void placeBet(String playerUsername, PlaceOrModifyBetDTO dto){
+        var player = playerRepository.findById(playerUsername).orElseThrow();
+        var match = matchRepository.findById(dto.matchId).orElseThrow();
+        var bet = PlaceBetTransaction.createBet(match,player, dto.betAmountInCents, dto.side, dateFactory.getToday());
 
+        bet = placeBetTransactionRepository.save(bet);
     }
     public void modifyBet(){
 

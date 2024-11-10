@@ -16,6 +16,8 @@ import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.AdminRepository;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -60,7 +62,14 @@ public class TournamentAdminService {
         return tournament.getId();
     }
 
-    public void modifyTournament(UUID tournamentId, Tournament tournamentToTakeAttributesFrom, String adminUsername){
+    public record ModifyTournamentDTO(
+            Tournament.RegistrationPeriod registrationPeriod,
+            @Size(max=100) String name,
+            String description,
+            @Positive int maxTeamCapacity,
+            Tournament.EstimatedTournamentPeriod estimatedTournamentPeriod
+    ){}
+    public void modifyTournament(UUID tournamentId, ModifyTournamentDTO tournamentToTakeAttributesFrom, String adminUsername){
         Tournament tournament = tournamentRepository.getTournamentById(tournamentId).orElseThrow();
         if (!tournament.getAdmin().getUsername().equals(adminUsername)){
             throw new IllegalArgumentException("You are not manager of this tournament");
