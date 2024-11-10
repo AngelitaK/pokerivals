@@ -261,6 +261,7 @@ public abstract class Tournament {
         this.matches.add(match);
     }
 
+    @JsonGetter("started")
     public boolean hasStarted(){
         return !this.matches.isEmpty();
     }
