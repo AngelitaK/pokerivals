@@ -28,10 +28,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -98,6 +95,9 @@ public class TournamentAdminService {
                 throw new IllegalArgumentException("You are not manager of this tournament");
             }
             List<Player> players = playerRepository.findAllById(usernames);
+            if (players.size() != usernames.size()){
+                throw new NoSuchElementException("some of players are do not exist");
+            }
             ct.addInvitedPlayer(players);
             notificationService.pushNotificationToLambda(new LambdaNotificationDTO(
                     new NotificationDetails(
