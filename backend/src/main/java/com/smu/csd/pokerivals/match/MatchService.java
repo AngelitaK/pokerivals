@@ -58,7 +58,7 @@ public class MatchService {
         if (!tournament.getRegistrationPeriod().isBefore(today)){
             throw new IllegalArgumentException("Tournament registration still open");
         }
-        if (!tournament.getMatches().isEmpty()){
+        if (tournament.hasStarted()){
             throw new IllegalArgumentException("Tournament already started");
         }
 
