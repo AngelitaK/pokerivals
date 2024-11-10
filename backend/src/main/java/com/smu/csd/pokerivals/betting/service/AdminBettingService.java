@@ -1,5 +1,6 @@
 package com.smu.csd.pokerivals.betting.service;
 
+import com.smu.csd.pokerivals.betting.dto.CompletedMatchBettingSummaryDTO;
 import com.smu.csd.pokerivals.betting.dto.MatchBettingSummaryDTO;
 import com.smu.csd.pokerivals.betting.entity.BettingSetting;
 import com.smu.csd.pokerivals.betting.repository.*;
@@ -45,6 +46,17 @@ public class AdminBettingService {
         return new OngoingBetsSummaryPageDTO(
                 placeBetTransactionPagingRepository.getBettingSummaryForFutureMatches(dateFactory.getToday(), PageRequest.of(page,limit)),
                 placeBetTransactionRepository.countBettingSummaryForFutureMatches(dateFactory.getToday())
+        );
+    }
+
+    public record FinishedBetsSummaryPage(
+            List<CompletedMatchBettingSummaryDTO> summaries,
+            long count
+    ){}
+    public FinishedBetsSummaryPage getSummariesOfPastBets(int page, int limit){
+        return new FinishedBetsSummaryPage(
+                placeBetTransactionPagingRepository.getBettingSummaryForPastMatches(PageRequest.of(page,limit)),
+                placeBetTransactionRepository.countBettingSummaryForPastMatches()
         );
     }
 

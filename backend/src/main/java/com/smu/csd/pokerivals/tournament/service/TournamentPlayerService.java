@@ -1,12 +1,11 @@
 package com.smu.csd.pokerivals.tournament.service;
 
 
-import com.smu.csd.pokerivals.notification.service.NotificationService;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.pokemon.entity.Ability;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
-import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
 import com.smu.csd.pokerivals.tournament.entity.ChosenPokemon;
@@ -14,7 +13,6 @@ import com.smu.csd.pokerivals.tournament.entity.Team;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
 import com.smu.csd.pokerivals.tournament.repository.*;
 import com.smu.csd.pokerivals.user.entity.Player;
-import com.smu.csd.pokerivals.user.repository.AdminRepository;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -35,31 +33,26 @@ import java.util.concurrent.atomic.AtomicReference;
 @PreAuthorize("hasAuthority('PLAYER')")
 public class TournamentPlayerService {
 
-    private final AdminRepository adminRepository;
     private final TournamentRepository tournamentRepository;
     private final DateFactory dateFactory;
     private final TournamentPagingRepository tournamentPagingRepository;
     private final PlayerRepository playerRepository;
-    private final NotificationService notificationService;
     private final PokemonRepository pokemonRepository;
     private final TeamRepository teamRepository;
     private final ClosedTournamentPagingRepository closedTournamentPagingRepository;
     private final ClosedTournamentRepository closedTournamentRepository;
 
     @Autowired
-    public TournamentPlayerService(AdminRepository adminRepository, TournamentRepository tournamentRepository, DateFactory dateFactory, TournamentPagingRepository tournamentPagingRepository, PlayerRepository playerRepository, NotificationService notificationService, PokemonRepository pokemonRepository, TeamRepository teamRepository, ClosedTournamentPagingRepository closedTournamentPagingRepository, ClosedTournamentRepository closedTournamentRepository) {
-        this.adminRepository = adminRepository;
+    public TournamentPlayerService(TournamentRepository tournamentRepository, DateFactory dateFactory, TournamentPagingRepository tournamentPagingRepository, PlayerRepository playerRepository, PokemonRepository pokemonRepository, TeamRepository teamRepository, ClosedTournamentPagingRepository closedTournamentPagingRepository, ClosedTournamentRepository closedTournamentRepository) {
         this.tournamentRepository = tournamentRepository;
         this.dateFactory = dateFactory;
         this.tournamentPagingRepository = tournamentPagingRepository;
         this.playerRepository = playerRepository;
-        this.notificationService = notificationService;
         this.pokemonRepository = pokemonRepository;
         this.teamRepository = teamRepository;
         this.closedTournamentPagingRepository = closedTournamentPagingRepository;
         this.closedTournamentRepository = closedTournamentRepository;
     }
-
 
     public record RawPokemonChoiceDTO(
             int pokemonId,
@@ -154,6 +147,5 @@ public class TournamentPlayerService {
                 closedTournamentRepository.countClosedTournamentWherePlayerInvited(player.getUsername())
         );
     }
-
 
 }

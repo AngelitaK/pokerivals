@@ -19,7 +19,9 @@ public interface TournamentPagingRepository extends PagingAndSortingRepository<T
     @Query("select t from Tournament t join t.teams ts where ts.teamId.playerName = :username ORDER BY t.createdAt ASC")
     List<Tournament> findTournamentByPlayerUsername(@Param("username") String playerUsername, Pageable pageable);
 
-    @Query("select t from Tournament t where upper(t.name) like lower(concat('%', :query,'%')) AND t.eloLimit.minElo < :points AND :points < t.eloLimit.maxElo")
+    @Query("select t from Tournament t where lower(t.name) like lower(concat('%', :query,'%')) AND t.eloLimit.minElo < :points AND :points < t.eloLimit.maxElo")
     List<Tournament> searchTournaments(@Param("query") String query,@Param("points") Double points, Pageable pageable);
+
+    List<Tournament> findByNameLikeIgnoreCaseAndEloLimit_MinEloLessThanAndEloLimit_MaxEloLessThan(String query,Double points, Double points2, Pageable pageable);
 
 }

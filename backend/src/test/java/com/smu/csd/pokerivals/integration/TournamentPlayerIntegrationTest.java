@@ -34,6 +34,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -49,6 +50,7 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 //@ActiveProfiles("test") // remove me and u will use the real database
 @Slf4j
+@ActiveProfiles("test")
 public class TournamentPlayerIntegrationTest {
 
     @LocalServerPort
@@ -137,8 +139,8 @@ public class TournamentPlayerIntegrationTest {
                 .setParameter("limit", "10");
 
         var result2 = restTemplate.exchange(builder.build(),HttpMethod.GET,createStatefulResponse(username), TournamentPageDTO.class);
-
         assertEquals(200, result2.getStatusCode().value());
+
         long initialTournaments = result2.getBody().count();
 
         long initialChosenPokemon =chosenPokemonRepository.count();
@@ -418,7 +420,8 @@ public class TournamentPlayerIntegrationTest {
         result = restTemplate.exchange(builder.build(),HttpMethod.GET,createStatefulResponse(username), TournamentPageDTO.class);
 
         assertEquals(200,result.getStatusCode().value());
-        assertEquals(1,result.getBody().count()-initialMatch);;
+        assertEquals(1,result.getBody().count()-initialMatch);
+        log.info(result.getBody().toString());
     }
 
     @Test

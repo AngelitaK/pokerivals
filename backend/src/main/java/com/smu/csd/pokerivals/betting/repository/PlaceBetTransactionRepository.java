@@ -45,4 +45,14 @@ public interface PlaceBetTransactionRepository extends JpaRepository<PlaceBetTra
     long countBettingSummaryForFutureMatches(@Param("today") ZonedDateTime today);
 
     List<PlaceBetTransaction> findByMatch_MatchId(Match.MatchId matchId);
+
+    @Query("""
+            SELECT COALESCE(COUNT(distinct(t.match.matchId)), 0)
+            FROM PlaceBetTransaction t LEFT JOIN t.winBetTransaction wt
+            WHERE
+                t.match.matchResult <> com.smu.csd.pokerivals.match.entity.MatchResult.PENDING AND
+                t.match.matchResult <> com.smu.csd.pokerivals.match.entity.MatchResult.CANCELLED AND
+                t.match.forfeitedTeam is null
+            """)
+    long countBettingSummaryForPastMatches();
 }
