@@ -1,6 +1,7 @@
 package com.smu.csd.pokerivals.betting.entity;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smu.csd.pokerivals.user.entity.Player;
 import com.stripe.model.checkout.Session;
 import jakarta.persistence.Column;
@@ -26,6 +27,7 @@ public class DepositTransaction extends Transaction{
         this.stripeCheckoutSessionId = stripeSession.getId();
     }
 
+    @JsonIgnore
     @Column(unique = true)
     private String stripeCheckoutSessionId;
 

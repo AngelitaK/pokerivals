@@ -1,7 +1,8 @@
 package com.smu.csd.pokerivals.betting.service;
 
+import com.smu.csd.pokerivals.betting.dto.TransactionPageDTO;
 import com.smu.csd.pokerivals.betting.entity.DepositTransaction;
-import com.smu.csd.pokerivals.betting.repository.DepositTransactionRepository;
+import com.smu.csd.pokerivals.betting.repository.*;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
 import com.stripe.Stripe;
@@ -13,17 +14,28 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@PreAuthorize("hasAuthority('PLAYER')")
 public class DepositService {
     @Autowired
-    public DepositService(PlayerRepository playerRepository, DepositTransactionRepository depositTransactionRepository, @Value("${stripe.secret-key}") String apiKey, DateFactory dateFactory) {
+    public DepositService(
+            PlayerRepository playerRepository,
+            DepositTransactionRepository depositTransactionRepository,
+            @Value("${stripe.secret-key}") String apiKey,
+            DateFactory dateFactory,
+            DepositTransactionPagingRepository depositTransactionPagingRepository,
+            TransactionRepository transactionRepository
+    ) {
         this.playerRepository = playerRepository;
         this.depositTransactionRepository = depositTransactionRepository;
         this.dateFactory = dateFactory;
+        this.depositTransactionPagingRepository = depositTransactionPagingRepository;
+        this.transactionRepository = transactionRepository;
         Stripe.apiKey = apiKey;
     }
 
@@ -38,6 +50,8 @@ public class DepositService {
     private final PlayerRepository playerRepository;
     private final DepositTransactionRepository depositTransactionRepository;
     private final DateFactory dateFactory;
+    private final DepositTransactionPagingRepository depositTransactionPagingRepository;
+    private final TransactionRepository transactionRepository;
 
     public record HostedPaymentDTO( String link ){};
     @PreAuthorize("hasAuthority('PLAYER')")
@@ -111,6 +125,21 @@ public class DepositService {
     public void updateDeposit(SummarizedStripeCheckoutSessionDepositDTO dto){
         var deposit = depositTransactionRepository.findOneByStripeCheckoutSessionId(dto.checkoutSessionId).orElseThrow();
         deposit.confirm(dto.customerEmail, dto.checkoutSessionId, dto.status, dto.amountTotal);
+    }
+
+    public TransactionPageDTO getAllCompletedTransaction(String playerUsername, int page, int limit){
+        return new TransactionPageDTO(
+                depositTransactionPagingRepository.findByChangeInCentsGreaterThanAndPlayer_Username(0, playerUsername, PageRequest.of(page, limit)),
+                depositTransactionRepository.countByChangeInCentsGreaterThanAndPlayer_Username(0, playerUsername),
+                transactionRepository.getPlayerBalance(playerUsername)
+        );
+    }
+    public TransactionPageDTO getAllIncompleteTransaction(String playerUsername, int page, int limit){
+        return new TransactionPageDTO(
+                depositTransactionPagingRepository.findByChangeInCentsAndPlayer_Username(0, playerUsername, PageRequest.of(page, limit)),
+                depositTransactionRepository.countByChangeInCentsAndPlayer_Username(0, playerUsername),
+                transactionRepository.getPlayerBalance(playerUsername)
+        );
     }
 
 }
