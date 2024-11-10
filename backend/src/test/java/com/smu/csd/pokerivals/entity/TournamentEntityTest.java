@@ -25,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.core.env.Environment;
+import software.amazon.awssdk.services.taxsettings.model.SouthKoreaAdditionalInfo;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -95,7 +96,6 @@ public class TournamentEntityTest {
         Team team = createTeam(player,tournament);
         tournament.addTeam(team,ZonedDateTime.now());
         tournamentRepository.save(tournament);
-
         assertEquals(1,teamRepository.count());
         assertEquals(6,chosenPokemonRepository.count());
 

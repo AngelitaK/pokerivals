@@ -1,6 +1,7 @@
 package com.smu.csd.pokerivals.tournament.entity;
 
 import com.fasterxml.jackson.annotation.*;
+import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.AssertTrue;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -24,9 +26,9 @@ import java.util.UUID;
 @Inheritance(strategy = InheritanceType.JOINED)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = OpenTournament.class, name = "Open"),
+        @JsonSubTypes.Type(value = OpenTournament.class, name = "open"),
 
-        @JsonSubTypes.Type(value = ClosedTournament.class, name = "Closed") }
+        @JsonSubTypes.Type(value = ClosedTournament.class, name = "closed") }
 )
 public abstract class Tournament {
 
@@ -69,6 +71,11 @@ public abstract class Tournament {
      */
     @Min(value = 0, message = "The value must be positive")
     private int maxTeamCapacity = 32;
+
+    @JsonSetter("maxTeamCapacity")
+    private void setMaxTeamCapacityOverride(int maxTeamCapacity){
+        this.maxTeamCapacity = maxTeamCapacity;
+    }
 
     public void setMaxTeamCapacity(int maxTeamCapacity){
         if (this.maxTeamCapacity <= maxTeamCapacity){
@@ -245,4 +252,17 @@ public abstract class Tournament {
         this.setMaxTeamCapacity(t.getMaxTeamCapacity());
         this.estimatedTournamentPeriod = t.getEstimatedTournamentPeriod();
     }
+
+    @OneToMany (mappedBy = "tournament", cascade = CascadeType.ALL,orphanRemoval = true)
+    private Set<Match> matches = new HashSet<>();
+
+    public void addMatches(Collection<Match> matches){
+        this.matches.addAll(matches);
+    }
+
+    public void addMatch(Match match){
+        this.matches.add(match);
+    }
+
+
 }

@@ -83,4 +83,15 @@ public class Player extends User {
             enemy.points -= 10.0;
         }
     }
+
+    private static final int AdjustmentRating = 20;
+
+    /**
+     * Change the elo of only THIS PLAYER
+     * @param winProbability probability of THIS PLAYER winning
+     * @param win whether THIS PLAYER won
+     */
+    public void changeElo(double winProbability, boolean win){
+        this.points+= AdjustmentRating * ((win ? 1: 0) - winProbability );
+    }
 }

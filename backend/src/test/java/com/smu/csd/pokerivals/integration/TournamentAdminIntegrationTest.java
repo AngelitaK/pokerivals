@@ -134,7 +134,7 @@ public class TournamentAdminIntegrationTest {
                 .setHost("localhost")
                 .setPort(port)
                 .setScheme("http")
-                .setPathSegments("admin","tournament","open");
+                .setPathSegments("admin","tournament");
 
 
         // 1: during registration period
@@ -191,7 +191,7 @@ public class TournamentAdminIntegrationTest {
                 .setHost("localhost")
                 .setPort(port)
                 .setScheme("http")
-                .setPathSegments("admin","tournament","open");
+                .setPathSegments("admin","tournament");
 
         URI uri = builder.build();
         Tournament tournament = new OpenTournament("fail_tournament", null,
@@ -234,7 +234,7 @@ public class TournamentAdminIntegrationTest {
                 .setHost("localhost")
                 .setPort(port)
                 .setScheme("http")
-                .setPathSegments("admin","tournament","closed");
+                .setPathSegments("admin","tournament");
 
         URI uri = builder.build();
         Tournament tournament = new ClosedTournament("closed_tournament", null,

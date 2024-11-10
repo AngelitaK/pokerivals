@@ -2,8 +2,8 @@ package com.smu.csd.pokerivals.tournament;
 
 import com.smu.csd.pokerivals.record.Message;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
-import com.smu.csd.pokerivals.tournament.entity.ClosedTournament;
 import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
+import com.smu.csd.pokerivals.tournament.entity.Tournament;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
@@ -29,18 +29,11 @@ public class TournamentAdminController {
 
     public record TournamentIDMessage(String message, UUID tournamentId){};
 
-    @PostMapping("/open")
-    @Operation(summary = "create an open tournament", description = "only for admins")
-    public TournamentIDMessage createOpenTournament(@RequestBody @Valid OpenTournament openTournament, @AuthenticationPrincipal UserDetails userDetails){
-        UUID tournamentId = tournamentAdminService.createTournament(userDetails.getUsername(), openTournament);
+    @PostMapping("")
+    @Operation(summary = "create an tournament (both open and closed)", description = "only for admins - use @type to indicate open or closed (same spelling)")
+    public TournamentIDMessage createOpenTournament(@RequestBody @Valid Tournament tournament, @AuthenticationPrincipal UserDetails userDetails){
+        UUID tournamentId = tournamentAdminService.createTournament(userDetails.getUsername(), tournament);
         return new TournamentIDMessage("Open tournament creation successful!", tournamentId);
-    }
-
-    @PostMapping("/closed")
-    @Operation(summary = "create an closed tournament (invite-only)", description = "only for admins")
-    public TournamentIDMessage createClosedTournament(@RequestBody @Valid ClosedTournament closedTournament, @AuthenticationPrincipal UserDetails userDetails){
-        UUID tournamentId = tournamentAdminService.createTournament(userDetails.getUsername(), closedTournament);
-        return new TournamentIDMessage("Closed tournament creation successful!", tournamentId);
     }
 
     @GetMapping("/me")
