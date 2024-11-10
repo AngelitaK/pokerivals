@@ -65,6 +65,10 @@ const ManageMatchesPage = () => {
       fetchTournamentData();
     }}, [id]);
 
+    const handleBackNavigation = () => {
+      router.push("/manage-tournament");
+    };
+
   return (
     <>
       <Flex

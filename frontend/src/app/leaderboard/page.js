@@ -124,7 +124,7 @@ const LeaderBoard = () => {
             {
               params: {
                 page: 0,
-                limit: 10,
+                limit: 100,
                 name: clan,
               },
             }
@@ -147,7 +147,7 @@ const LeaderBoard = () => {
           const response = await axios.get("/player/me/friend", {
             params: {
               page: 0,
-              limit: 10,
+              limit: 100,
             },
           });
           const sortedPlayers = response.data.players.sort(

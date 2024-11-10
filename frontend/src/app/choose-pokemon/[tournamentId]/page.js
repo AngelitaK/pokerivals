@@ -29,20 +29,32 @@ const ChoosePokemon = ({ params }) => {
   const addPokemonToTeam = (pokemon) => {
     if (finalTeam.length < 6) { // Limit to 6 Pokémon
       setFinalTeam((prevTeam) => [...prevTeam, pokemon]);
-    } else {
+    } 
+    else {
       console.warn("Team is already full");
     }
   };
 
    // Log finalTeam whenever it updates
-   useEffect(() => {
-    console.log("Updated team:", finalTeam);
-    console.log(tournamentId);
-  }, [finalTeam, tournamentId]);
+  //  useEffect(() => {
+  //   console.log("Updated team:", finalTeam);
+  //   console.log(tournamentId);
+  // }, [finalTeam, tournamentId]);
 
   // Handle posting the final team to the API
   const handleReadyForBattle = async () => {
     console.log("Final team:", finalTeam);
+
+    // if final team is empty
+    if(finalTeam.length < 1){
+      toast({
+        title: "OK I know you can do better than that! Add some pokemons to your team!",
+        status: "error",
+        duration: 5000,
+        isClosable: true
+      });
+      return;
+    }
     
     const pokemonChoicesRaw = finalTeam.map(pokemon => ({
       pokemonId: pokemon.id, // Assuming each pokemon object has an id
@@ -69,6 +81,12 @@ const ChoosePokemon = ({ params }) => {
 
     } catch (error) {
       console.error("Error joining tournament:", error);
+      toast({
+        title: response.data.explanation,
+        status: "error",
+        duration: 5000,
+        isClosable: true
+      });
     }
   };
 
