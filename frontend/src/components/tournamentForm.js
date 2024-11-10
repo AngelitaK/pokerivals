@@ -36,6 +36,7 @@ const convertToSGT = (utcDateStr) => {
 
 const TournamentForm = ({ tournament = null, isEdited = false }) => {
     const router = useRouter();
+    const [type, setType] = useState("open")
 
     const {
         register,
@@ -74,6 +75,7 @@ const TournamentForm = ({ tournament = null, isEdited = false }) => {
                 tournamentBegin: convertToSGT(tournament.estimatedTournamentPeriod.tournamentBegin),
                 tournamentEnd: convertToSGT(tournament.estimatedTournamentPeriod.tournamentEnd)
             });
+            setType(tournament['@type'])
         }
     }, [tournament, reset]);
 
@@ -164,7 +166,7 @@ const TournamentForm = ({ tournament = null, isEdited = false }) => {
                     <Box bg="white" p="6" boxShadow="md" borderRadius="md" mb="4">
                         <FormControl isDisabled={isEdited} isInvalid={errors.tournamentType}>
                             <FormLabel>Tournament Type</FormLabel>
-                            <RadioGroup defaultValue="open">
+                            <RadioGroup defaultValue={type}>
                                 <HStack spacing="24px">
                                     <Radio value="open" {...register("tournamentType")}>Open</Radio>
                                     <Radio value="closed" {...register("tournamentType")}>Closed</Radio>

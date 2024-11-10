@@ -130,6 +130,9 @@ const MatchComponent = ({ seed, toast }) => {
               isDisabled={bothPlayersAccepted}
               width="fit-content"
               minWidth="120px"
+              padding="0.5rem 1rem" 
+              minW="120px" 
+              minH="40px"
             >
               Propose Time
             </Button>

@@ -64,7 +64,6 @@ const ManageMatchesPage = () => {
             console.error("Error fetching matches: ", error)
         }
 
-        // setTournamentData(test_data.data);
     }, []);
 
     const handleBackNavigation = () => {
@@ -110,7 +109,9 @@ const ManageMatchesPage = () => {
                     <TabPanels>
                         {tournamentData && tournamentData.map((round, index) => (
                             <TabPanel key={index} p={4}>
-                                {round.seeds.map((seed, seedIndex) => (
+                                {round.seeds
+                                    .filter(seed => seed.teams && seed.teams.length === 2 && seed.teams.every(team => !team.empty))
+                                    .map((seed, seedIndex) => (
                                     <MatchComponent
                                         key={seedIndex}
                                         seed={seed}
