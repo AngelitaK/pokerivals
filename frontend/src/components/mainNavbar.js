@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { useRouter } from "next/navigation";
+import axios from "../../config/axiosInstance"; 
 import {
   Box,
   Flex,
@@ -31,9 +32,9 @@ const Logo = () => {
 };
 
 const Links = [
-  { text: 'Build Team', route: '#' },
-  { text: 'Tournament', route: '#' },
-  { text: 'Leaderboard', route: '#' }
+  { text: 'Tournament', route: '/find-tournament' },
+  { text: 'Leaderboard', route: '/leaderboard' },
+  { text: 'Betting', route: '/betting' }
 ];
 
 const NavLink = ({ text, route }) => {
@@ -56,33 +57,35 @@ const NavLink = ({ text, route }) => {
 
 export default function MainNavbar() {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [username, setUsername] = useState('Guest'); 
   const router = useRouter();
   const toast = useToast();
 
     // Retrieve username from LocalStorage
-    const username = typeof window !== "undefined" ? localStorage.getItem("username") : "Guest";
+    useEffect(() => {
+      // This runs only on the client
+      const storedUsername = localStorage.getItem("username");
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+    }, []);
 
     // Logout function
     const handleLogout = async () => {
       console.log("Logging out");
     
       try {
-        const response = await fetch('http://localhost:8080/auth/logout', {
-          method: 'GET', 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-    
-        if (!response.ok) {
+        const response = await axios.get('/auth/logout');
+        if (response.status !== 200) {
           throw new Error(`Logout failed: ${response.statusText}`);
         }
-    
+
         // set the response as text
-        const message = await response.text();
-        console.log(message.message)
+        const message = response.data;
+        console.log(message.message);
 
         localStorage.removeItem("username");
+        localStorage.removeItem("role");
 
         toast({
           title: "Logout Successful",
@@ -141,10 +144,10 @@ export default function MainNavbar() {
                   minW={0}
                   _hover={{ textDecoration: 'none' }}>
                   <Flex alignItems="center" flexDirection="row">
-                    <Text color={'black'} mr={'10px'}>{username|| 'Name'}</Text>
+                    <Text color={'black'} mr={'10px'}>{username || 'Name'}</Text>
                     <Avatar
                       size={'sm'}
-                      src={'https://avatars.dicebear.com/api/male/username.svg'}
+                      src={'ashketchum.jpg'}
                     />
                   </Flex>
                 </MenuButton>
@@ -153,18 +156,24 @@ export default function MainNavbar() {
                   <Center>
                     <Avatar
                       size={'2xl'}
-                      src={'https://avatars.dicebear.com/api/male/username.svg'}
+                      src={'ashketchum.jpg'}
                     />
                   </Center>
                   <br />
-                  <Center>
-                    <p>Hello!</p>
+                  <Center 
+                    onClick={() => router.push('/profile')} 
+                    cursor="pointer" 
+                    width="fit-content"
+                    margin="auto"
+                  >
+                    <Text>
+                      {username || 'Name'}
+                    </Text>
                   </Center>
-                  <br />
                   <MenuDivider />
-                  <MenuItem color="black" onClick={handleLogout}>
-                  Logout
-                </MenuItem>
+                  <MenuItem color="black" onClick={handleLogout} justifyContent="center" fontWeight="semibold">
+                    Logout
+                  </MenuItem>
                 </MenuList>
               </Menu>
             </Stack>

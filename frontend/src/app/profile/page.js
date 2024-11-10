@@ -1,333 +1,180 @@
-  "use client";
+"use client";
 
-  import { useState, useEffect } from "react";
-  import {
-    Avatar,
-    Box,
-    Flex,
-    Tabs,
-    TabList,
-    TabPanels,
-    Tab,
-    TabPanel,
-    Stack,
-    Button,
-    Heading,
-    Text,
-    Grid,
-    HStack,
-    VStack,
-    IconButton,
-    useToast
-  } from "@chakra-ui/react";
-  import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
-  import SearchBar from "@/components/searchBar";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import LoadingOverlay from "../../components/loadingOverlay";
+import axios from "../../../config/axiosInstance";
+import useAuth from "../../../config/useAuth";
+import {
+  Avatar,
+  Box,
+  Button,
+  Container,
+  Flex,
+  Heading,
+  Text,
+  VStack,
+  Icon,
+  SimpleGrid
+} from "@chakra-ui/react";
+import { EmailIcon, CalendarIcon } from "@chakra-ui/icons";
+import { FaUsers } from "react-icons/fa";
+import { TbPokeball } from "react-icons/tb";
 
-  const FriendItem = ({ name, username, onAddFriend }) => {
-    return (
-      <Box maxW="90%" mx="auto">
-        <Flex align="center" justify="space-between" mt={5}>
-          <HStack>
-            <Avatar />
-            <VStack align="start">
-              <Text color="black" fontWeight="bold">{name}</Text>
-              <Text fontSize="sm" color="gray.500">{username}</Text>
-            </VStack>
-          </HStack>
-          <IconButton 
-            icon={<AddIcon />} 
-            aria-label="Add Friend" 
-            onClick={onAddFriend} // Attach the onClick event
-          />
-        </Flex>
-      </Box>
-    );
-  };
+const ProfilePage = () => {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
+  
+   // Check authentication
+   const { isAuthenticated, user, loading } = useAuth("PLAYER");
+   console.log(isAuthenticated, user, loading);
+  
+  useEffect(() => {
+    // This effect will run only after `loading` is false
+    if (!loading && isAuthenticated) {
+      const storedUsername = localStorage.getItem("username");
+      setUsername(storedUsername);
+    }
+  }, [loading, isAuthenticated]);
 
-  const UserItem = ({ name, username, onDeleteFriend }) => {
-    return (
-      <Box maxW="90%" mx="auto">
-        <Flex align="center" justify="space-between" mt={5}>
-          <HStack>
-            <Avatar />
-            <VStack align="start">
-              <Text color="black" fontWeight="bold">{name}</Text>
-              <Text fontSize="sm" color="gray.500">{username}</Text>
-            </VStack>
-          </HStack>
-          <IconButton 
-            icon={<DeleteIcon/>} 
-            aria-label="Remove Friend" 
-            onClick={onDeleteFriend}
-          />
-        </Flex>
-      </Box>
-    )
-  }
-
-  const ProfilePage = () => {
-    const [users, setUsers] = useState([]); // Store remaining users
-    const [friends, setFriends] = useState([]); // Store friends
-    const toast = useToast();
-
-    // Fetch friends from the backend on load
-    useEffect(() => {
-      const fetchFriends = async () => {
-        try {
-          const response = await fetch("http://localhost:8080/player/me/friend", {
-            method: "GET",
-            credentials: "include", // Maintain session
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error("Failed to fetch friends");
-          }
-
-          const data = await response.json();
-          setFriends(data); // Set the friend list
-        } catch (error) {
-          console.error("Error fetching friends:", error);
-        }
-      };
-
-      fetchFriends();
-    }, []);
-
-    // Add friend to backend
-    const handleAddFriend = async (user) => {
+  useEffect(() => {
+    const fetchUserData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/player/me/friend/${user.username}`, {
-          method: "POST",
-          credentials: "include", // Maintain session
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to add ${user.username} as a friend`);
-        }
-
-        const data = await response.json();
-
-        // Show success toast
-        toast({
-          title: "Friend Added",
-          description: `${user.username} added to your friends!`,
-          status: "success",
-          duration: 9000,
-          isClosable: true,
-        });
-
-        // Update the state
-        setFriends([...friends, user]);
-        setUsers(users.filter((u) => u.username !== user.username)); // Remove from users
-
+        const response = await axios.get(`/player/${username}`);
+        setUserInfo(response.data); // Store fetched data in state
       } catch (error) {
-        console.error("Error adding friend:", error);
-        toast({
-          title: "Error",
-          description: `Failed to add ${user.username} as a friend.`,
-          status: "error",
-          duration: 9000,
-          isClosable: true,
-        });
+        //means that the user is admin or unauthorized
+        console.error("Error fetching user data:", error);
+        if(isAuthenticated){
+          return <LoadingOverlay />
+        }
       }
     };
 
-    // Delete friend from backend
-    const handleDeleteFriend = async (user) => {
-      try {
-        const response = await fetch(`http://localhost:8080/player/me/friend/${user.username}`, {
-          method: "DELETE",
-          credentials: "include", // Maintain session
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+    if (username) fetchUserData();
+  }, [username]);
 
-        if (!response.ok) {
-          throw new Error(`Failed to remove ${user.username} from friends`);
-        }
+  if (loading) return <LoadingOverlay />;
+  
+  return (
+    <Flex
+      minH="100vh"
+      bgImage="/TopupBG.png"
+      bgSize="cover"
+      bgPosition="center"
+      align="center"
+      justify="center"
+      p={5}
+    >
+      <Container maxW="100%" p={0}>
+        <Box
+          maxW="100%"
+          maxH="100%"
+          minH="85vh"
+          bg="rgba(255, 255, 255, 0.95)"
+          borderRadius="xl"
+          boxShadow="lg"
+          p={10}
+          mx="auto"
+          textAlign="center"
+        >
+          {/* Top Section: Avatar on the left, User Info on the right */}
+          <Flex align="center" mb={"5%"}>
+            <Avatar size="2xl" src={'ashketchum.jpg'} name={userInfo?.username} mr={6} />
 
-        const data = await response.json();
+            <VStack align="flex-start" spacing={1} flex="1">
+              <Heading size="xl" fontWeight="bold" mb={2}>
+                {userInfo?.username}
+              </Heading>
 
-        // Show success toast
-        toast({
-          title: "Friend Removed",
-          description: `${user.username} has been removed from your friends!`,
-          status: "success",
-          duration: 9000,
-          isClosable: true,
-        });
-
-        // Update the state to remove the friend from the friends list
-        setFriends(friends.filter((friend) => friend.username !== user.username));
-
-      } catch (error) {
-        console.error("Error removing friend:", error);
-        toast({
-          title: "Error",
-          description: `Failed to remove ${user.username} from friends.`,
-          status: "error",
-          duration: 9000,
-          isClosable: true,
-        });
-      }
-    };
-
-
-    // Function to fetch users based on search term
-    const handleSearch = async (query) => {
-      if (query.length === 0) {
-        setUsers([]); // Clear the user list if the search is empty
-        return;
-      }
-      
-      try {
-        const response = await fetch(`http://localhost:8080/player?query=${query}`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to search users");
-        }
-
-        const data = await response.json();
-        setUsers(data); // Update the users list with search results
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-
-    return (
-      <Stack
-        minH={"100vh"}
-        bgImage="/TopupBG.png"
-        bgSize="cover"
-        bgPosition="center"
-      >
-        <Flex p="50px">
-          <Grid templateColumns="repeat(2, 1fr)" gap={6} w="100%" h="100%">
-            <Flex
-              bg="rgba(255, 255, 255, 0.8)"
-              p={10}
-              borderRadius="2xl"
-              boxShadow="md"
-              mb={6}
-              gap={3}
-              direction="column"
-              justify="center"  
-              align="center"
-              color="black"
-            >
-              <Avatar size="2xl" name="John Doe" />
-              <Flex align="center" mt={4}>
-                <Heading size="lg" fontWeight="bold">
-                  {'Jon Doe' || 'John Doe'}
-                </Heading>
+              <Flex align="center" color="gray.600">
+                <EmailIcon mr={2} size={"lg"} />
+                <Text fontSize="lg">{userInfo?.email}</Text>
               </Flex>
+            </VStack>
+          </Flex>
 
-              <Text mt={5} fontSize="xl">
-                {'Jon Doe' || 'No description available'}
-              </Text>
-              <Text mt={5} fontSize="xl">
-                Tournaments won: {0 || 0}
-              </Text>
-              <Text fontSize="xl">Points: {0 || 0}</Text>
+          {/* Action Buttons */}
+          <SimpleGrid columns={3} spacing={10} mb={2}>
+            {/* calendar */}
+            <Box
+                bg="#e7e7e7"
+                p={5}
+                borderRadius="lg"
+                textAlign="center"
+                onClick={() => router.push("/calendar")}
+                cursor="pointer"
+                 _hover={{ bg: "#d7d7d7" }}
+              >
+                <Icon as={CalendarIcon} boxSize={10} mb={3}/>
+                <Text fontWeight="bold" fontSize="xl">
+                  View Calendar
+                </Text>
+              </Box>
 
-              <Text fontSize="xl" fontWeight="bold">
-                Clan: {'Marco Clan'|| 'No clan'}
-              </Text>
+            {/* Clan box */}
+              <Box
+                bg="#e7e7e7"
+                p={4}
+                borderRadius="lg"
+                textAlign="center"
+              >
+                <Icon as={FaUsers} boxSize={10} mb={2}/>
+                <Text fontWeight="bold" fontSize="xl">
+                  Clan
+                </Text>
+                <Text color="gray.600" fontSize="lg" textTransform="uppercase">{userInfo?.clan.name}</Text>
+              </Box>
 
-              <Stack spacing={6} mt={8} direction="row">
-                <Button colorScheme="teal" size="lg">
-                  Save
-                </Button>
-                <Button variant="outline" size="lg">
-                  Cancel
-                </Button>
-              </Stack>
-            </Flex>
+              {/* points box */}
+              <Box
+                bg="#e7e7e7"
+                p={4}
+                borderRadius="lg"
+                textAlign="center"
+              >
+                <Icon as={TbPokeball} boxSize={10} mb={2} />
+                <Text fontWeight="bold" fontSize="xl">
+                  Points
+                </Text>
+                <Text color="gray.600" fontSize="lg">{userInfo?.points}</Text>
+              </Box>
+          </SimpleGrid>
 
-            <Flex
-              bg="rgba(255, 255, 255, 0.8)"
-              p={10}
-              borderRadius="2xl"
-              boxShadow="md"
-              mb={6}
-              gap={3}
-              direction="column"
+          {/* About Me Section */}
+          <Box textAlign="left" my={6}>
+            <Heading size="lg" pt={5} mb={5}>
+              About Me
+            </Heading>
+            <Text fontSize="lg" color="gray.700">
+              {userInfo?.description}
+            </Text>
+          </Box>
+
+          {/* BUTTONS BOTTOM  */}
+          <Flex justify="space-between" pt={10}>
+            <Button
+              colorScheme="teal"
+              size="lg"
+              minW={"180px"}
+              onClick={() => router.push("/friend-list")}
             >
-              <Tabs size="md" variant="enclosed">
-                <TabList>
-                  <Tab
-                  _selected={{ color: "white", bg: "blue.500" }} 
-                  _hover={{ color: "black" }}
-                  color="black"
-                  >
-                    Add Friends
-                  </Tab>
-                  <Tab
-                  _selected={{ color: "white", bg: "blue.500" }} 
-                  _hover={{ color: "black" }}
-                  color="black"
-                  >
-                    Friend Lists
-                  </Tab>
-                </TabList>
-                <TabPanels>
-                  {/* Add Friends Tab */}
-                  <TabPanel>
-                    <Box mb={4}>
-                      <SearchBar handleSearch={handleSearch} />
-                    </Box>
-                    <Box
-                      maxH="400px" 
-                      overflowY="auto"
-                    >
-                      {users.map((user, index) => (
-                        <FriendItem
-                          key={index}
-                          name={user.name}
-                          username={user.username}
-                          onAddFriend={() => handleAddFriend(user)} // Add the user when clicked
-                        />
-                      ))}
-                    </Box>
-                  </TabPanel>
+              View Friends List
+            </Button>
+            <Button
+              colorScheme="teal"
+              size="lg"
+              minW={"180px"}
+              onClick={() => router.push("/find-tournament")}
+            >
+              Find Tournament
+            </Button>
+          </Flex>
+        </Box>
+      </Container>
+    </Flex>
+  );
+};
 
-                  {/* Friend List Tab */}
-                  <TabPanel>
-                    <Box
-                        maxH="400px" 
-                        overflowY="auto"
-                      >
-                        {friends.map((user, index) => (
-                          <UserItem
-                            key={index}
-                            name={user.name}
-                            username={user.username}
-                            onDeleteFriend={() => handleDeleteFriend(user)}
-                          />
-                        ))}
-                      </Box>
-                  </TabPanel>
-                </TabPanels>
-              </Tabs>
-
-            </Flex>
-          </Grid>
-        </Flex>
-      </Stack>
-    );
-  };
-
-  export default ProfilePage;
+export default ProfilePage;

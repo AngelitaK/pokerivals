@@ -3,18 +3,26 @@ import { useState } from 'react';
 import { Box, Input, InputGroup, Button, InputRightElement } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 
-function SearchBar({ handleSearch }) {  // Updated to receive handleSearch
+function SearchBar({ handleSearch }) {
   const [inputValue, setInputValue] = useState('');
 
   const handleInputChange = (e) => {
-    const value = e.target.value;
-    setInputValue(value);
-    handleSearch(value); // Call the handleSearch function directly
+    setInputValue(e.target.value);
+  };
+
+  const handleButtonClick = () => {
+    handleSearch(inputValue); // Trigger search when button is clicked
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleButtonClick();
+    }
   };
 
   return (
-    <Box width='450px'>
-      <InputGroup size='md'>
+    <Box pb={8}>
+      <InputGroup size='lg'>
         <Input
           pr='4.5rem'
           placeholder='Search friends...'
@@ -22,10 +30,12 @@ function SearchBar({ handleSearch }) {  // Updated to receive handleSearch
           focusBorderColor='black'
           value={inputValue}
           onChange={handleInputChange}
+          onKeyPress={handleKeyPress} 
           color='black'
+          border="2px solid black" 
         />
         <InputRightElement width='3rem' bg='inherit'>
-          <Button h='1.75rem' size='sm' borderRadius={30}>
+          <Button h='1.75rem' size='sm' borderRadius={30} onClick={handleButtonClick}>
             <SearchIcon />
           </Button>
         </InputRightElement>

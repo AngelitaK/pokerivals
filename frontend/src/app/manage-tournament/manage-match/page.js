@@ -18,7 +18,6 @@ import {
     FaArrowCircleLeft,
 } from 'react-icons/fa';
 import MatchComponent from '@/components/matchComponent';
-// import test_data from './test-data';
 
 function formatDate(dateString) {
     const date = new Date(dateString);

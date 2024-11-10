@@ -1,10 +1,20 @@
-"use client"
+"use client";
 
-import { Box, Button, Flex, Heading, Image, Text, VStack } from "@chakra-ui/react";
+import { useEffect, useState, useContext, useMemo} from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@chakra-ui/react"; 
-import { UserContext } from "../Providers.js"
-import { useState, useContext } from "react";
+import { useToast } from "@chakra-ui/react";
+import LoadingOverlay from "../../components/loadingOverlay";
+import axios from "../../../config/axiosInstance";
+import useAuth from "../../../config/useAuth";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Image,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
 // Array with clan names and logos
 const teams = [
@@ -17,48 +27,33 @@ const teams = [
 const TeamSelectionPage = () => {
   const router = useRouter();
   const toast = useToast();
-
+  
+  // Check authentication
+  const { isAuthenticated, user, loading } = useAuth("PLAYER");
+  console.log(isAuthenticated, user, loading);
+  
   // Function to handle the "Join Team" button click
   const handleJoinTeam = async (teamName) => {
     try {
       // PATCH request to add the user to the selected clan
-      const response = await fetch(`http://localhost:8080/player/me/clan/${teamName}`, {
-        method: "PATCH",
-        credentials: "include", // Include credentials to maintain the session
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      // Check if the response is not okay
-      if (!response.ok) {
-        throw new Error(`Failed to join ${teamName}: ${response.statusText}`);
-      }
-
-      // Parse the response data
-      const data = await response.json();
-
-      // Update the UserContext with the new clan
-      // setUserData((prevData) => ({
-      //   ...prevData,
-      //   clan: { name: teamName }, 
-      // }));
+      const response = await axios.patch(`/player/me/clan/${teamName}`,{withCredentials: true,});
+      const data = response.data;
       
       // Show a success message
       toast({
         title: "Success",
-        description: data.message || `You have joined ${teamName} successfully!`,
+        description:
+        data.message || `You have joined ${teamName} successfully!`,
         status: "success",
         duration: 2000,
         isClosable: true,
       });
-
-      // After successfully joining the team, navigate to the profile page
-      router.push('/profile');
       
+      // After successfully joining the team, navigate to the profile page
+      router.push("/profile");
     } catch (error) {
       console.error("Error joining team:", error);
-
+      
       // Show an error message if something goes wrong
       toast({
         title: "Error",
@@ -69,22 +64,29 @@ const TeamSelectionPage = () => {
       });
     }
   };
+  
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Box h="100%" bg="white">
       <Box position="relative" h="100vh">
-        <Heading
+        <Box
           position="absolute"
-          top="0"
+          top="10%"
           left="50%"
           transform="translateX(-50%)"
           zIndex="1"
-          color="black"
-          size="xl"
-          mt={4}
+          bg="white"
+          px={4} 
+          py={2} 
+          borderRadius="md" 
+          boxShadow="md" 
         >
-          Choose Your Team
-        </Heading>
+          <Heading color="black" size="xl">
+            Choose Your Team
+          </Heading>
+        </Box>
 
         {/* Team Selection Boxes */}
         <Flex h="100%">
@@ -100,9 +102,13 @@ const TeamSelectionPage = () => {
               <Text fontWeight="bold" fontSize="xl" color="black">
                 {team.name}
               </Text>
-              <Image src={team.logo} alt={`${team.name} Logo`} boxSize="100px" />
+              <Image
+                src={team.logo}
+                alt={`${team.name} Logo`}
+                boxSize="200px"
+              />
               {/* Button to join the specific clan */}
-              <Button 
+              <Button
                 onClick={() => handleJoinTeam(team.name)} // This will send the correct clan name
                 colorScheme="blue"
               >
