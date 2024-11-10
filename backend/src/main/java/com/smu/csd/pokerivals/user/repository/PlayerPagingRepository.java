@@ -19,5 +19,5 @@ public interface PlayerPagingRepository extends PagingAndSortingRepository<Playe
 
     List<Player> findByUsernameContainingIgnoreCase(String query, Pageable pageable);
 
-    List<Player> findByClan_NameOrderByPointsDesc(String clanName, Pageable pageable);
+    List<Player> findByClan_NameIgnoreCaseOrderByPointsDesc(String clanName, Pageable pageable);
 }

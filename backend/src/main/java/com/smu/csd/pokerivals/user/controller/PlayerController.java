@@ -168,7 +168,7 @@ public class PlayerController {
                                                     @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize,
                                                     @PathVariable String name
     ){
-        return playerService.getPeopleInClan(name,page,pageSize);
+        return playerService.getPeopleInClan(name.toLowerCase(),page,pageSize);
     }
 
     @GetMapping("")

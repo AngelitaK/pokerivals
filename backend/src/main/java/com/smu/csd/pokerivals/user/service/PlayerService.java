@@ -83,8 +83,8 @@ public class PlayerService {
     @PreAuthorize("hasAuthority('PLAYER')")
     public PlayerPageDTO getPeopleInClan(String clanName, int page, int limit){
         return new PlayerPageDTO(
-                playerPagingRepository.findByClan_NameOrderByPointsDesc(clanName,PageRequest.of(page,limit)),
-                playerRepository.countByClan_Name(clanName)
+                playerPagingRepository.findByClan_NameIgnoreCaseOrderByPointsDesc(clanName,PageRequest.of(page,limit)),
+                playerRepository.countByClan_NameIgnoreCase(clanName)
         );
     }
 
