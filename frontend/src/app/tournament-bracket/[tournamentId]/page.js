@@ -3,12 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bracket, Seed, SeedItem, SeedTeam, SeedTime } from 'react-brackets';
 import { Box, Text, Heading, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Flex, Tag, TagLabel, Stack, Divider,  } from '@chakra-ui/react';
-<<<<<<<< HEAD:frontend/src/app/tournament-bracket/[tournamentId]/page.js
 import axios from '../../../../config/axiosInstance'
-========
-import rounds from './completedTournament';
-import axios from '../../../config/axiosInstance'
->>>>>>>> origin/frontend-marco:frontend/src/app/tournament-bracket/page.js
 
 const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
   const formattedDate = new Date(seed.matchResultRecordedAt).toLocaleDateString("en-GB", {
@@ -95,7 +90,6 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
 const TournamentPage = ( {params} ) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedSeed, setSelectedSeed] = useState(null);
-<<<<<<<< HEAD:frontend/src/app/tournament-bracket/[tournamentId]/page.js
 
   const { tournamentId } = params;
 
@@ -118,27 +112,6 @@ const TournamentPage = ( {params} ) => {
     fetchMatches();
   }, []);
 
-========
-  const [rounds, setRounds] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch the tournament matches when the component mounts
-    const fetchMatches = async () => {
-      try {
-        const response = await axios.get(`/tournament/match/${TOURNAMENT_ID}`);
-        setRounds(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching tournament matches:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchMatches();
-  }, []);
-
->>>>>>>> origin/frontend-marco:frontend/src/app/tournament-bracket/page.js
   if (loading) return <Text>Loading tournament data...</Text>;
 
   const finalRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
@@ -155,11 +128,11 @@ const TournamentPage = ( {params} ) => {
       <Heading as="h1" textAlign="center" color="teal.700" mb="2" fontSize="3xl">
         Pokémon Tournament Bracket
       </Heading>
-      <Box mt={2} mb={6}>
+      {/* <Box mt={2} mb={6}>
         <Text fontSize="2xl" color="teal.800" fontWeight="bold">
           🎉 Winner: {winner}! 🎉
         </Text>
-      </Box>
+      </Box> */}
       <Box width="100%" mb={4}>
         <Bracket
           mobileBreakpoint={1000}
