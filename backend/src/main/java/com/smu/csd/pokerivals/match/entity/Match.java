@@ -70,18 +70,21 @@ public class Match {
     /**
      * Effectively the height of tree (based on number of edges not vertices)
      */
+    @JsonIgnore
     private int treeHeight;
 
     /**
      * Round is depth but counting backwards
      * @return which round this match belongs to
      */
-    private int getRound(){
+    @JsonIgnore
+    public int getRound(){
         return treeHeight - getDepth();
     }
 
     @MapsId("tournamentId")
     @ManyToOne
+    @JsonIgnore
     protected Tournament tournament;
 
     @JsonGetter("index")
@@ -98,13 +101,32 @@ public class Match {
         return matchId.getTournamentId();
     };
 
+    @JsonIgnore
     public boolean isLeaf(){ return  getRound() == 0;}
 
+    @JsonIgnore
     public boolean isRoot(){ return  matchId.getDepth() == 0; }
 
+    @JsonIgnore
     @ManyToOne
     @Setter(AccessLevel.NONE)
     private Team teamA;
+
+    @JsonGetter("teams")
+    private List<MatchWrapper.TeamInMatchDTO> getTeams(){
+        return List.of(
+                new MatchWrapper.TeamInMatchDTO(
+                        (teamA == null ? "" : teamA.getPlayerUsername()),
+                        (teamA == null ? 0.0 : teamA.getPlayer().getPoints()),
+                        teamA == null
+                ),
+                new MatchWrapper.TeamInMatchDTO(
+                        (teamB == null ? "" : teamB.getPlayerUsername()),
+                        (teamB == null ? 0.0 : teamB.getPlayer().getPoints()),
+                        teamB == null
+                )
+        );
+    }
 
     @Setter(AccessLevel.NONE)
     private ZonedDateTime timeFinalisedTeamA;
@@ -127,7 +149,9 @@ public class Match {
 
     @ManyToOne
     @Setter(AccessLevel.NONE)
+    @JsonIgnore
     private Team teamB;
+
 
     @Setter(AccessLevel.NONE)
     private ZonedDateTime timeFinalisedTeamB;
@@ -243,6 +267,7 @@ public class Match {
         this(tournament,0,0,treeHeight);
     }
 
+    @Setter(AccessLevel.NONE)
     private ZonedDateTime matchResultRecordedAt;
 
     /**
@@ -337,6 +362,14 @@ public class Match {
         }
         // B is null, A default win
         return  setMatchResult(MatchResult.TEAM_A, today);
+    }
+
+    // timing agreement stuff
+    private ZonedDateTime timeMatchOccurs;
+
+    @JsonGetter("can_set_result")
+    private boolean canSetMatchResult(){
+        return timeFinalisedTeamB != null && timeFinalisedTeamA != null && matchResult.equals(MatchResult.PENDING);
     }
 }
 

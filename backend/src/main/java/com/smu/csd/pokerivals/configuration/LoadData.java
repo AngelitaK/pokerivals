@@ -47,7 +47,7 @@ public class LoadData {
           String[] line;
           while ((line = csvReader.readNext()) != null) {
             if (clanRepository.findById(line[0].toLowerCase()).isEmpty()) {
-              System.out.println("Saving " + clanRepository.save(new Clan(line[0].toLowerCase())));
+              log.trace("Saving {}", clanRepository.save(new Clan(line[0].toLowerCase())));
             }
           }
         }
@@ -64,7 +64,7 @@ public class LoadData {
             if (userRepository.findById(admin.getId()).isEmpty() && userRepository.findOneByGoogleSub(admin.getGoogleSub()).isEmpty()) {
               userRepository.deleteById(admin.getUsername());
               userRepository.deleteByGoogleSub(admin.getGoogleSub());
-              System.out.println("Saving Admin : " + userRepository.save(admin));
+              log.trace("Saving Admin : {}", userRepository.save(admin));
             }
           }
         }
@@ -81,7 +81,7 @@ public class LoadData {
             if (userRepository.findById(player.getId()).isEmpty() && userRepository.findOneByGoogleSub(player.getGoogleSub()).isEmpty()){
               userRepository.deleteById(player.getUsername());
               userRepository.deleteByGoogleSub(player.getGoogleSub());
-              System.out.println("Saving Player : " + userRepository.save(player));
+              log.trace("Saving Player : {}", userRepository.save(player));
             }
           }
         }
@@ -126,7 +126,6 @@ public class LoadData {
       }
 
       for(Map<String,String> row : pokemonRows){
-        System.out.println(row);
 
         String[] type = new String[2];
         String typeString = row.get("types");

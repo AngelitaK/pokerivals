@@ -1,5 +1,9 @@
 package com.smu.csd.pokerivals.entity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.smu.csd.pokerivals.match.MatchService;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.match.entity.MatchWrapper;
@@ -7,6 +11,7 @@ import com.smu.csd.pokerivals.match.repository.MatchRepository;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
 import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
+import com.smu.csd.pokerivals.security.AuthenticationController;
 import com.smu.csd.pokerivals.tournament.entity.ChosenPokemon;
 import com.smu.csd.pokerivals.tournament.entity.OpenTournament;
 import com.smu.csd.pokerivals.tournament.entity.Team;
@@ -16,10 +21,20 @@ import com.smu.csd.pokerivals.user.entity.Admin;
 import com.smu.csd.pokerivals.user.entity.Player;
 import com.smu.csd.pokerivals.user.repository.AdminRepository;
 import com.smu.csd.pokerivals.user.repository.PlayerRepository;
+import org.apache.http.client.utils.URIBuilder;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,9 +42,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static com.smu.csd.pokerivals.integration.IntegrationTestDependency.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TournamentSeedingTest {
 
     //tournament creation
@@ -50,6 +68,61 @@ public class TournamentSeedingTest {
 
     @Autowired
     private MatchRepository matchRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    // Mocked for google
+    @MockBean
+    private GoogleIdTokenVerifier verifier;
+
+    @Mock
+    private GoogleIdToken.Payload payload;
+
+    @Mock
+    private  GoogleIdToken idTokenMock;
+
+    private String username;
+
+    private String baseUrl ="http://localhost:";
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @BeforeEach
+    public void loginAdmin() throws Exception {
+        // Arrange
+        String subOfPlayer = "abc";
+        when(verifier.verify(tokenMap.get(subOfPlayer))).thenReturn(idTokenMock);
+        when(idTokenMock.getPayload()).thenReturn(payload);
+        when(payload.getSubject()).thenReturn(subOfPlayer);
+
+        URI uri = new URI(baseUrl + port + "/auth/login");
+        AuthenticationController.LoginDetails loginDetails1 = new AuthenticationController.LoginDetails(tokenMap.get(subOfPlayer));
+
+        // Act
+        ResponseEntity<AuthenticationController.WhoAmI> result = restTemplate.postForEntity(uri, loginDetails1, AuthenticationController.WhoAmI.class);
+        username = storeCookie(result);
+
+        // Assert
+        assertEquals(200, result.getStatusCode().value());
+        assertNotNull(result.getBody().role());
+        assertEquals("ADMIN",result.getBody().role());
+
+        verify(verifier).verify(tokenMap.get(subOfPlayer));
+        verify(idTokenMock).getPayload();
+
+        // Act
+        uri = new URI(baseUrl + port + "/me");
+        result = restTemplate.exchange(uri, HttpMethod.GET, createStatefulResponse(username), AuthenticationController.WhoAmI.class);
+
+        assertEquals(200,result.getStatusCode().value());
+        assertNotNull(result.getBody().role());
+        assertEquals("ADMIN",result.getBody().role());
+    }
 
     private final Random random = ThreadLocalRandom.current();
 
@@ -102,7 +175,7 @@ public class TournamentSeedingTest {
     private int numPlayers = 13;
 
     @Test
-    public void testBracket(){
+    public void testBracket() throws JsonProcessingException, URISyntaxException {
         matchRepository.deleteAll();
 
         Admin a1 = adminRepository.findById("fake_admin").orElseThrow();
@@ -141,6 +214,7 @@ public class TournamentSeedingTest {
         matchService.advance(t1.getId(),3,7,MatchResult.CANCELLED,ZonedDateTime.now());
 
         matchService.advance(t1.getId(),3,3, MatchResult.TEAM_A,ZonedDateTime.now());
+
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
 
         matchService.advance(t1.getId(),3,4, MatchResult.TEAM_B,ZonedDateTime.now());
@@ -150,6 +224,13 @@ public class TournamentSeedingTest {
         matchService.advance(t1.getId(),3,5,MatchResult.TEAM_A, ZonedDateTime.now());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
+        URIBuilder builder = new URIBuilder()
+                .setHost("localhost")
+                .setScheme("http")
+                .setPort(port)
+                .setPathSegments("tournament","match", t1.getId().toString());
+
+        System.out.println(restTemplate.exchange(builder.build(), HttpMethod.GET, createStatefulResponse(username),String.class).getBody());
 
         Tournament finalT = t1;
         assertThrows(IllegalArgumentException.class, ()->{
@@ -169,6 +250,8 @@ public class TournamentSeedingTest {
         matchService.advance(t1.getId(),0,0, MatchResult.TEAM_A,ZonedDateTime.now());
 
         System.out.println(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(t1.getId())));
+
+        System.out.println(restTemplate.exchange(builder.build(), HttpMethod.GET, createStatefulResponse(username),String.class).getBody());
     }
 
 }

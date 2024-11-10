@@ -4,6 +4,7 @@ package com.smu.csd.pokerivals.match;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
+import com.smu.csd.pokerivals.match.entity.MatchWrapper;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
 import com.smu.csd.pokerivals.tournament.entity.Team;
 import com.smu.csd.pokerivals.tournament.entity.Tournament;
@@ -11,6 +12,7 @@ import com.smu.csd.pokerivals.tournament.repository.TournamentRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
@@ -71,6 +73,7 @@ public class MatchService {
      * @param index of the match affected
      * @param matchResult only accepts TEAM_A, TEAM_B, CANCELLED
      */
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
     public void advance(UUID tournamentId,int depth, int index,MatchResult matchResult, ZonedDateTime today){
         Match matchBefore = matchRepository.findById(new Match.MatchId(tournamentId,depth,index)).orElseThrow();
@@ -111,16 +114,26 @@ public class MatchService {
      * @param tournamentId of the match
      * @param depth of the match affected
      * @param index of the match affected
-     * @param teamA if false, then team B forfeit
+     * @param forfeitTeamA if false, then team B forfeit
      */
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
-    public void forfeit(UUID tournamentId,int depth, int index,boolean teamA){
+    public void forfeit(UUID tournamentId,int depth, int index,boolean forfeitTeamA){
 
         ZonedDateTime today = dateFactory.getToday();
         Match matchBefore = matchRepository.findById(new Match.MatchId(tournamentId,depth,index)).orElseThrow();
+        if(matchBefore.getTimeFinalisedTeamA() == null && forfeitTeamA){
+            // team A not finalised, hence cannot forfeit
+            throw new IllegalArgumentException("Team A not set, hence cannot forfeit");
+        }
+        if(matchBefore.getTimeFinalisedTeamB() == null && !forfeitTeamA){
+            // team A not finalised, hence cannot forfeit
+            throw new IllegalArgumentException("Team B not set, hence cannot forfeit");
+        }
+
 
         boolean bye;
-        if (teamA){
+        if (forfeitTeamA){
             bye = matchBefore.finaliseTeamA(null, today) ;
         } else {
             bye = matchBefore.finaliseTeamB(null, today) ;
@@ -158,6 +171,10 @@ public class MatchService {
                 break;
             }
         }
+    }
+
+    public List<MatchWrapper.MatchRoundDTO> generateFrontendFriendlyBrackets(UUID tournamentId){
+        return MatchWrapper.breadthFirstSearch(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(tournamentId)));
     }
 
 

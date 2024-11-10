@@ -108,4 +108,35 @@ public class MatchWrapper {
         return result.get(0);
     }
 
+    public static List<MatchRoundDTO>  breadthFirstSearch(MatchWrapper root){
+        List<MatchRoundDTO> result = new ArrayList<>();
+        Queue<MatchWrapper> queue = new ArrayDeque<>();
+        // 0 is head, size-1 is tail
+        queue.add(root);
+        int lastRound = root.getMatch().getRound()+1;
+        while(!queue.isEmpty()) {
+            var currentNode = queue.remove();
+            if (lastRound > currentNode.match.getRound()){
+                result.add(0,
+                        new MatchRoundDTO(
+                                "Round "+ (1+currentNode.getMatch().getRound()),
+                                new ArrayList<>()
+                        ));
+                lastRound = currentNode.match.getRound();
+            }
+            result.get(0).seeds.add(currentNode.match);
+            if(currentNode.matchBeforeA != null){
+                queue.add(currentNode.matchBeforeA);
+            }
+            if(currentNode.matchBeforeB != null){
+                queue.add(currentNode.matchBeforeB);
+            }
+        }
+        return result;
+    }
+
+    public record MatchRoundDTO(String title, List<Match> seeds){}
+    public record TeamInMatchDTO(String id, double score, boolean empty){}
+
+
 }
