@@ -27,7 +27,6 @@ import java.util.UUID;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = OpenTournament.class, name = "open"),
-
         @JsonSubTypes.Type(value = ClosedTournament.class, name = "closed") }
 )
 public abstract class Tournament {

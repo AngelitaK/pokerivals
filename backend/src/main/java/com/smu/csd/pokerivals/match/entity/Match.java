@@ -218,6 +218,10 @@ public class Match {
         return (timeFinalisedTeamA != null && timeFinalisedTeamB != null) && (teamA == null || teamB == null);
     }
 
+    public boolean isBothTeamsFinalisedAndNotNull(){
+        return (timeFinalisedTeamA != null && timeFinalisedTeamB != null) && (teamA != null && teamB != null);
+    }
+
     @Setter(AccessLevel.NONE)
     private MatchResult matchResult = MatchResult.PENDING;
 
