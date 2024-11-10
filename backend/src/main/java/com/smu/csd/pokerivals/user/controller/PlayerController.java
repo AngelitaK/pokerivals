@@ -126,7 +126,7 @@ public class PlayerController {
                             schema = @Schema(implementation = Message.class)) })})
     public PlayerService.PlayerPageDTO getFriends(@AuthenticationPrincipal UserDetails userDetails,
                                                   @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
-                                                  @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize){
+                                                  @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize){
         return playerService.getFriendsOf(userDetails.getUsername(),page,pageSize);
     }
 
@@ -145,9 +145,30 @@ public class PlayerController {
                             schema = @Schema(implementation = Message.class)) })})
     public PlayerService.PlayerPageDTO getNotFriends(@AuthenticationPrincipal UserDetails userDetails,
                                                      @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
-                                                     @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize
+                                                     @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize
     ){
         return playerService.getNotFriendsOf(userDetails.getUsername(),page,pageSize);
+    }
+
+    @GetMapping("/clan/{name}")
+    @Operation(summary= "Get players within a clan",
+            description = "sorted by points descending")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Get friends successfully.",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = List.class)) }),
+            @ApiResponse(responseCode = "400", description = "Failed to get friends.",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Message.class)) }),
+            @ApiResponse(responseCode = "403", description = "Forbidden access.",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Message.class)) })})
+    public PlayerService.PlayerPageDTO getClanMates(@AuthenticationPrincipal UserDetails userDetails,
+                                                    @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
+                                                    @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize,
+                                                    @PathVariable String name
+    ){
+        return playerService.getPeopleInClan(name,page,pageSize);
     }
 
     @GetMapping("")
@@ -162,7 +183,7 @@ public class PlayerController {
                             schema = @Schema(implementation = Message.class)) })})
     public PlayerService.PlayerPageDTO getFriends(@RequestParam String query,
                                                   @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
-                                                  @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize
+                                                  @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize
     )
     {
         return playerService.searchPlayersByUsername(query, page, pageSize);

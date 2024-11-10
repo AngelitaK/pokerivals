@@ -23,4 +23,5 @@ public interface PlayerRepository extends JpaRepository<Player,String> {
 
     long countByUsernameContainingIgnoreCase(String query);
 
+    long countByClan_Name(String clanName);
 }

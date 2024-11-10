@@ -80,6 +80,14 @@ public class PlayerService {
         );
     }
 
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public PlayerPageDTO getPeopleInClan(String clanName, int page, int limit){
+        return new PlayerPageDTO(
+                playerPagingRepository.findByClan_NameOrderByPointsDesc(clanName,PageRequest.of(page,limit)),
+                playerRepository.countByClan_Name(clanName)
+        );
+    }
+
     /**
      * Make two players friends
      * @param username1 First player
@@ -141,6 +149,14 @@ public class PlayerService {
 
     public record PlayerPageDTO(List<Player> players, long count){ }
 
+    public record UpdateDescriptionDTO(String desc){}
 
+    @Transactional
+    @PreAuthorize("hasAuthority('PLAYER')")
+    public void updateDescription(String username, UpdateDescriptionDTO dto){
+        Player player = playerRepository.findById(username).orElseThrow();
+        player.setDescription(dto.desc());
+        playerRepository.save(player);
+    }
 
 }
