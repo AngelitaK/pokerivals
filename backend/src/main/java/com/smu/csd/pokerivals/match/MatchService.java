@@ -275,4 +275,13 @@ public class MatchService {
         );
     }
 
+    @PreAuthorize("hasAuthority('PLAYER')")
+    @Transactional
+    public MatchPageDTO getMatchesForPlayerBetweenDates(String username, ZonedDateTime start, ZonedDateTime end , int page, int limit){
+        return new MatchPageDTO(
+                matchPagingRepository.findByTimeMatchOccursBetweenAndTournamentPlayer(start,end, username, PageRequest.of(page, limit)),
+                matchRepository.countByTimeMatchOccursBetweenAndTournamentPlayer(start,end,username)
+        );
+    }
+
 }
