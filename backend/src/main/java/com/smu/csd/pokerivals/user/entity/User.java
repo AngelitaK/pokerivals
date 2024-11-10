@@ -32,6 +32,7 @@ public abstract class User implements Persistable<String> {
         protected String username;
 
         @Column(columnDefinition = "TEXT")
+        @Setter
         protected String description;
 
         @Column(length = 30, unique=true)
@@ -67,9 +68,11 @@ public abstract class User implements Persistable<String> {
         @Setter
         @Getter
         @Transient
+        @JsonIgnore
         private boolean update;
 
         @Override
+        @JsonIgnore
         public boolean isNew() {
                 return !this.update;
         }
@@ -81,6 +84,7 @@ public abstract class User implements Persistable<String> {
         }
 
         @Override
+        @JsonIgnore
         public String getId(){
                 return username;
         }
