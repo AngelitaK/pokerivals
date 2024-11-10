@@ -25,7 +25,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.core.env.Environment;
-import software.amazon.awssdk.services.taxsettings.model.SouthKoreaAdditionalInfo;
 
 import java.time.ZonedDateTime;
 import java.util.*;

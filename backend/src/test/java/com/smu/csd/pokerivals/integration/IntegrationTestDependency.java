@@ -40,6 +40,7 @@ public class IntegrationTestDependency {
      */
     public static String storeCookie(ResponseEntity<AuthenticationController.WhoAmI> response){
         String username = response.getBody().username();
+        log.info("Cookie header {}",response.getHeaders().getFirst(HttpHeaders.SET_COOKIE));
         String cookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE).split(";")[0];
         cookies.put(username,cookie);
 
