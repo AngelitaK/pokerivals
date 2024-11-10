@@ -3,7 +3,7 @@ package com.smu.csd.pokerivals.entity;
 
 import com.smu.csd.pokerivals.configuration.LoadData;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
-import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.repository.AbilityRepository;
 import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
@@ -25,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.core.env.Environment;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -78,7 +79,11 @@ public class TournamentEntityTest {
     }
 
     @Test
+    @DirtiesContext
     public void testJoinAndLeaveTournament(){
+        long initialNoOfTeams = teamRepository.count();
+        long initialNoOfChosenPokemon = chosenPokemonRepository.count();
+
         var tournament = tournamentRepository.save(new OpenTournament(
                 "abc",
                 (Admin) userRepository.findById("fake_admin").orElseThrow(),
@@ -95,16 +100,15 @@ public class TournamentEntityTest {
         Team team = createTeam(player,tournament);
         tournament.addTeam(team,ZonedDateTime.now());
         tournamentRepository.save(tournament);
-        assertEquals(1,teamRepository.count());
-        assertEquals(6,chosenPokemonRepository.count());
+
+        assertEquals(1,teamRepository.count()-initialNoOfTeams);
+        assertEquals(6,chosenPokemonRepository.count()-initialNoOfChosenPokemon);
 
         assertTrue(teamRepository.findById(new Team.TeamId(player,tournament)).isPresent());
 
         teamRepository.deleteById(new Team.TeamId(player,tournament));
 
-
-//        assertEquals(0,teamRepository.count());
-        assertEquals(0,chosenPokemonRepository.count());
+        assertEquals(0,chosenPokemonRepository.count()-initialNoOfChosenPokemon);
 
     }
 
@@ -119,7 +123,7 @@ public class TournamentEntityTest {
             var pokemonIdChosen = random.nextLong(1,noOfPokemons+1);
             var pokemon = pokemonRepository.findById((int)pokemonIdChosen).orElseThrow();
 
-            var nature = randomEnum(POKEMON_NATURE.class);
+            var nature = randomEnum(PokemonNature.class);
             var ability = pokemon.getAbilities().stream().toList().get(random.nextInt(pokemon.getAbilities().size()));
 
             Set<Move> moves = new HashSet<>();

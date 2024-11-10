@@ -11,7 +11,7 @@ import com.smu.csd.pokerivals.match.entity.MatchWrapper;
 import com.smu.csd.pokerivals.match.entity.TeamAgreementStatus;
 import com.smu.csd.pokerivals.match.repository.MatchRepository;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
-import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.record.Message;
 import com.smu.csd.pokerivals.security.AuthenticationController;
@@ -149,7 +149,7 @@ public class MatchIntegrationTest {
             var pokemonIdChosen = random.nextLong(1,noOfPokemons+1);
             var pokemon = pokemonRepository.findById((int)pokemonIdChosen).orElseThrow();
 
-            var nature = randomEnum(POKEMON_NATURE.class);
+            var nature = randomEnum(PokemonNature.class);
             var ability = pokemon.getAbilities().stream().toList().get(random.nextInt(pokemon.getAbilities().size()));
 
             var originalMoves = new ArrayList<>(pokemon.getMoves());

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
-import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
@@ -275,7 +275,7 @@ public class TournamentPlayerIntegrationTest {
                 Move m = getRandomSetElement(pokemon.getMoves());
                 moveNames.add(m.getName());
             }
-            POKEMON_NATURE nature = randomEnum(POKEMON_NATURE.class);
+            PokemonNature nature = randomEnum(PokemonNature.class);
 
             TournamentPlayerService.RawPokemonChoiceDTO one = new TournamentPlayerService.RawPokemonChoiceDTO(pokemonId, new ArrayList<>(moveNames),nature,ability);
             input.add(one);
@@ -328,7 +328,7 @@ public class TournamentPlayerIntegrationTest {
             chosenMoves.forEach(moveName ->{
                 chosenPokemon.learnMove(moveRepository.findById(moveName).orElseThrow());
             });
-            chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
+            chosenPokemon.setNature(randomEnum(PokemonNature.class));
             team.addChosenPokemon(chosenPokemon);
         }
         // join

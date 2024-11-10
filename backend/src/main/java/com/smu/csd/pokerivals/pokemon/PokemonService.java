@@ -1,6 +1,7 @@
 package com.smu.csd.pokerivals.pokemon;
 
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonPagingRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -34,6 +36,10 @@ public class PokemonService {
                 pokemonPagingRepository.findAll(PageRequest.of(page,limit)).getContent(),
                 pokemonRepository.count()
         );
+    }
+
+    public List<String> getPokemonNatures(){
+        return Arrays.stream(PokemonNature.values()).map(Enum::toString).toList();
     }
 }
 

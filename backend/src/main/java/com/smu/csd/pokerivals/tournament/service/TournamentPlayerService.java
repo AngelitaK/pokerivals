@@ -5,7 +5,7 @@ import com.smu.csd.pokerivals.NotificationService;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.pokemon.entity.Ability;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
-import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
@@ -64,7 +64,7 @@ public class TournamentPlayerService {
     public record RawPokemonChoiceDTO(
             int pokemonId,
             List<String> moves,
-            POKEMON_NATURE nature,
+            PokemonNature nature,
             String ability
     ){ }
 

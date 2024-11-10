@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smu.csd.pokerivals.pokemon.entity.Ability;
 import com.smu.csd.pokerivals.pokemon.entity.Move;
-import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -73,7 +73,7 @@ public class ChosenPokemon {
 
     @Enumerated(EnumType.ORDINAL)
     @NotNull
-    private POKEMON_NATURE nature;
+    private PokemonNature nature;
 
     @ManyToOne
     @JsonIgnore

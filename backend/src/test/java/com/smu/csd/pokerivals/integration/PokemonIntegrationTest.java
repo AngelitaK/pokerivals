@@ -56,6 +56,9 @@ public class PokemonIntegrationTest {
 
     private String username;
 
+    @Autowired
+    private PokemonService pokemonService;
+
     @BeforeEach
     public void loginPlayer() throws Exception {
         // Arrange
@@ -143,5 +146,10 @@ public class PokemonIntegrationTest {
 
         assertEquals(200, result.getStatusCode().value());
         assertEquals(1,result.getBody().getId());
+    }
+
+    @Test
+    public void getPokemonNature_success(){
+        log.info(pokemonService.getPokemonNatures().toString());
     }
 }

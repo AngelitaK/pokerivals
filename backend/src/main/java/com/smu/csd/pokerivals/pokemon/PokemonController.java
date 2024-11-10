@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/pokemon")
 @CrossOrigin
@@ -28,6 +30,12 @@ public class PokemonController {
     public Pokemon getOnePokemon(
             @PathVariable Integer id)  {
         return pokemonService.getPokemonById(id);
+    }
+
+    @GetMapping("/nature")
+    @Operation(summary="Get Pokemon Nature", description="Registers an admin for an account")
+    public List<String> pokemonNatures()  {
+        return pokemonService.getPokemonNatures();
     }
 
 }

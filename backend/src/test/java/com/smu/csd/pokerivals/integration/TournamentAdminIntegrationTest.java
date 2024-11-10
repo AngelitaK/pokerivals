@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.smu.csd.pokerivals.configuration.DateFactory;
-import com.smu.csd.pokerivals.pokemon.entity.POKEMON_NATURE;
+import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import com.smu.csd.pokerivals.pokemon.repository.MoveRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
@@ -335,7 +335,7 @@ public class TournamentAdminIntegrationTest {
                 });
 
 
-                chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
+                chosenPokemon.setNature(randomEnum(PokemonNature.class));
                 team.addChosenPokemon(chosenPokemon);
             }
             // join
@@ -446,7 +446,7 @@ public class TournamentAdminIntegrationTest {
                     chosenPokemon.learnMove(moveRepository.findById(moveName).orElseThrow());
                 });
 
-                chosenPokemon.setNature(randomEnum(POKEMON_NATURE.class));
+                chosenPokemon.setNature(randomEnum(PokemonNature.class));
                 team.addChosenPokemon(chosenPokemon);
             }
             // join

@@ -1,6 +1,6 @@
 package com.smu.csd.pokerivals.pokemon.entity;
 
-public enum POKEMON_NATURE {
+public enum PokemonNature {
     Adamant,
     Bashful,
     Bold,
