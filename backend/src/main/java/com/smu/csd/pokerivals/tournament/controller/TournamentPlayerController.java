@@ -1,8 +1,9 @@
 package com.smu.csd.pokerivals.tournament.controller;
 
 import com.smu.csd.pokerivals.record.Message;
-import com.smu.csd.pokerivals.tournament.service.TournamentPlayerService;
 import com.smu.csd.pokerivals.tournament.dto.TournamentPageDTO;
+import com.smu.csd.pokerivals.tournament.entity.Team;
+import com.smu.csd.pokerivals.tournament.service.TournamentPlayerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -50,8 +51,8 @@ public class TournamentPlayerController {
     @GetMapping("/search")
     @Operation(summary = "get tournaments based on name search and by player's elo", description = "only for players")
     public TournamentPageDTO searchTournaments(@AuthenticationPrincipal UserDetails userDetails,
-                                               @Parameter(description = "page of tournament to get (start from zero)") @RequestParam("page") Integer page,
-                                               @Parameter(description = "number of tournament per page") @RequestParam("limit") Integer pageSize,
+                                                @Parameter(description = "page of tournament to get (start from zero)") @RequestParam("page") Integer page,
+                                                @Parameter(description = "number of tournament per page") @RequestParam("limit") Integer pageSize,
                                                @Parameter(description = "case-insensitve name query") @RequestParam("query") String query){
         return tournamentPlayerService.searchTournaments(query,userDetails.getUsername(),page, pageSize);
     }
@@ -59,11 +60,15 @@ public class TournamentPlayerController {
     @GetMapping("/closed/invited")
     @Operation(summary = "get CLOSED tournaments where player is invited", description = "only for players")
     public TournamentPageDTO findTournamentsWherePlayerInvited(@AuthenticationPrincipal UserDetails userDetails,
-                                                               @Parameter(description = "page of tournament to get (start from zero)") @RequestParam("page") Integer page,
-                                                               @Parameter(description = "number of tournament per page") @RequestParam("limit") Integer pageSize){
+                                               @Parameter(description = "page of tournament to get (start from zero)") @RequestParam("page") Integer page,
+                                               @Parameter(description = "number of tournament per page") @RequestParam("limit") Integer pageSize){
         return tournamentPlayerService.findTournamentWherePlayerIsInvited(userDetails.getUsername(),page, pageSize);
     }
 
-
-
+    @GetMapping("/{id}/me/team/")
+    @Operation(summary = "get my team", description = "only for players")
+    public Team getMyTournament(@AuthenticationPrincipal UserDetails userDetails,
+                                @PathVariable String id){
+        return tournamentPlayerService.getMyTeam(userDetails.getUsername(), UUID.fromString(id));
+    }
 }

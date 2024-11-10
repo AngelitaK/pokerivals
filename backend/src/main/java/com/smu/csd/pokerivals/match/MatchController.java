@@ -62,8 +62,8 @@ public class MatchController {
 
     @PostMapping("/timing")
     @Operation(summary = "Suggest timing for a match by admin", description = "This will reset the approvals given by the players")
-    public Message suggestMatchTiming(@RequestBody @Valid MatchService.ApproveRejectMatchTimingDTO dto,@AuthenticationPrincipal UserDetails userDetail){
-        matchService.approveOrRejectMatchTiming(dto,userDetail.getUsername());
+    public Message suggestMatchTiming(@RequestBody @Valid MatchService.SetMatchTimingDTO dto,@AuthenticationPrincipal UserDetails userDetail){
+        matchService.setMatchTiming(userDetail.getUsername(),dto);
         return new Message("Result set");
     }
 

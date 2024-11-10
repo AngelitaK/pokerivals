@@ -219,7 +219,7 @@ public class MatchService {
 
         boolean bye;
         if (forfeitTeamA){
-            bye = matchBefore.finaliseTeamA(null, today) ;
+             bye = matchBefore.finaliseTeamA(null, today) ;
         } else {
             bye = matchBefore.finaliseTeamB(null, today) ;
         }
@@ -296,7 +296,8 @@ public class MatchService {
     }
 
     public List<MatchWrapper.MatchRoundDTO> generateFrontendFriendlyBrackets(UUID tournamentId){
-        return MatchWrapper.generateDisplayableTreeViaBFS(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(tournamentId)));
+        var matches = matchRepository.findByMatchIdTournamentId(tournamentId);
+        return matches.isEmpty() ? new ArrayList<>() : MatchWrapper.generateDisplayableTreeViaBFS(MatchWrapper.reconstructTree(matches));
     }
 
     public record ApproveRejectMatchTimingDTO(
@@ -311,6 +312,16 @@ public class MatchService {
         if (!match.isPlayerInMatch(username)){
             throw new IllegalArgumentException("this tournament is not participated by you");
         }
+
+        // PENDING
+        if (match.getTeamA() != null && match.getTeamA().getPlayer().getUsername().equals(username)){
+            // Team A
+            match.setTeamAAgreed(dto.approve, dateFactory.getToday());
+        }
+        else if (match.getTeamB().getPlayer().getUsername().equals(username)){
+            // Team B
+            match.setTeamBAgreed(dto.approve, dateFactory.getToday());
+        }
         notificationService.pushNotificationToLambda(
                 new LambdaNotificationDTO(
                         new NotificationDetails(
@@ -321,15 +332,6 @@ public class MatchService {
                         NotificationType.MATCH_ADMIN_CHANGE_TIME_AGREEMENT
                 )
         );
-        // PENDING
-        if (match.getTeamA() != null && match.getTeamA().getPlayer().getUsername().equals(username)){
-            // Team A
-            match.setTeamAAgreed(dto.approve, dateFactory.getToday());
-        }
-        else if (match.getTeamB().getPlayer().getUsername().equals(username)){
-            // Team B
-            match.setTeamBAgreed(dto.approve, dateFactory.getToday());
-        }
     }
 
     public record SetMatchTimingDTO(

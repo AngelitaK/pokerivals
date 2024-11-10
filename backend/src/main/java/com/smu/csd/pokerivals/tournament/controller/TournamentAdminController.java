@@ -66,18 +66,18 @@ public class TournamentAdminController {
     @GetMapping("/{id}/team")
     @Operation(summary = "get all teams of a tournament that an admin is managing", description = "only for admins")
     public TournamentAdminService.TeamPageDTO fetchTeamsOfMyTournament(@AuthenticationPrincipal UserDetails userDetails,
-                                                                       @Parameter(description = "page of pokemon to get (start from zero)") @RequestParam("page") Integer page,
-                                                                       @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize,
-                                                                       @PathVariable String id){
+                                                @Parameter(description = "page of pokemon to get (start from zero)") @RequestParam("page") Integer page,
+                                                @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize,
+                                                      @PathVariable String id){
         return tournamentAdminService.getTeamsOfATournament(UUID.fromString(id),userDetails.getUsername(),page,pageSize);
     }
 
     @DeleteMapping("/{id}/team/player/{playerUsername}")
     @Operation(summary = "delete  a team of a tournament that an admin is managing", description = "only for admins")
     public Message deleteTeamOfMyTournament(@AuthenticationPrincipal UserDetails userDetails,
-                                            @PathVariable String id,
-                                            @PathVariable String playerUsername){
-        tournamentAdminService.kickPlayerFromTournament(userDetails.getUsername(),playerUsername,UUID.fromString(id));
+                                                                       @PathVariable String id,
+                                                                       @PathVariable String playerUsername){
+         tournamentAdminService.kickPlayerFromTournament(userDetails.getUsername(),playerUsername,UUID.fromString(id));
 
         return new Message("Successfully removed player");
     }

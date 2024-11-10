@@ -12,13 +12,13 @@ import java.util.UUID;
 public interface MatchRepository extends JpaRepository<Match, Match.MatchId> {
     List<Match> findByMatchIdTournamentId(UUID tournamentId);
 
-    //    @Query("select count(m) from Match m where m.tournament.admin.username = :username and m.timeMatchOccurs > :start and m.timeMatchOccurs < :end")
+//    @Query("select count(m) from Match m where m.tournament.admin.username = :username and m.timeMatchOccurs > :start and m.timeMatchOccurs < :end")
     long countByTimeMatchOccursBetweenAndTournament_Admin_Username(ZonedDateTime start, ZonedDateTime end, String username);
 
     @Query("select count(m) from Match m where (m.teamA.teamId.playerName = :username or m.teamB.teamId.playerName = :username) and m.timeMatchOccurs > :start and m.timeMatchOccurs < :end")
     long countByTimeMatchOccursBetweenAndTournamentPlayer(@Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end,  @Param("username") String username);
 
-    long countByTimeMatchOccursBetweenOrderByTimeMatchOccursAsc( ZonedDateTime start, ZonedDateTime end);
+   long countByTimeMatchOccursBetweenOrderByTimeMatchOccursAsc( ZonedDateTime start, ZonedDateTime end);
 
-    List<Match> findByTimeMatchOccursBetween(ZonedDateTime start, ZonedDateTime end);
+   List<Match> findByTimeMatchOccursBetween(ZonedDateTime start, ZonedDateTime end);
 }

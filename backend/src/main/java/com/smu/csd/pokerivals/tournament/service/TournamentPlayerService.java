@@ -148,4 +148,11 @@ public class TournamentPlayerService {
         );
     }
 
+    public Team getMyTeam(String playerUsername, UUID tournamentID){
+        return teamRepository.findById(new Team.TeamId(
+                playerRepository.findById(playerUsername).orElseThrow(),
+                tournamentRepository.findById(tournamentID).orElseThrow()
+        )).orElseThrow();
+    }
+
 }

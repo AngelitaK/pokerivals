@@ -27,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.core.env.Environment;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -35,13 +36,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataJpaTest(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3306/test",
-        "spring.jpa.hibernate.ddl-auto=update",
-        "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver",
-        "spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect"
-})
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@DataJpaTest()
+@ActiveProfiles("test")
 public class TournamentEntityTest {
     @Autowired
     private TestEntityManager testEM;
@@ -79,7 +75,7 @@ public class TournamentEntityTest {
 
     @BeforeEach
     public void loadData() throws Exception {
-        new LoadData(environment).initDatabase(userRepository,clanRepository, pokemonRepository,abilityRepository, moveRepository, bettingSettingRepository).run("abc");
+        new LoadData(environment).initDatabase(userRepository,clanRepository, pokemonRepository,abilityRepository, moveRepository, bettingSettingRepository).afterPropertiesSet();
     }
 
     @Test

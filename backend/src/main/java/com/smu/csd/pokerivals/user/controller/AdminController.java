@@ -34,7 +34,7 @@ public class AdminController {
     @PostMapping("")
     @Operation(summary="Register admin", description="Registers an admin for an account")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Admin registered successfully.",
+            @ApiResponse(responseCode = "200", description = "Admin registered successfully.",
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = Message.class)) }),
             @ApiResponse(responseCode = "400", description = "Admin failed to be registered.",
@@ -74,7 +74,7 @@ public class AdminController {
     @PostMapping("/link")
     @Operation(summary="Link admin account with Google email", description = "Link admin account with Google email")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Email linked to account successfully.",
+            @ApiResponse(responseCode = "200", description = "Email linked to account successfully.",
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = Message.class)) }),
             @ApiResponse(responseCode = "400", description = "Failed to link email with account.",

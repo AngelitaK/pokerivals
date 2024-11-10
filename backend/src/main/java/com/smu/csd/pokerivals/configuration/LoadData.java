@@ -37,10 +37,10 @@ public class LoadData {
 
   @Autowired
   public LoadData(Environment environment) {
-    this.environment = environment;
-  }
+        this.environment = environment;
+    }
 
-  @Bean
+    @Bean
   public InitializingBean initDatabase(
           UserRepository userRepository,
           ClanRepository clanRepository,
@@ -48,7 +48,7 @@ public class LoadData {
           AbilityRepository abilityRepository,
           MoveRepository moveRepository,
           BettingSettingRepository bettingSettingRepository
-  ) {
+    ) {
     return () -> {
       // load config
       var minConfig = bettingSettingRepository.findById(BettingSettingKey.MINIMUM_PROFIT_MARGIN_PERCENTAGE);
@@ -70,7 +70,7 @@ public class LoadData {
           String[] line;
           while ((line = csvReader.readNext()) != null) {
             if (clanRepository.findById(line[0].toLowerCase()).isEmpty()) {
-              log.trace("Saving {}", clanRepository.save(new Clan(line[0].toLowerCase())));
+                log.trace("Saving {}", clanRepository.save(new Clan(line[0].toLowerCase())));
             }
           }
         }
@@ -88,7 +88,7 @@ public class LoadData {
             if (userRepository.findById(admin.getId()).isEmpty() && userRepository.findOneByGoogleSub(admin.getGoogleSub()).isEmpty()) {
               userRepository.deleteById(admin.getUsername());
               userRepository.deleteByGoogleSub(admin.getGoogleSub());
-              log.trace("Saving Admin : {}", userRepository.save(admin));
+                log.trace("Saving Admin : {}", userRepository.save(admin));
             }
           }
         }
@@ -105,7 +105,7 @@ public class LoadData {
             if (userRepository.findById(player.getId()).isEmpty() && userRepository.findOneByGoogleSub(player.getGoogleSub()).isEmpty()){
               userRepository.deleteById(player.getUsername());
               userRepository.deleteByGoogleSub(player.getGoogleSub());
-              log.trace("Saving Player : {}", userRepository.save(player));
+                log.trace("Saving Player : {}", userRepository.save(player));
             }
           }
         }

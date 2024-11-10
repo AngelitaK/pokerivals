@@ -69,7 +69,7 @@ public class Player extends User {
         c.getMembers().add(this);
     }
 
-
+    @JsonIgnore
     public int getNoOfFriends(){
         if (befriendedBy.size() != friendsWith.size()){
             throw new IllegalStateException();

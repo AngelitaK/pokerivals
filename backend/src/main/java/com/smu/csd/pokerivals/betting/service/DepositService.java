@@ -23,12 +23,12 @@ import org.springframework.stereotype.Service;
 public class DepositService {
     @Autowired
     public DepositService(
-            PlayerRepository playerRepository,
-            DepositTransactionRepository depositTransactionRepository,
-            @Value("${stripe.secret-key}") String apiKey,
-            DateFactory dateFactory,
-            DepositTransactionPagingRepository depositTransactionPagingRepository,
-            TransactionRepository transactionRepository
+        PlayerRepository playerRepository,
+        DepositTransactionRepository depositTransactionRepository,
+        @Value("${stripe.secret-key}") String apiKey,
+        DateFactory dateFactory,
+        DepositTransactionPagingRepository depositTransactionPagingRepository,
+        TransactionRepository transactionRepository
     ) {
         this.playerRepository = playerRepository;
         this.depositTransactionRepository = depositTransactionRepository;

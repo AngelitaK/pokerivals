@@ -36,6 +36,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -53,6 +54,7 @@ import static org.mockito.Mockito.*;
 
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 public class MatchSearchIntegrationTest {
 
     //tournament creation

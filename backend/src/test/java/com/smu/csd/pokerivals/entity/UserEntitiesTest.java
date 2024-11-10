@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.*;
 
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 //    "spring.jpa.hibernate.ddl-auto=update"
 })
 //@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ActiveProfiles("test")
 public class UserEntitiesTest {
     @Autowired
     private TestEntityManager testEM;

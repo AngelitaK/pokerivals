@@ -20,7 +20,7 @@ import java.util.Set;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 public class Move {
-
+    
     @Id
     @Column(length = 100)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

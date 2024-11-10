@@ -5,16 +5,16 @@ import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.tournament.service.TournamentAdminService;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Getter
@@ -226,8 +226,8 @@ public abstract class Tournament {
         if (!teams.contains(team)){
             throw new IllegalArgumentException("Team is not in tournament");
         }
-        this.teams.remove(team);
-        team.setTournament(null);
+            this.teams.remove(team);
+            team.setTournament(null);
     };
 
     /**
@@ -264,5 +264,10 @@ public abstract class Tournament {
     @JsonGetter("started")
     public boolean hasStarted(){
         return !this.matches.isEmpty();
+    }
+
+    @JsonGetter("participants")
+    private List<String> getParticipants(){
+        return this.teams.stream().map(Team::getPlayerUsername).collect(ArrayList::new,ArrayList::add, ArrayList::addAll);
     }
 }

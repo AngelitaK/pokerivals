@@ -98,6 +98,8 @@ public class PlayerBettingService {
         if (transactionRepository.getPlayerBalance(playerUsername) >= dto.betAmountInCents) {
             var bet = PlaceBetTransaction.createBet(match,player, dto.betAmountInCents, dto.side, dateFactory.getToday());
             bet = placeBetTransactionRepository.save(bet);
+        } else {
+            throw new IllegalArgumentException("You do not have enough money! Please top up");
         }
     }
 
@@ -202,7 +204,7 @@ public class PlayerBettingService {
         // create win bet for everyone
         List<PlaceBetTransaction> toProcess = placeBetTransactionRepository.findByMatch_MatchId(matchId);
         for (PlaceBetTransaction pt: toProcess){
-            pt.cancelIfForfeited();
+                pt.cancelIfForfeited();
         }
 
         notificationService.pushNotificationToLambda(new LambdaNotificationDTO(

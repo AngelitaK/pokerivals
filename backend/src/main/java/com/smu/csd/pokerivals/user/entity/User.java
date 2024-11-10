@@ -19,7 +19,7 @@ import java.util.Date;
  * Implements {@link Persistable<String>} to prevent saving of user with the same username twice
  */
 @Entity
-@Table(name="users")
+@Table(name="users") 
 @Inheritance(strategy = InheritanceType.JOINED) // experiment with different kinds
 @NoArgsConstructor
 @Getter

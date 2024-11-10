@@ -144,7 +144,7 @@ public class PlayerController {
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = Message.class)) })})
     public PlayerService.PlayerPageDTO getNotFriends(@AuthenticationPrincipal UserDetails userDetails,
-                                                     @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
+                                       @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
                                                      @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize
     ){
         return playerService.getNotFriendsOf(userDetails.getUsername(),page,pageSize);
@@ -164,8 +164,8 @@ public class PlayerController {
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = Message.class)) })})
     public PlayerService.PlayerPageDTO getClanMates(@AuthenticationPrincipal UserDetails userDetails,
-                                                    @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
-                                                    @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize,
+                                                  @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
+                                                  @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize,
                                                     @PathVariable String name
     ){
         return playerService.getPeopleInClan(name.toLowerCase(),page,pageSize);
@@ -182,8 +182,8 @@ public class PlayerController {
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = Message.class)) })})
     public PlayerService.PlayerPageDTO getFriends(@RequestParam String query,
-                                                  @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
-                                                  @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize
+                                   @Parameter(description = "page of users to get (start from zero)") @RequestParam("page") Integer page,
+                                   @Parameter(description = "number of players per page") @RequestParam("limit") Integer pageSize
     )
     {
         return playerService.searchPlayersByUsername(query, page, pageSize);

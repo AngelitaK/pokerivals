@@ -140,6 +140,9 @@ public class Match {
         return forTeamA ? teamAWinRate : teamBWinRate;
     }
 
+    private boolean isMatchDone(){
+        return matchResult == MatchResult.TEAM_A || matchResult == MatchResult.TEAM_B;
+    }
 
     @JsonGetter("teams")
     private List<MatchWrapper.TeamInMatchDTO> getTeams(){
@@ -162,18 +165,18 @@ public class Match {
 
         return new ArrayList<>(
                 List.of(
-                        new MatchWrapper.TeamInMatchDTO(
-                                (teamA == null ? "" : teamA.getPlayerUsername()),
-                                (teamA == null ? 0.0 : teamA.getPlayer().getPoints()),
-                                teamA == null,
-                                teamA == null ? 0.0 : teamAWinRate
-                        ),
-                        new MatchWrapper.TeamInMatchDTO(
-                                (teamB == null ? "" : teamB.getPlayerUsername()),
-                                (teamB == null ? 0.0 : teamB.getPlayer().getPoints()),
-                                teamB == null,
-                                teamB == null ? 0.0 : teamBWinRate
-                        )
+                    new MatchWrapper.TeamInMatchDTO(
+                        (teamA == null ? "" : teamA.getPlayerUsername()),
+                        (teamA == null ? 0.0 : (isMatchDone() ? teamAPointsWhenCompleted : teamA.getPlayer().getPoints())),
+                        teamA == null,
+                            teamA == null ? 0.0 : teamAWinRate
+                    ),
+                    new MatchWrapper.TeamInMatchDTO(
+                            (teamB == null ? "" : teamB.getPlayerUsername()),
+                            (teamB == null ? 0.0 : (isMatchDone() ? teamBPointsWhenCompleted : teamB.getPlayer().getPoints())),
+                            teamB == null,
+                            teamB == null ? 0.0 : teamBWinRate
+                    )
                 )
         );
     }
@@ -233,7 +236,7 @@ public class Match {
      * @return whether a Bye occurred
      */
     public boolean finaliseTeamB(Team team, ZonedDateTime today){
-        if (teamB != null && team != null) {
+         if (teamB != null && team != null) {
             throw new IllegalArgumentException("You are not allowed to overwrite the team");
         } else if (teamB != null){
             // Forfeit
@@ -346,6 +349,9 @@ public class Match {
     @Setter(AccessLevel.NONE)
     private ZonedDateTime matchResultRecordedAt;
 
+    private double teamBPointsWhenCompleted;
+    private double teamAPointsWhenCompleted;
+
     /**
      * Set the match result of this match
      * @param matchResult result of this match (cannot be pending)
@@ -374,6 +380,9 @@ public class Match {
             // calculate both side win rate
             double teamAWinRate = getWinRate(differenceBetweenBAndA);
             double teamBWinRate = 1 - teamAWinRate;
+
+            teamAPointsWhenCompleted = teamA.getPlayer().getPoints();
+            teamBPointsWhenCompleted = teamB.getPlayer().getPoints();
 
             // change elo based on who won
             return switch (matchResult) {
@@ -550,6 +559,11 @@ public class Match {
     @JsonIgnore
     public boolean isAdminManagingMatch(String adminUsername){
         return tournament.getAdminUsername().equals(adminUsername);
+    }
+
+    @JsonGetter("tournamentName")
+    public String getTournamentName(){
+        return tournament.getName();
     }
 }
 

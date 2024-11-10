@@ -32,7 +32,7 @@ public class Ability {
     @JsonIgnore
     @ManyToMany(mappedBy = "abilities")
     private Set<Pokemon> possessedBy = new HashSet<>();
-
+    
     public void addPokemon (Pokemon pokemon){
         possessedBy.add(pokemon);
     }

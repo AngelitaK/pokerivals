@@ -4,6 +4,7 @@ import com.smu.csd.pokerivals.betting.dto.TransactionPageDTO;
 import com.smu.csd.pokerivals.betting.service.PlayerBettingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,6 +45,24 @@ public class PlayerBettingController {
             @Parameter(description = "number of transaction per page") @RequestParam("limit") Integer pageSize
     ){
         return playerBettingService.getAllWinBetTransaction(userDetails.getUsername(),page,pageSize);
+    }
+
+    @PostMapping("/bet")
+    @Operation(summary = "place bet on a match")
+    public void placeBet(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid PlayerBettingService.PlaceOrModifyBetDTO dto
+            ){
+        playerBettingService.placeBet(userDetails.getUsername(),dto);
+    }
+
+    @GetMapping("/bet")
+    @Operation(summary = "predict bet win")
+    public PlayerBettingService.WinPredictionDTO predictBet(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid PlayerBettingService.PlaceOrModifyBetDTO dto
+    ){
+        return playerBettingService.predictWinAmount(dto);
     }
 
 }
