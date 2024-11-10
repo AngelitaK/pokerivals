@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo} from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Flex,
   Box,
@@ -14,26 +14,20 @@ import { FcCalendar } from "react-icons/fc";
 import { useRouter } from 'next/navigation'; 
 import Link from 'next/link'; 
 import TournamentItem from '../../components/tournamentItem';
-import LoadingOverlay from "../../components/loadingOverlay";
-import axios from "../../../config/axiosInstance";
-import useAuth from "../../../config/useAuth";
+import axios from '../../../config/axiosInstance'; 
 import SearchBar from "@/components/searchBar";
-
+import RegisteredItem from './../../components/registeredItem';
 
 const FindTournamentPage = () => {  
   const [tournaments, setTournaments] = useState([]); 
   const [searchResults, setSearchResults] = useState([]); // Search results
+  const [loading, setLoading] = useState(false); // Track loading state
   const [error, setError] = useState(null); // Track errors
   const [page, setPage] = useState(0); // Track the current page for pagination
   const [query, setQuery] = useState(''); // Track search query
   const [hasMoreResults, setHasMoreResults] = useState(true); // Track if more results exist
   const limit = 3; // Number of items per page
   const router = useRouter();
-
-  // Check authentication
-  const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
-  const { isAuthenticated, user, loading } = useAuth(roles);
-  console.log(isAuthenticated, user, loading);
 
   // Function to fetch all the tournaments the user is in
   useEffect(() => {
@@ -44,7 +38,9 @@ const FindTournamentPage = () => {
       } catch (err) {
         console.error("Error fetching tournaments:", err);
         setError("Failed to load tournaments."); // Set error message
-      } 
+      } finally {
+        setLoading(false); // Set loading to false after fetching
+      }
     };
 
     fetchTournaments();
@@ -119,8 +115,9 @@ const FindTournamentPage = () => {
     router.push(`/choose-pokemon/${tournamentId}`);
   };
 
-  if (loading) return <LoadingOverlay />;
-  if (!isAuthenticated) return null;
+  const handleTournamentClick = (tournamentId) => {
+    router.push(`/tournament-details/${tournamentId}`);
+  };
 
   return (
     <Stack
@@ -171,12 +168,13 @@ const FindTournamentPage = () => {
                     tournaments.map((tournament) => {
                       const isRegistrationEnded = new Date() > new Date(tournament.registrationPeriod.registrationEnd);
                       return (
-                        <TournamentItem 
+                        <RegisteredItem
                           key={tournament.id} 
                           tournament={tournament} 
                           buttonLabel="Leave"
                           onButtonClick={() => handleWithdraw(tournament.id)}
                           isDisabled={isRegistrationEnded} // Disable button if registration has ended
+                          onTournamentClick={handleTournamentClick}
                         />
                       );
                     })

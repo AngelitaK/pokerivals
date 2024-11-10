@@ -27,7 +27,7 @@ const ChoosePokemon = ({ params }) => {
 
   // Function to add Pokémon to the final team
   const addPokemonToTeam = (pokemon) => {
-    if (finalTeam.length < 7) { // Limit to 6 Pokémon
+    if (finalTeam.length < 6) { // Limit to 6 Pokémon
       setFinalTeam((prevTeam) => [...prevTeam, pokemon]);
     } else {
       console.warn("Team is already full");
@@ -45,20 +45,18 @@ const ChoosePokemon = ({ params }) => {
     console.log("Final team:", finalTeam);
     
     const pokemonChoicesRaw = finalTeam.map(pokemon => ({
-      pokemonId: pokemon.id,
-      moves: pokemon.moves,
-      nature: pokemon.nature,
-      ability: pokemon.ability
-   }));
+      pokemonId: pokemon.id, // Assuming each pokemon object has an id
+      moves: pokemon.moves, // Assuming moves are stored in the pokemon object
+      nature: pokemon.nature, // Assuming nature is stored in the pokemon object
+      ability: pokemon.ability // Assuming ability is stored in the pokemon object
+    }));
 
     try {
       const response = await axios.post(`/player/tournament/${tournamentId}/join`, {
-        pokemonChoicesRaw: pokemonChoicesRaw
-
-      }
-    );
-      console.log("Successfully joined tournament:", response.data);
+        pokemonChoicesRaw
+      });
       
+      console.log("Successfully joined tournament:", response.data);
       toast({
         title: "Successfully joined tournament!",
         status: "success",
@@ -71,12 +69,6 @@ const ChoosePokemon = ({ params }) => {
 
     } catch (error) {
       console.error("Error joining tournament:", error);
-      toast({
-        title: "Error joining tournament!" + response.data.explanation,
-        status: "error",
-        duration: 5000,
-        isClosable: true
-      });
     }
   };
 
@@ -94,7 +86,7 @@ const ChoosePokemon = ({ params }) => {
       bgPosition="center"
       p={8}
       minH="100vh"
-    >
+    >x
       {/* Top Header */}
       <Flex w="100%" justify="center" align="center" mb={10}>
         <Button onClick={() => router.back()} colorScheme="blue" position="absolute" left="10px">
