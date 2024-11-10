@@ -113,7 +113,7 @@ public class PlayerController {
 
     @GetMapping("me/friend")
     @Operation(summary= "Get user's friends",
-            description = "Get the logged-in user's friends")
+            description = "Get the logged-in user's friends sorted by points desc")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Get friends successfully.",
                     content = { @Content(mediaType = "application/json",
@@ -131,7 +131,7 @@ public class PlayerController {
     }
 
     @GetMapping("me/non-friend")
-    @Operation(summary= "Get user's friends",
+    @Operation(summary= "Get user's non-friends",
             description = "Get the logged-in user's friends")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Get friends successfully.",
