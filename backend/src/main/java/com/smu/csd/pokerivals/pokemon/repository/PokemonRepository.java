@@ -15,4 +15,6 @@ public interface PokemonRepository extends JpaRepository<Pokemon, Integer> {
     @NotNull
     @EntityGraph(attributePaths = { "abilities", "moves" })
     Optional<Pokemon> findById(@NotNull Integer id);
+
+    public long countByNameContainingIgnoreCase(String name);
 }

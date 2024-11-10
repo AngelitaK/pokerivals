@@ -152,4 +152,9 @@ public class PokemonIntegrationTest {
     public void getPokemonNature_success(){
         log.info(pokemonService.getPokemonNatures().toString());
     }
+
+    @Test
+    public void searchPokemon_success(){
+        log.info(pokemonService.searchPokemon("c",1,10).pokemons().stream().map(Pokemon::getName).toList().toString());
+    }
 }

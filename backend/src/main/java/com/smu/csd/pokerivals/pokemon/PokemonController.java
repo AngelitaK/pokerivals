@@ -38,4 +38,13 @@ public class PokemonController {
         return pokemonService.getPokemonNatures();
     }
 
+    @GetMapping("/search")
+    @Operation(summary="Search Pokemons")
+    public PokemonService.PokemonPageDTO searchPokemon(
+            @Parameter(description = "string to search pokemon by (case-insensitive)") @RequestParam("query") String query,
+            @Parameter(description = "page of pokemon to get (start from zero)") @RequestParam("page") Integer page,
+            @Parameter(description = "number of pokemon per page") @RequestParam("limit") Integer pageSize)  {
+        return pokemonService.searchPokemon(query,page, pageSize);
+    }
+
 }

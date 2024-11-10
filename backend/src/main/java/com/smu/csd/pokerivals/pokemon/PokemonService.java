@@ -4,6 +4,7 @@ import com.smu.csd.pokerivals.pokemon.entity.Pokemon;
 import com.smu.csd.pokerivals.pokemon.entity.PokemonNature;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonPagingRepository;
 import com.smu.csd.pokerivals.pokemon.repository.PokemonRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Transactional
 public class PokemonService {
 
     private final PokemonRepository pokemonRepository;
@@ -40,6 +42,13 @@ public class PokemonService {
 
     public List<String> getPokemonNatures(){
         return Arrays.stream(PokemonNature.values()).map(Enum::toString).toList();
+    }
+
+    public PokemonPageDTO searchPokemon(String query, int page, int limit){
+        return new PokemonPageDTO(
+                pokemonPagingRepository.findByNameContainingIgnoreCase(query,PageRequest.of(page,limit)),
+                pokemonRepository.countByNameContainingIgnoreCase(query)
+        );
     }
 }
 

@@ -107,9 +107,9 @@ public class Pokemon {
                 ", name='" + name + '\'' +
                 ", type1='" + type1 + '\'' +
                 ", type2='" + type2 + '\'' +
-                ", abilities=" + abilities +
+                ", abilities=" + getAbilitiesAsString() +
                 ", stats=" + stats +
-                ", moves=" + moves +
+                ", moves=" + getMovesAsString() +
                 '}';
     }
 }
