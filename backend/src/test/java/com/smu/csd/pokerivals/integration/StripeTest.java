@@ -91,14 +91,14 @@ public class StripeTest {
                 .setHost("localhost")
                 .setScheme("http")
                 .setPort(port)
-                .setPathSegments("deposit","start", "embedded");
+                .setPathSegments("transaction","deposit","start", "embedded");
 
         var resultEmbedded = restTemplate.exchange(builder.build(), HttpMethod.POST, createStatefulResponse(username), DepositService.EmbeddedPaymentDTO.class);
         assertEquals(200, resultEmbedded.getStatusCode().value());
         assertNotNull(resultEmbedded.getBody().clientSecret());
 
         builder
-                .setPathSegments("deposit","start", "hosted");
+                .setPathSegments("transaction","deposit","start", "hosted");
 
         var resultHosted = restTemplate.exchange(builder.build(), HttpMethod.POST, createStatefulResponse(username), DepositService.HostedPaymentDTO.class);
         assertEquals(200, resultHosted.getStatusCode().value());

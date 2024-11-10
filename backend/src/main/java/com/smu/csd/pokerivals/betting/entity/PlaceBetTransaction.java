@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
 import com.smu.csd.pokerivals.user.entity.Player;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
@@ -43,6 +40,7 @@ public class PlaceBetTransaction extends Transaction{
     @NotNull
     private BettingSide side;
 
+
     public void cancelIfForfeited(){
         if (match.isForfeited()){
             this.changeInCents=0;
@@ -50,15 +48,18 @@ public class PlaceBetTransaction extends Transaction{
         }
     }
 
-    public void modifyBetAmount(@Positive long betAmount){
-        if (!match.getMatchResult().equals(MatchResult.PENDING)){
-            throw new IllegalArgumentException("Match has concluded");
-        }
-        this.betAmount = betAmount;
-        this.changeInCents  = -betAmount;
-    }
-
     @Positive
     private long betAmount;
     private boolean cancelled = false;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JsonIgnore
+    private WinBetTransaction winBetTransaction;
+
+    public void setWinBetTransaction(WinBetTransaction winBetTransaction) {
+        if (match.getMatchResult() == MatchResult.PENDING ||match.getMatchResult() == MatchResult.CANCELLED ){
+            throw new IllegalArgumentException();
+        }
+        this.winBetTransaction = winBetTransaction;
+    }
 }

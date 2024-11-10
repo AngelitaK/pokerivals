@@ -45,7 +45,7 @@ public class SecurityConfig {
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 						.requestMatchers(HttpMethod.OPTIONS).permitAll()
-						.requestMatchers("/deposit/webhook").permitAll()
+						.requestMatchers("/transaction/deposit/webhook").permitAll()
 						.anyRequest().authenticated()
 
 				)

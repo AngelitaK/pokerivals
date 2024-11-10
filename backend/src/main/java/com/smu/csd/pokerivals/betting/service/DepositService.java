@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@PreAuthorize("hasAuthority('PLAYER')")
 public class DepositService {
     @Autowired
     public DepositService(
@@ -127,6 +126,7 @@ public class DepositService {
         deposit.confirm(dto.customerEmail, dto.checkoutSessionId, dto.status, dto.amountTotal);
     }
 
+    @PreAuthorize("hasAuthority('PLAYER')")
     public TransactionPageDTO getAllCompletedTransaction(String playerUsername, int page, int limit){
         return new TransactionPageDTO(
                 depositTransactionPagingRepository.findByChangeInCentsGreaterThanAndPlayer_Username(0, playerUsername, PageRequest.of(page, limit)),
@@ -134,6 +134,7 @@ public class DepositService {
                 transactionRepository.getPlayerBalance(playerUsername)
         );
     }
+    @PreAuthorize("hasAuthority('PLAYER')")
     public TransactionPageDTO getAllIncompleteTransaction(String playerUsername, int page, int limit){
         return new TransactionPageDTO(
                 depositTransactionPagingRepository.findByChangeInCentsAndPlayer_Username(0, playerUsername, PageRequest.of(page, limit)),
