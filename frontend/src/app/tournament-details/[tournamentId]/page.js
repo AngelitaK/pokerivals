@@ -23,7 +23,7 @@ import {
   ModalBody,
   ModalContent,
   VStack,
-  Spinner
+  Spinner,
 } from "@chakra-ui/react";
 import { FaArrowCircleLeft } from "react-icons/fa";
 import { TbTournament } from "react-icons/tb";
@@ -54,56 +54,56 @@ const TournamentDetails = ({ params }) => {
   const [teamData, setTeamData] = useState([]);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isLoadingTeam, setIsLoadingTeam] = useState(false);
-  
+
   const { tournamentId } = params;
 
   // Fetch tournament data on page load
   useEffect(() => {
     const fetchTournamentData = async () => {
-      try{
+      try {
         const response = await axios.get("/player/tournament/me", {
-          params: { page: 0, limit: 100 },
+          params: { page: 0, limit: 200 },
         });
         const tournaments = response.data.tournaments;
-        
+
         if (Array.isArray(tournaments)) {
           const tournament = tournaments.find((t) => t.id === tournamentId);
           if (tournament) {
             setTournament(tournament);
-          } 
+          }
         } else {
           console.error("No tournament data found or data is not an array");
         }
-      }
-      catch(err){
+      } catch (err) {
         console.error("Error fetching tournaments:", err);
       }
-  
+
       // Fetch tournament match data
       try {
         const response = await axios.get(`/tournament/match/${tournamentId}`);
         if (response.status === 200) {
           setTournamentData(response.data);
-          console.log("response.data: ", response.data);
-          
+          // console.log("response.data: ", response.data);
         } else {
           console.error("Failed to fetch matches: Invalid status code");
         }
       } catch (error) {
         console.error("Error fetching matches: ", error);
-        setTournamentData(null); 
+        setTournamentData(null);
       }
     };
-  
+
     fetchTournamentData();
   }, [tournamentId]);
 
-   // Function to fetch the player's team
+  // Function to fetch the player's team
   const fetchTeamData = async () => {
     setIsLoadingTeam(true);
     try {
-      const response = await axios.get(`/player/tournament/${tournamentId}/me/team/`);
-      console.log(response.data.chosenPokemons);
+      const response = await axios.get(
+        `/player/tournament/${tournamentId}/me/team/`
+      );
+      // console.log(response.data.chosenPokemons);
       setTeamData(response.data.chosenPokemons);
     } catch (error) {
       console.error("Error fetching team data:", error);
@@ -119,18 +119,20 @@ const TournamentDetails = ({ params }) => {
     }
   };
 
-  const handleViewTeam = () => { 
-    fetchTeamData(); 
+  const handleViewTeam = () => {
+    fetchTeamData();
     setIsTeamModalOpen(true);
   };
 
-  const handleViewBracket = (tournamentId) => { 
+  const handleViewBracket = (tournamentId) => {
     router.push(`/tournament-bracket/${tournamentId}`);
   };
 
   const handleBackNavigation = () => {
     router.push("/find-tournament");
   };
+
+  // console.log("tournamentData: ", tournamentData);
 
   return (
     <Box minH="90vh" bg="white">
@@ -156,7 +158,10 @@ const TournamentDetails = ({ params }) => {
 
         {/* Bracket View Button */}
         {tournament && (
-          <Tooltip label="View Tournament Bracket" aria-label="View Tournament Bracket">
+          <Tooltip
+            label="View Tournament Bracket"
+            aria-label="View Tournament Bracket"
+          >
             <Button
               leftIcon={<TbTournament size={20} />}
               colorScheme="gray"
@@ -173,63 +178,90 @@ const TournamentDetails = ({ params }) => {
         )}
 
         {tournament && (
-            <Button
-              leftIcon={<CgPokemon size={20} />}
-              colorScheme="gray"
-              variant="solid"
-              onClick={handleViewTeam}
-              size="md"
-              fontSize="sm"
-              left="52%"
-            >
-              View my Team
-            </Button>
+          <Button
+            leftIcon={<CgPokemon size={20} />}
+            colorScheme="gray"
+            variant="solid"
+            onClick={handleViewTeam}
+            size="md"
+            fontSize="sm"
+            left="52%"
+          >
+            View my Team
+          </Button>
         )}
-        </Flex>
+      </Flex>
 
-        {tournament && (
-          <Text fontSize="xl" textAlign="center">
-            {formatDate(tournament.estimatedTournamentPeriod.tournamentBegin)}{" "}
-            - {formatDate(tournament.estimatedTournamentPeriod.tournamentEnd)}
-          </Text>
-        )}
+      {tournament && (
+        <Text fontSize="xl" textAlign="center">
+          {formatDate(tournament.estimatedTournamentPeriod.tournamentBegin)} -{" "}
+          {formatDate(tournament.estimatedTournamentPeriod.tournamentEnd)}
+        </Text>
+      )}
 
       {/* tournament data and info */}
       <Box m={"0% 3%"}>
-        <Tabs variant="enclosed" colorScheme="teal">
-          <TabList>
-            {tournamentData &&
-              tournamentData.map((round, index) => (
+        {!tournamentData || tournamentData.length === 0 ? (
+          <Text fontSize="lg" color="gray.500" textAlign="center" mt={4}>
+            No match started
+          </Text>
+        ) : (
+          <Tabs variant="enclosed" colorScheme="teal">
+            <TabList>
+              {tournamentData.map((round, index) => (
                 <Tab key={index}>{round.title}</Tab>
               ))}
-          </TabList>
+            </TabList>
 
-          <TabPanels>
-            {tournamentData &&
-              tournamentData.map((round, index) => (
+            <TabPanels>
+              {tournamentData.map((round, index) => (
                 <TabPanel key={index} p={4}>
-                  {round.seeds.map((seed, seedIndex) => (
-                    <PlayerMatchComponent
-                      key={seedIndex}
-                      seed={seed}
-                      toast={toast}
-                    />
-                  ))}
+                  {round.seeds
+                    .filter(
+                      (seed) =>
+                        seed.teams &&
+                        seed.teams.length === 2 &&
+                        seed.teams.every((team) => !team.empty)
+                    )
+                    .map((seed, seedIndex) => (
+                      <PlayerMatchComponent
+                        key={seedIndex}
+                        seed={seed}
+                        toast={toast}
+                      />
+                    ))}
                 </TabPanel>
               ))}
-          </TabPanels>
-        </Tabs>
+            </TabPanels>
+          </Tabs>
+        )}
       </Box>
 
       {/* Team Modal */}
-      <Modal isOpen={isTeamModalOpen} onClose={() => setIsTeamModalOpen(false)} size="full" isCentered>
+      <Modal
+        isOpen={isTeamModalOpen}
+        onClose={() => setIsTeamModalOpen(false)}
+        size="full"
+        isCentered
+      >
         <ModalOverlay />
-        <ModalContent maxW="70vw" maxH="80vh" overflowY="auto" borderRadius="lg">
+        <ModalContent
+          maxW="70vw"
+          maxH="80vh"
+          overflowY="auto"
+          borderRadius="lg"
+        >
           <Flex justify="center" align="center" p={4} position="relative">
             <Heading size="lg" textAlign="center">
               My Team
             </Heading>
-            <Button onClick={() => setIsTeamModalOpen(false)} variant="ghost" size="lg" position="absolute" right="16px">
+            <Button
+              onClick={() => setIsTeamModalOpen(false)}
+              variant="ghost"
+              size="lg"
+              position="absolute"
+              right="16px"
+            >
               ✕
             </Button>
           </Flex>

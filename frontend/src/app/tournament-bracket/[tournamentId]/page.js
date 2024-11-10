@@ -6,11 +6,21 @@ import { Box, Text, Heading, useDisclosure, Modal, ModalOverlay, ModalContent, M
 import axios from '../../../../config/axiosInstance'
 
 const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
-  const formattedDate = new Date(seed.matchResultRecordedAt).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  
+
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    const isEpoch = date.getTime() === new Date(0).getTime(); // Check if date is 01/01/1970
+    if (isEpoch) {
+      return "TBC";
+    }
+    const day = date.getDate();
+    const suffix = day % 10 === 1 && day !== 11 ? 'st' :
+                   day % 10 === 2 && day !== 12 ? 'nd' :
+                   day % 10 === 3 && day !== 13 ? 'rd' : 'th';
+    const options = { month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
+    return `${day}${suffix} ${date.toLocaleString('en-US', options)}`;
+  };
 
   const handlePlayerClick = (team) => {
     onSeedClick({ ...seed, selectedTeam: team });
@@ -79,7 +89,7 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
           |
         </Text>
         <Text as="span" color="red.500">
-          {formattedDate}
+          {formatDateTime(seed.matchResultRecordedAt)}
         </Text>
       </SeedTime>
 

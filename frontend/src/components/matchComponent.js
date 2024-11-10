@@ -37,13 +37,13 @@ const MatchComponent = ({ seed, toast }) => {
       return;
     }
 
-    axios.post('/tournament/match/timing', {
+    axios.post('http://localhost:8080/tournament/match/timing', {
       matchId: {
         tournamentId: seed.tournament_id,
         depth: seed.depth,
         index: seed.index,
       },
-      approve: true,
+      matchTiming: new Date(proposedTime).toISOString(),
     })
       .then(() => {
         toast({
@@ -58,8 +58,7 @@ const MatchComponent = ({ seed, toast }) => {
   };
 
   const handleConfirmResult = () => {
-
-    axios.patch('/tournament/match/result', {
+    axios.patch('http://localhost:8080/tournament/match/result', {
       matchId: {
         tournamentId: seed.tournament_id,
         depth: seed.depth,
@@ -116,28 +115,29 @@ const MatchComponent = ({ seed, toast }) => {
 
         {/* Right Column */}
         <VStack align="start" spacing={2} width={{ base: '100%', md: '50%' }}>
-          <HStack width="100%">
-            <Input
-              placeholder="Propose Time"
-              value={proposedTime}
-              onChange={(e) => setProposedTime(e.target.value)}
-              size="sm"
-              type="datetime-local"
-              isDisabled={bothPlayersAccepted}
-            />
-            <Button
-              colorScheme="blue"
-              onClick={handleProposeTime}
-              isDisabled={bothPlayersAccepted}
-              width="fit-content"
-              minWidth="120px"
-              padding="0.5rem 1rem" 
-              minW="120px" 
-              minH="40px"
-            >
-              Propose Time
-            </Button>
-          </HStack>
+          <fieldset disabled={seed.both_agree_timing !== "REJECTED"}>
+            <HStack width="100%">
+
+              <Input
+                value={proposedTime}
+                onChange={(e) => setProposedTime(e.target.value)}
+                size="sm"
+                type="datetime-local"
+              />
+              <Button
+                colorScheme="blue"
+                onClick={handleProposeTime}
+                isDisabled={bothPlayersAccepted}
+                width="fit-content"
+                minWidth="120px"
+                padding="0.5rem 1rem"
+                minW="120px"
+                minH="40px"
+              >
+                Propose Time
+              </Button>
+            </HStack>
+          </fieldset>
           <Select
             placeholder={seed.can_set_result ? "Select Winner" : seed.matchResult}
             size="sm"

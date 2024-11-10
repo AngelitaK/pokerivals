@@ -9,7 +9,8 @@ const limit = 5;
 const start = new Date().toISOString();
 
 var end = new Date();
-end = end.setMonth(end.getMonth() + 1);
+end.setMonth(end.getMonth() + 1)
+end = end.toISOString();
 
 const BettingPage = () => {
     const router = useRouter();
@@ -51,7 +52,7 @@ const BettingPage = () => {
     const totalPages = Math.ceil(count / limit);
 
     return (
-        <Box p={[4, 6, 8]} minH="100vh" backgroundImage="url('/PokeRivalsBackgroundBetting.jpg')" backgroundSize="cover" backgroundPosition="center" bgOpacity="0.8">
+        <Box p={[4, 6, 8]} minH="100vh" backgroundImage="url('/PokeRivalsBackgroundBetting.jpg')" backgroundSize="cover" backgroundPosition="center" bgopacity="0.8">
             <Box bg="whiteAlpha.800" borderRadius="md" p={[2, 4]} maxW="800px" mx="auto">
                 <Flex justifyContent="center" alignItems="center" mb={4} position="relative">
                     <Text fontWeight="bold" fontSize={["md", "lg", "xl"]} color="blue.600" textAlign="center">

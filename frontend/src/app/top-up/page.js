@@ -226,9 +226,11 @@ const TopUpPage = () => {
   const handleNextUserTransactionsPage = () => setUserTransactionsPage((prevPage) => prevPage + 1);
   const handlePrevUserTransactionsPage = () => setUserTransactionsPage((prevPage) => (prevPage > 0 ? prevPage - 1 : 0));
 
-  const handleBetTypeChange = (event) => {
-    setSelectedBetType(event.target.value);
-  };
+  const handleNextActiveBetsPage = () => setActiveBetsPage((prevPage) => prevPage + 1);
+  const handlePrevActiveBetsPage = () => setActiveBetsPage((prevPage) => (prevPage > 0 ? prevPage - 1 : 0));
+
+  const handleNextOngoingBetsPage = () => setOngoingBetsPage((prevPage) => prevPage + 1);
+  const handlePrevOngoingBetsPage = () => setOngoingBetsPage((prevPage) => (prevPage > 0 ? prevPage - 1 : 0));
 
   return (
     <Stack minH={"100vh"} bgImage="/TopupBG.png" bgSize="cover" bgPosition="center">
@@ -281,7 +283,7 @@ const TopUpPage = () => {
               <Tab>Transactions</Tab>
               <Tab>Betting Transactions</Tab>
               <Tab>Active Bets</Tab>
-              <Tab>Ongoing Bets</Tab>
+              <Tab>Inactive Bets</Tab>
               <Tab>User Transactions</Tab>
             </TabList>
             <TabPanels>
