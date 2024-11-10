@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Flex, HStack, VStack, Text, Button } from '@chakra-ui/react';
 
-const TournamentItem = ({ tournament, buttonLabel, onButtonClick, isDisabled }) => {
+const RegisteredItem = ({ tournament, buttonLabel, onButtonClick, onTournamentClick, isDisabled }) => {
     const {
         name,
         registrationPeriod,
@@ -20,8 +20,6 @@ const TournamentItem = ({ tournament, buttonLabel, onButtonClick, isDisabled }) 
         return `${day}${suffix} ${date.toLocaleString('en-US', options)}`;
     };
 
-    const isPastRegistrationEnd = new Date() > new Date(registrationPeriod.registrationEnd);
-
     return (
         <Box 
             bg="rgba(255, 255, 255, 0.9)" 
@@ -29,6 +27,8 @@ const TournamentItem = ({ tournament, buttonLabel, onButtonClick, isDisabled }) 
             boxShadow="lg" 
             p={4}  
             minW="100%" 
+            onClick={() => onTournamentClick(tournament.id)} // Trigger onTournamentClick with the tournament ID
+            cursor="pointer"
             _hover={{ shadow: "xl", transform: "scale(1.02)" }} 
         >
             <Flex align="center" justify="space-between">
@@ -45,15 +45,18 @@ const TournamentItem = ({ tournament, buttonLabel, onButtonClick, isDisabled }) 
                     </VStack>
                 </HStack>
                 <Button 
-                    colorScheme={isPastRegistrationEnd ? "yellow" : buttonLabel === "Leave" ? "red" : "green"}
-                    onClick={onButtonClick}
-                    disabled={isDisabled || isPastRegistrationEnd}
+                    colorScheme={buttonLabel === "Leave" ? "red" : "green"} 
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent parent onClick when button is clicked
+                        onButtonClick();
+                    }}
+                    disabled={isDisabled}
                 >
-                    {isPastRegistrationEnd ? "Closed" : buttonLabel}
+                    {buttonLabel}
                 </Button>
             </Flex>
         </Box>
     );
 };
 
-export default TournamentItem;
+export default RegisteredItem;

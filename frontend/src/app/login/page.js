@@ -4,7 +4,7 @@ import { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "../../../config/axiosInstance";
 import Head from "next/head";
-import useAuth from "../../../config/useAuth"; 
+import checkLogged from "../../../config/checkLogged";
 import LoadingOverlay from "../../components/loadingOverlay";
 import { GoogleLogin } from "@react-oauth/google";
 import {
@@ -31,9 +31,9 @@ export default function Login() {
   const toast = useToast();
   const router = useRouter();
 
-  //authentication
-  // const { isAuthenticated, loading } = useAuth();
-  // console.log(isAuthenticated, loading);
+   // check if user is logged in
+   const { isAuthenticated, loading } = checkLogged();
+   console.log(isAuthenticated, loading);
 
   //registration input
   const [userName, setUserName] = useState(""); // To store the username input
@@ -114,8 +114,8 @@ export default function Login() {
     }
   };
 
-  // if (loading) return <LoadingOverlay />;
-  // if (isAuthenticated) return null;
+  if (loading) return <LoadingOverlay />;
+  if (isAuthenticated) return null;
 
   return (
     <>

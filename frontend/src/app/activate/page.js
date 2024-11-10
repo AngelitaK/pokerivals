@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "../../../config/axiosInstance";
-import useAuth from "../../../config/useAuth";
+import checkLogged from "../../../config/checkLogged";
 import LoadingOverlay from "../../components/loadingOverlay";
 import { GoogleLogin } from "@react-oauth/google";
-import { Suspense } from "react";
 import {
   Button,
   Flex,
@@ -29,9 +28,9 @@ export default function Activate() {
     mac: "",
   });
 
-  //authentication
-  // const { isAuthenticated, user, loading } = useAuth();
-  // console.log(isAuthenticated, user, loading);
+  // check if user is logged in
+  const { isAuthenticated, loading } = checkLogged();
+  console.log(isAuthenticated, loading);
 
   useEffect(() => {
     // Retrieve the query params using searchParams.get()
@@ -104,8 +103,8 @@ export default function Activate() {
     router.push("/login");
   };
 
-  // if (loading) return <LoadingOverlay />;
-  // if (!isAuthenticated) return null;
+  if (loading) return <LoadingOverlay />;
+  if (isAuthenticated) return null;
 
   return (
       <Stack

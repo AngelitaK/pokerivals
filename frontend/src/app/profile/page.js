@@ -46,9 +46,6 @@ const ProfilePage = () => {
       } catch (error) {
         //means that the user is admin or unauthorized
         console.error("Error fetching user data:", error);
-        if(isAuthenticated){
-          return <LoadingOverlay />
-        }
       }
     };
 
@@ -56,6 +53,7 @@ const ProfilePage = () => {
   }, [username]);
 
   if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
   
   return (
     <Flex

@@ -16,7 +16,7 @@ import Link from 'next/link';
 import TournamentItem from '../../components/tournamentItem';
 import axios from '../../../config/axiosInstance'; 
 import SearchBar from "@/components/searchBar";
-
+import RegisteredItem from './../../components/registeredItem';
 
 const FindTournamentPage = () => {  
   const [tournaments, setTournaments] = useState([]); 
@@ -33,7 +33,7 @@ const FindTournamentPage = () => {
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
-        const response = await axios.get('/player/tournament/me?page=0&limit=10'); 
+        const response = await axios.get('/player/tournament/me?page=0&limit=50'); 
         setTournaments(response.data.tournaments);
       } catch (err) {
         console.error("Error fetching tournaments:", err);
@@ -115,6 +115,10 @@ const FindTournamentPage = () => {
     router.push(`/choose-pokemon/${tournamentId}`);
   };
 
+  const handleTournamentClick = (tournamentId) => {
+    router.push(`/tournament-details/${tournamentId}`);
+  };
+
   return (
     <Stack
       minH={"100vh"}
@@ -164,12 +168,13 @@ const FindTournamentPage = () => {
                     tournaments.map((tournament) => {
                       const isRegistrationEnded = new Date() > new Date(tournament.registrationPeriod.registrationEnd);
                       return (
-                        <TournamentItem 
+                        <RegisteredItem
                           key={tournament.id} 
                           tournament={tournament} 
                           buttonLabel="Leave"
                           onButtonClick={() => handleWithdraw(tournament.id)}
                           isDisabled={isRegistrationEnded} // Disable button if registration has ended
+                          onTournamentClick={handleTournamentClick}
                         />
                       );
                     })

@@ -114,6 +114,31 @@ export default function AddAdmin() {
     }
   };
 
+  const handleResendLink = async (username) => {
+    console.log(username);
+    
+    try {
+      const response = await axios.post(`/admin/${username}/google`);
+      console.log(response.data);
+      
+      toast({
+        title: "Resent Link",
+        description: response.data.message,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to resend link email",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   // Render conditional UI after all hooks have been called
   if (loading) return <LoadingOverlay />;
   if (!isAuthenticated) return null;
@@ -190,6 +215,7 @@ export default function AddAdmin() {
                         size="sm"
                         colorScheme="blue"
                         variant="outline"
+                        onClick={() => handleResendLink(person.username)}
                       >
                         Resend link email
                       </Button>
