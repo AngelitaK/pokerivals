@@ -42,13 +42,14 @@ const TournamentDetails = ({ params }) => {
   const [tournament, setTournament] = useState(null);
   const [tournamentData, setTournamentData] = useState(null);
   
-  const { tournamentId } = params;
-
-  tournamentId = "" //hardcoded for now, remove once get tournament id
+  let { tournamentId } = params;
+  console.log(tournamentId);
 
   // Fetch tournament data on page load
   useEffect(() => {
     const tournaments = JSON.parse(sessionStorage.getItem("tournaments"));
+    console.log(tournaments);
+
     if (Array.isArray(tournaments)) {
       for (const t of tournaments) {
         if (t.id === tournamentId) {
@@ -61,20 +62,19 @@ const TournamentDetails = ({ params }) => {
 
     //get tournament data from ID
     try {
-      const response = axios.get(
-        `http://localhost:8080/tournament/match/${tournamentId}`
-      );
+      const response = axios.get(`/tournament/match/${tournamentId}`);
+      console.log(response.data);
 
       if (response.status !== 200) {
         throw new Error("Failed to fetch matches");
       }
 
-      // setTournamentData(response.data); //change when get tournament id
+      setTournamentData(response.data); //change when get tournament id
     } catch (error) {
       console.error("Error fetching matches: ", error);
     }
 
-    setTournamentData(test_data.data); //remove once get tournament id
+    // setTournamentData(test_data.data); //remove once get tournament id
   }, []);
 
   const handleViewBracket = (tournamentId) => { 
