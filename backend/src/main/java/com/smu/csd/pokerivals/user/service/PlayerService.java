@@ -120,7 +120,7 @@ public class PlayerService {
     public PlayerPageDTO searchPlayersByUsername(String query, int page, int limit){
         return new PlayerPageDTO(
                 playerPagingRepository.findByUsernameContainingIgnoreCase(query, PageRequest.of(page,limit)),
-                playerRepository.count()
+                playerRepository.countByUsernameContainingIgnoreCase(query)
         );
     }
 

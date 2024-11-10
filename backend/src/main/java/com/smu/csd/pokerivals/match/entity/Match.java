@@ -27,6 +27,15 @@ public class Match {
 
     @Override
     public String toString() {
+        Team teamA;
+        Team teamB;
+        if (forfeitedTeam != null){
+            teamA = (this.teamA == null) ? forfeitedTeam : this.teamA;
+            teamB = (this.teamB == null) ? forfeitedTeam : this.teamB;
+        } else {
+            teamA = this.teamA;
+            teamB = this.teamB;
+        }
         return "Match{" +
                 (teamA == null ? "EMPTY" : teamA.getPlayer().getUsername())
                 +" (A)'s points=" + (teamA == null ? "EMPTY" : round(teamA.getPlayer().getPoints())) +
@@ -37,6 +46,7 @@ public class Match {
                 ", idx=" + getIndex() +
                 ", final=" + (timeFinalisedTeamA == null ? "" : "A") +  (timeFinalisedTeamB == null ? "" : "B")+
                 ", result=" + matchResult +
+                ", forfeit=" + isForfeited() +
                 '}';
     }
 
@@ -119,6 +129,15 @@ public class Match {
 
     @JsonGetter("teams")
     private List<MatchWrapper.TeamInMatchDTO> getTeams(){
+        Team teamA;
+        Team teamB;
+        if (forfeitedTeam != null){
+            teamA = (this.teamA == null) ? forfeitedTeam : this.teamA;
+            teamB = (this.teamB == null) ? forfeitedTeam : this.teamB;
+        } else {
+            teamA = this.teamA;
+            teamB = this.teamB;
+        }
         return List.of(
                 new MatchWrapper.TeamInMatchDTO(
                         (teamA == null ? "" : teamA.getPlayerUsername()),
@@ -133,6 +152,11 @@ public class Match {
         );
     }
 
+    @JsonGetter
+    public boolean isForfeited(){
+        return forfeitedTeam != null;
+    }
+
     @Setter(AccessLevel.NONE)
     private ZonedDateTime timeFinalisedTeamA;
 
@@ -140,17 +164,26 @@ public class Match {
     private double changeInPointsTeamA;
     /**
      * Not only set team but mark down the time
+     *      * If set to null but the team exists, this is forfeit, record as such
      * @param team may be null indicating previous player forfeit
      * @param today today's date
      * @return whether a Bye occurred
      */
     public boolean finaliseTeamA(Team team, ZonedDateTime today){
+        if (teamA != null){
+            // Forfeit
+            forfeitedTeam = teamA;
+        }
         this.teamA = team;
         timeFinalisedTeamA = today;
         // if  [both teams are finalise] and [either is null]
         return (timeFinalisedTeamA != null && timeFinalisedTeamB != null) && (teamA == null || teamB == null);
     }
 
+    @JsonIgnore
+    @ManyToOne
+    @Setter(AccessLevel.NONE)
+    private Team forfeitedTeam;
 
     @ManyToOne
     @Setter(AccessLevel.NONE)
@@ -166,11 +199,16 @@ public class Match {
 
     /**
      * Not only set team but mark down the time
+     * If set to null but the team exists, this is forfeit, record as such
      * @param team may be null indicate no player/forfeit
      * @param today today's date
      * @return whether a Bye occurred
      */
     public boolean finaliseTeamB(Team team, ZonedDateTime today){
+        if (teamB != null){
+            // Forfeit
+            forfeitedTeam = teamB;
+        }
         this.teamB = team;
         timeFinalisedTeamB = today;
         // if  [both teams are finalise] and [either is null]
@@ -368,11 +406,108 @@ public class Match {
     }
 
     // timing agreement stuff
+    @Setter(AccessLevel.NONE)
     private ZonedDateTime timeMatchOccurs;
+    @Setter(AccessLevel.NONE)
+    private ZonedDateTime timeMatchOccursSetOn;
+
+    public void setTimeMatchOccursAndResetAgreement(ZonedDateTime eventTime, ZonedDateTime today){
+        if (!matchResult.equals(MatchResult.PENDING)){
+            throw new IllegalArgumentException("Match has already concluded");
+        }
+        if (!eventTime.isAfter(today)){
+            throw new IllegalArgumentException("eventTime is not after today");
+        };
+
+        timeMatchOccurs = eventTime;
+        timeMatchOccursSetOn = today;
+
+        timeTeamARespondedTiming = null;
+        timeTeamBRespondedTiming = null;
+        teamAAgreed = false;
+        teamBAgreed = false;
+    }
+
+    @Setter(AccessLevel.NONE)
+    private ZonedDateTime timeTeamARespondedTiming;
+    @Setter(AccessLevel.NONE)
+    private ZonedDateTime timeTeamBRespondedTiming;
+    @JsonIgnore
+    @Setter(AccessLevel.NONE)
+    private boolean teamAAgreed;
+    @JsonIgnore
+    @Setter(AccessLevel.NONE)
+    private boolean teamBAgreed;
+
+    public void setTeamAAgreed(boolean agree, ZonedDateTime today){
+        if (getBothTeamAgreementStatus().equals(TeamAgreementStatus.APPROVED)){
+            throw new IllegalArgumentException("Tournament date already agreed upon!");
+        }
+        if (getBothTeamAgreementStatus().equals(TeamAgreementStatus.REJECTED)){
+            throw new IllegalArgumentException("Timing is rejected already");
+        }
+        teamAAgreed = agree;
+        timeTeamARespondedTiming = today;
+    }
+    public void setTeamBAgreed(boolean agree, ZonedDateTime today){
+        if (getBothTeamAgreementStatus().equals(TeamAgreementStatus.APPROVED)){
+            throw new IllegalArgumentException("Tournament date already agreed upon!");
+        }
+        if (getBothTeamAgreementStatus().equals(TeamAgreementStatus.REJECTED)){
+            throw new IllegalArgumentException("Timing is rejected already");
+        }
+        teamBAgreed = agree;
+        timeTeamBRespondedTiming = today;
+    }
+
+    @JsonGetter("team_a_agree_timing")
+    public TeamAgreementStatus getTeamAAgreementStatus(){
+        if (timeTeamARespondedTiming == null){
+            return TeamAgreementStatus.PENDING;
+        }
+        return teamAAgreed ? TeamAgreementStatus.APPROVED : TeamAgreementStatus.REJECTED;
+    }
+
+    @JsonGetter("team_b_agree_timing")
+    public TeamAgreementStatus getTeamBAgreementStatus(){
+        if (timeTeamBRespondedTiming == null){
+            return TeamAgreementStatus.PENDING;
+        }
+        return teamBAgreed ? TeamAgreementStatus.APPROVED : TeamAgreementStatus.REJECTED;
+    }
+
+    @JsonGetter("both_agree_timing")
+    public TeamAgreementStatus getBothTeamAgreementStatus(){
+        TeamAgreementStatus teamAAgreementStatus = getTeamAAgreementStatus();
+        TeamAgreementStatus teamBAgreementStatus = getTeamBAgreementStatus();
+
+        if (teamAAgreementStatus.equals(TeamAgreementStatus.APPROVED)
+                && teamBAgreementStatus.equals(teamAAgreementStatus)){
+            // BOTH APPROVED
+            return TeamAgreementStatus.APPROVED;
+        } else if (teamBAgreementStatus.equals(TeamAgreementStatus.REJECTED)
+                || teamAAgreementStatus.equals(TeamAgreementStatus.REJECTED)){
+            // EITHER rejected
+            return TeamAgreementStatus.REJECTED;
+        } else {
+            // EITHER both pending or either approved
+            return TeamAgreementStatus.PENDING;
+        }
+    }
 
     @JsonGetter("can_set_result")
     private boolean canSetMatchResult(){
         return timeFinalisedTeamB != null && timeFinalisedTeamA != null && matchResult.equals(MatchResult.PENDING);
+    }
+
+    @JsonIgnore
+    public boolean isPlayerInMatch(String playerUsername){
+        return teamA.getPlayer().getUsername().equals(playerUsername) || teamB.getPlayer().getUsername().equals(playerUsername);
+    }
+
+    @JsonIgnore
+    public boolean isAdminManagingMatch(String adminUsername){
+        return tournament.getAdminUsername().equals(adminUsername);
     }
 }
 

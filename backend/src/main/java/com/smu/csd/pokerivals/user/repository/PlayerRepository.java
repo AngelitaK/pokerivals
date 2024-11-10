@@ -20,4 +20,6 @@ public interface PlayerRepository extends JpaRepository<Player,String> {
     @Query("SELECT COUNT(x) FROM Player x WHERE x not in (select p from Player p join p.befriendedBy bB join p.friendsWith fW " +
             "where bB.username = :username and fW.username = :username)")
     long countNotFriendsOfPlayer(@Param("username") String username);
+
+    long countByUsernameContainingIgnoreCase(String query);
 }

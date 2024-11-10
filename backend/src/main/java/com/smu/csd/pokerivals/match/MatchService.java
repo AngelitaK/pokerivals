@@ -1,6 +1,7 @@
 package com.smu.csd.pokerivals.match;
 
 
+import com.smu.csd.pokerivals.NotificationService;
 import com.smu.csd.pokerivals.configuration.DateFactory;
 import com.smu.csd.pokerivals.match.entity.Match;
 import com.smu.csd.pokerivals.match.entity.MatchResult;
@@ -27,12 +28,14 @@ public class MatchService {
     private final TournamentRepository tournamentRepository;
     private final MatchRepository matchRepository;
     private final DateFactory dateFactory;
+    private final NotificationService notificationService;
 
     @Autowired
-    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory) {
+    public MatchService(TournamentRepository tournamentRepository, MatchRepository matchRepository, DateFactory dateFactory, NotificationService notificationService) {
         this.tournamentRepository = tournamentRepository;
         this.matchRepository = matchRepository;
         this.dateFactory = dateFactory;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -42,9 +45,12 @@ public class MatchService {
      */
     @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
-    public Set<Match> startSingleEliminationTournament(UUID uuid){
+    public Set<Match> startSingleEliminationTournament(UUID uuid, String adminUsername){
         ZonedDateTime today = dateFactory.getToday();
         Tournament tournament = tournamentRepository.getTournamentById(uuid).orElseThrow();
+        if(!tournament.getAdminUsername().equals(adminUsername)){
+            throw new IllegalArgumentException("The tournament is not managed by you");
+        }
         if (!tournament.getRegistrationPeriod().isBefore(today)){
             throw new IllegalArgumentException("Tournament registration still open");
         }
@@ -91,13 +97,15 @@ public class MatchService {
      */
     @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
-    public void setMatchResult(SetMatchResultDTO dto){
+    public void setMatchResult(SetMatchResultDTO dto, String adminUsername){
         var today = dateFactory.getToday();
         Match matchBefore = matchRepository.findById(dto.matchId).orElseThrow();
-
+        if (!matchBefore.isAdminManagingMatch(adminUsername)){
+            throw new IllegalArgumentException("this tournament is not managed by you");
+        }
         // i have the team i need to move forward
         Team winningTeam = matchBefore.setMatchResult(dto.matchResult, today);
-
+        notificationService.notifyMatchOutcome(matchBefore.getMatchId());
         // continue until reaching root
         while (true) {
             // if root don't attempt to move forward
@@ -119,6 +127,7 @@ public class MatchService {
             // if a bye, we need to go up the chain, but get the winning team first
             if (bye){
                 winningTeam = matchAfter.finaliseBye(today);
+                notificationService.notifyMatchOutcome(matchAfter.getMatchId());
             } else {
                 break;
             }
@@ -141,10 +150,13 @@ public class MatchService {
      */
     @PreAuthorize("hasAuthority('ADMIN')")
     @Transactional
-    public void forfeit(ForfeitDTO dto){
+    public void forfeit(ForfeitDTO dto, String adminUsername){
         boolean forfeitTeamA = dto.forfeitTeamA;
         ZonedDateTime today = dateFactory.getToday();
         Match matchBefore = matchRepository.findById(dto.matchId).orElseThrow();
+        if (!matchBefore.isAdminManagingMatch(adminUsername)){
+            throw new IllegalArgumentException("this tournament is not managed by you");
+        }
         if(matchBefore.getTimeFinalisedTeamA() == null && forfeitTeamA){
             // team A not finalised, hence cannot forfeit
             throw new IllegalArgumentException("Team A not set, hence cannot forfeit");
@@ -168,6 +180,7 @@ public class MatchService {
         // have bye
         // i have the team i need to move forward
         Team winningTeam = matchBefore.finaliseBye(today);
+        notificationService.notifyMatchOutcome(matchBefore.getMatchId());
 
         // continue until reaching root
         while (true) {
@@ -190,6 +203,7 @@ public class MatchService {
             // if a bye, we need to go up the chain, but get the winning team first
             if (bye){
                 winningTeam = matchAfter.finaliseBye(today);
+                notificationService.notifyMatchOutcome(matchAfter.getMatchId());
             } else {
                 break;
             }
@@ -200,6 +214,50 @@ public class MatchService {
         return MatchWrapper.generateDisplayableTreeViaBFS(MatchWrapper.reconstructTree(matchRepository.findByMatchIdTournamentId(tournamentId)));
     }
 
+    public record ApproveRejectMatchTimingDTO(
+            Match.MatchId matchId,
+            boolean approve
+    ){}
 
+    @PreAuthorize("hasAuthority('PLAYER')")
+    @Transactional
+    public void approveOrRejectMatchTiming(ApproveRejectMatchTimingDTO dto, String username){
+        var match = matchRepository.findById(dto.matchId).orElseThrow();
+        if (!match.isPlayerInMatch(username)){
+            throw new IllegalArgumentException("this tournament is not participated by you");
+        }
+        // PENDING
+        if (match.getTeamA() != null && match.getTeamA().getPlayer().getUsername().equals(username)){
+            // Team A
+            match.setTeamAAgreed(dto.approve, dateFactory.getToday());
+            notificationService.notifyUpdateOfTimingAgreement(match.getMatchId());
+        }
+        else if (match.getTeamB().getPlayer().getUsername().equals(username)){
+            // Team B
+            match.setTeamBAgreed(dto.approve, dateFactory.getToday());
+            notificationService.notifyUpdateOfTimingAgreement(match.getMatchId());
+        }
+    }
+
+    public record SetMatchTimingDTO(
+            Match.MatchId matchId,
+            ZonedDateTime matchTiming
+    ){}
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Transactional
+    public void setMatchTiming(String adminUsername,SetMatchTimingDTO dto){
+        var match = matchRepository.findById(dto.matchId).orElseThrow();
+        if (!match.isAdminManagingMatch(adminUsername)){
+            throw new IllegalArgumentException("this tournament is not managed by you");
+        }
+        if(Objects.equals(match.getTournament().getAdmin().getUsername(), adminUsername)){
+            // time validation occurs inside
+            match.setTimeMatchOccursAndResetAgreement(dto.matchTiming, dateFactory.getToday());
+            notificationService.notifyPlayersOfTiming(match.getMatchId());
+        } else {
+            throw new IllegalArgumentException("You are not admin for this match");
+        }
+    }
 
 }
