@@ -69,6 +69,7 @@ public abstract class Transaction {
     @ManyToOne
     @MapsId("playerName")
     @JsonIgnore
+    @Getter
     protected Player player;
 
     @Getter
