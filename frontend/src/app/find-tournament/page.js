@@ -33,7 +33,7 @@ const FindTournamentPage = () => {
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
-        const response = await axios.get('/player/tournament/me?page=0&limit=10'); 
+        const response = await axios.get('/player/tournament/me?page=0&limit=50'); 
         setTournaments(response.data.tournaments);
       } catch (err) {
         console.error("Error fetching tournaments:", err);

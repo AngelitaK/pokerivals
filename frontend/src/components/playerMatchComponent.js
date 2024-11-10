@@ -55,7 +55,7 @@ const PlayerMatchComponent = ({ seed, toast }) => {
           <Text>Overall Status: {seed.both_agree_timing}</Text>
 
           {/* add winner here */}
-          <Text>Winner: TEAM{" "}{seed.final_winner}</Text>
+          <Text>Winner: {seed.matchResult}</Text>
         </VStack>
       </fieldset>
     </Box>

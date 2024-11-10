@@ -30,7 +30,6 @@ import { TbTournament } from "react-icons/tb";
 import { CgPokemon } from "react-icons/cg";
 import PlayerMatchComponent from "@/components/playerMatchComponent";
 import PokemonDataCard from "@/components/pokemonDataCard";
-import test_data from "./test-data"; //remove once get tournament id
 
 // format date
 function formatDate(dateString) {
@@ -60,35 +59,44 @@ const TournamentDetails = ({ params }) => {
 
   // Fetch tournament data on page load
   useEffect(() => {
-    const tournaments = JSON.parse(sessionStorage.getItem("tournaments"));
-    console.log(tournaments);
-
-    if (Array.isArray(tournaments)) {
-      for (const t of tournaments) {
-        if (t.id === tournamentId) {
-          setTournament(t);
+    const fetchTournamentData = async () => {
+      try{
+        const response = await axios.get("/player/tournament/me", {
+          params: { page: 0, limit: 100 },
+        });
+        const tournaments = response.data.tournaments;
+        
+        if (Array.isArray(tournaments)) {
+          const tournament = tournaments.find((t) => t.id === tournamentId);
+          if (tournament) {
+            setTournament(tournament);
+          } 
+        } else {
+          console.error("No tournament data found or data is not an array");
         }
       }
-    } else {
-      console.error("No tournament data found or data is not an array");
-    }
-
-    //get tournament data from ID
-    try {
-      const response = axios.get(`/tournament/match/${tournamentId}`);
-      console.log(response.data);
-
-      if (response.status !== 200) {
-        throw new Error("Failed to fetch matches");
+      catch(err){
+        console.error("Error fetching tournaments:", err);
       }
-
-      setTournamentData(response.data); //change when get tournament id
-    } catch (error) {
-      console.error("Error fetching matches: ", error);
-    }
-
-    // setTournamentData(test_data.data); //remove once get tournament id
-  }, []);
+  
+      // Fetch tournament match data
+      try {
+        const response = await axios.get(`/tournament/match/${tournamentId}`);
+        if (response.status === 200) {
+          setTournamentData(response.data);
+          console.log("response.data: ", response.data);
+          
+        } else {
+          console.error("Failed to fetch matches: Invalid status code");
+        }
+      } catch (error) {
+        console.error("Error fetching matches: ", error);
+        setTournamentData(null); 
+      }
+    };
+  
+    fetchTournamentData();
+  }, [tournamentId]);
 
    // Function to fetch the player's team
   const fetchTeamData = async () => {
@@ -153,10 +161,11 @@ const TournamentDetails = ({ params }) => {
               leftIcon={<TbTournament size={20} />}
               colorScheme="gray"
               variant="solid"
-              onClick={handleViewBracket}
+              onClick={() => handleViewBracket(tournamentId)}
               size="md"
               fontSize="sm"
               left="50%"
+              ms={10}
             >
               Bracket View
             </Button>
@@ -179,7 +188,7 @@ const TournamentDetails = ({ params }) => {
         </Flex>
 
         {tournament && (
-          <Text fontSize="xl" textAlign="center" mt={1}>
+          <Text fontSize="xl" textAlign="center">
             {formatDate(tournament.estimatedTournamentPeriod.tournamentBegin)}{" "}
             - {formatDate(tournament.estimatedTournamentPeriod.tournamentEnd)}
           </Text>

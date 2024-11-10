@@ -161,7 +161,7 @@ function PokemonCard({ addToTeam }) {
       };
 
   return (
-    <Box position="relative" width="250px">
+    <Box position="relative" width="200px">
       <Box
         position="absolute"
         top="-60px"
