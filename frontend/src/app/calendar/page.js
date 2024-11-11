@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import Calendar from "@/components/calendar";
-import axiosInstance from "../../../config/axiosInstance";
+import axios from "../../../config/axiosInstance";
 import { FaArrowCircleLeft } from "react-icons/fa";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
