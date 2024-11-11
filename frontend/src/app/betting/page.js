@@ -45,7 +45,7 @@ const BettingPage = () => {
                 console.error("Error fetching matches: ", error);
                 toast({
                     title: "Error",
-                    description: "Failed to load bet results.",
+                    description: "Failed to load bet results." + data.explanation,
                     status: "error",
                     duration: 3000,
                     isClosable: true,

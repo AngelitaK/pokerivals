@@ -46,7 +46,7 @@ const BetModal = ({ isOpen, onClose, details }) => {
             depth: details.depth,
             index: details.index,
           },
-          betAmountInCents: parseInt(betAmount) * 100, // Ensure betAmount is parsed to an integer
+          betAmountInCents: parseInt(betAmount), // Ensure betAmount is parsed to an integer
           side: selectedPlayer,
         };
   
@@ -59,7 +59,7 @@ const BetModal = ({ isOpen, onClose, details }) => {
         if (response.status === 200) {
           const data = response.data;
           // Ensure expectedWin is updated correctly
-          setExpectedWin(data.winAmountInCents); 
+          setExpectedWin(data.winAmountInCents * 100); 
         } else {
           throw new Error("Failed to fetch prediction data");
         }
@@ -75,7 +75,7 @@ const BetModal = ({ isOpen, onClose, details }) => {
 
   
   const handleConfirm = async () => {
-    const betAmountInCents = parseInt(betAmount) * 100;
+    const betAmountInCents = parseInt(betAmount);
 
     if (betAmountInCents <= 0) {
       toast({
