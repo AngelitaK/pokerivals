@@ -102,7 +102,9 @@ const ManageTournamentPage = () => {
                 setTournaments(data.tournaments);
                 setCount(data.count);
 
-                sessionStorage.setItem("tournaments", JSON.stringify(data.tournaments));
+                sessionStorage.setItem("tournaments", JSON.stringify(tournaments));
+                sessionStorage.setItem("page", page)
+                sessionStorage.setItem("pageSize", pageSize)
             } catch (error) {
                 console.error("Error fetching Tournaments:", error);
                 toast({
