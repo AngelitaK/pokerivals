@@ -28,7 +28,7 @@ const LeaderBoard = () => {
 
   // Check authentication
   const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
-  const { isAuthenticated, user } = useAuth(roles);
+  const { isAuthenticated, user, loading } = useAuth(roles);
   // console.log(isAuthenticated, user, loading);
 
   //pagination
