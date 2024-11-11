@@ -1,13 +1,29 @@
-"use client"; 
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Bracket, Seed, SeedItem, SeedTeam, SeedTime } from 'react-brackets';
-import { Box, Text, Heading, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Flex, Tag, TagLabel, Stack, Divider,  } from '@chakra-ui/react';
-import axios from '../../../../config/axiosInstance'
+import React, { useState, useEffect, useMemo } from "react";
+import axios from "../../../../config/axiosInstance";
+import useAuth from "../../../../config/useAuth";
+import LoadingOverlay from "../../../components/loadingOverlay";
+import { Bracket, Seed, SeedItem, SeedTeam, SeedTime } from "react-brackets";
+import {
+  Box,
+  Text,
+  Heading,
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  Flex,
+  Tag,
+  TagLabel,
+  Stack,
+  Divider,
+} from "@chakra-ui/react";
 
 const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
-  
-
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
     const isEpoch = date.getTime() === new Date(0).getTime(); // Check if date is 01/01/1970
@@ -15,11 +31,22 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
       return "TBC";
     }
     const day = date.getDate();
-    const suffix = day % 10 === 1 && day !== 11 ? 'st' :
-                   day % 10 === 2 && day !== 12 ? 'nd' :
-                   day % 10 === 3 && day !== 13 ? 'rd' : 'th';
-    const options = { month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
-    return `${day}${suffix} ${date.toLocaleString('en-US', options)}`;
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? "st"
+        : day % 10 === 2 && day !== 12
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+        ? "rd"
+        : "th";
+    const options = {
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    };
+    return `${day}${suffix} ${date.toLocaleString("en-US", options)}`;
   };
 
   const handlePlayerClick = (team) => {
@@ -27,8 +54,16 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
   };
 
   return (
-    <Seed mobileBreakpoint={breakpoint} style={{ width: '0%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <SeedItem style={{ width: '100%' }}>
+    <Seed
+      mobileBreakpoint={breakpoint}
+      style={{
+        width: "0%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <SeedItem style={{ width: "100%" }}>
         <Box boxShadow="md" bg={seed.forfeited ? "red.600" : "black"}>
           {seed.teams[0]?.id && (
             <Box
@@ -37,15 +72,20 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
               cursor="pointer"
               onClick={() => handlePlayerClick(seed.teams[0])}
               _hover={{ bg: seed.forfeited ? "red.500" : "blue.400" }}
-              color={'white'}
+              color={"white"}
               width="100%"
               textAlign="center"
             >
               <SeedTeam fontSize="lg" fontWeight="bold">
                 ⚔️ {seed.teams[0].id}
-                <Tag ml={2} size="sm" colorScheme={seed.forfeited ? "red" : "blue"} borderRadius="full">
+                <Tag
+                  ml={2}
+                  size="sm"
+                  colorScheme={seed.forfeited ? "red" : "blue"}
+                  borderRadius="full"
+                >
                   <TagLabel>{seed.teams[0].score.toFixed(1)}</TagLabel>
-                </Tag> 
+                </Tag>
               </SeedTeam>
             </Box>
           )}
@@ -63,7 +103,12 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
             >
               <SeedTeam fontSize="lg" fontWeight="bold" color="black">
                 ⚔️ {seed.teams[1].id}
-                <Tag ml={2} size="sm" colorScheme={seed.forfeited ? "red" : "gray"} borderRadius="full">
+                <Tag
+                  ml={2}
+                  size="sm"
+                  colorScheme={seed.forfeited ? "red" : "gray"}
+                  borderRadius="full"
+                >
                   <TagLabel>{seed.teams[1].score.toFixed(1)}</TagLabel>
                 </Tag>
               </SeedTeam>
@@ -78,12 +123,16 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
         mt="2"
         textAlign="center"
       >
-        <Text as="span" color={seed.matchResult === "TEAM_A" ? "green.600" : "green.600"} fontWeight="semibold">
-        {seed.matchResult === "TEAM_A"
-          ? "Team A Wins!"
-          : seed.matchResult === "TEAM_B"
-          ? "Team B Wins!"
-          : seed.matchResult}
+        <Text
+          as="span"
+          color={seed.matchResult === "TEAM_A" ? "green.600" : "green.600"}
+          fontWeight="semibold"
+        >
+          {seed.matchResult === "TEAM_A"
+            ? "Team A Wins!"
+            : seed.matchResult === "TEAM_B"
+            ? "Team B Wins!"
+            : seed.matchResult}
         </Text>
         <Text as="span" mx="2" color="gray.500">
           |
@@ -92,12 +141,15 @@ const RenderSeed = ({ breakpoint, seed, onSeedClick }) => {
           {formatDateTime(seed.matchResultRecordedAt)}
         </Text>
       </SeedTime>
-
     </Seed>
   );
 };
 
-const TournamentPage = ( {params} ) => {
+const TournamentPage = ({ params }) => {
+  //authentication
+  const roles = useMemo(() => ["PLAYER", "ADMIN"], []);
+  const { isAuthenticated, user } = useAuth(roles);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedSeed, setSelectedSeed] = useState(null);
 
@@ -125,17 +177,39 @@ const TournamentPage = ( {params} ) => {
   if (loading) return <Text>Loading tournament data...</Text>;
 
   const finalRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
-  const finalMatch = finalRound && finalRound.seeds && finalRound.seeds.length > 0 ? finalRound.seeds[0] : null;
-  const winner = finalMatch && finalMatch.matchResult === "TEAM_A" ? finalMatch.teams[0].id : finalMatch?.teams[1]?.id;
+  const finalMatch =
+    finalRound && finalRound.seeds && finalRound.seeds.length > 0
+      ? finalRound.seeds[0]
+      : null;
+  const winner =
+    finalMatch && finalMatch.matchResult === "TEAM_A"
+      ? finalMatch.teams[0].id
+      : finalMatch?.teams[1]?.id;
 
   const handleSeedClick = (seed) => {
     setSelectedSeed(seed);
     onOpen();
   };
 
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
+
   return (
-    <Box padding="20px" bg="gray.50" minHeight="100vh" display="flex" flexDirection="column" alignItems="center">
-      <Heading as="h1" textAlign="center" color="teal.700" mb="2" fontSize="3xl">
+    <Box
+      padding="20px"
+      bg="gray.50"
+      minHeight="100vh"
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+    >
+      <Heading
+        as="h1"
+        textAlign="center"
+        color="teal.700"
+        mb="2"
+        fontSize="3xl"
+      >
         Pokémon Tournament Bracket
       </Heading>
       {/* <Box mt={2} mb={6}>
@@ -147,7 +221,9 @@ const TournamentPage = ( {params} ) => {
         <Bracket
           mobileBreakpoint={1000}
           rounds={rounds}
-          renderSeedComponent={(props) => <RenderSeed {...props} onSeedClick={handleSeedClick} />}
+          renderSeedComponent={(props) => (
+            <RenderSeed {...props} onSeedClick={handleSeedClick} />
+          )}
           swipeableProps={{ enableMouseEvents: true, animateHeight: true }}
         />
       </Box>
@@ -155,7 +231,14 @@ const TournamentPage = ( {params} ) => {
       {isOpen && selectedSeed && (
         <Modal isOpen={isOpen} onClose={onClose} isCentered>
           <ModalOverlay />
-          <ModalContent boxShadow="2xl" p={4} bg="white" border="2px solid" borderColor="gray.300" borderRadius="md">
+          <ModalContent
+            boxShadow="2xl"
+            p={4}
+            bg="white"
+            border="2px solid"
+            borderColor="gray.300"
+            borderRadius="md"
+          >
             <ModalHeader
               textAlign="center"
               fontWeight="bold"
@@ -164,7 +247,11 @@ const TournamentPage = ( {params} ) => {
             >
               Player Details
             </ModalHeader>
-            <ModalCloseButton border="2px solid" borderColor="black" color="black" />
+            <ModalCloseButton
+              border="2px solid"
+              borderColor="black"
+              color="black"
+            />
             <ModalBody>
               <Flex justify="center" mb={6}>
                 <Box
@@ -175,9 +262,17 @@ const TournamentPage = ( {params} ) => {
                   w="fit-content"
                   borderRadius="md"
                 >
-                  <Text fontSize="lg" fontWeight="bold" color="black" textAlign="center">
+                  <Text
+                    fontSize="lg"
+                    fontWeight="bold"
+                    color="black"
+                    textAlign="center"
+                  >
                     Selected Player:
-                    <Text as="span" color="black" fontWeight="semibold"> {selectedSeed?.selectedTeam?.id}</Text>
+                    <Text as="span" color="black" fontWeight="semibold">
+                      {" "}
+                      {selectedSeed?.selectedTeam?.id}
+                    </Text>
                   </Text>
                 </Box>
               </Flex>
@@ -186,8 +281,15 @@ const TournamentPage = ( {params} ) => {
                 <Box>
                   <Text fontSize="md" fontWeight="semibold" color="gray.700">
                     ELO Rating:
-                    <Tag ml={2} colorScheme="green" size="md" borderRadius="full">
-                      <TagLabel>{selectedSeed?.selectedTeam?.score.toFixed(2)}</TagLabel>
+                    <Tag
+                      ml={2}
+                      colorScheme="green"
+                      size="md"
+                      borderRadius="full"
+                    >
+                      <TagLabel>
+                        {selectedSeed?.selectedTeam?.score.toFixed(2)}
+                      </TagLabel>
                     </Tag>
                   </Text>
                 </Box>
@@ -198,11 +300,11 @@ const TournamentPage = ( {params} ) => {
                   <Text fontSize="md" fontWeight="semibold" color="gray.700">
                     Match Result:
                     <Text as="span" color="teal.600" fontWeight="bold" ml={1}>
-                    {selectedSeed.matchResult === "TEAM_A"
-                      ? "Team A Wins!"
-                      : selectedSeed.matchResult === "TEAM_B"
-                      ? "Team B Wins!"
-                      : selectedSeed.matchResult}
+                      {selectedSeed.matchResult === "TEAM_A"
+                        ? "Team A Wins!"
+                        : selectedSeed.matchResult === "TEAM_B"
+                        ? "Team B Wins!"
+                        : selectedSeed.matchResult}
                     </Text>
                   </Text>
                 </Box>
@@ -213,7 +315,9 @@ const TournamentPage = ( {params} ) => {
                   <Text fontSize="md" fontWeight="semibold" color="gray.700">
                     Date:
                     <Text as="span" color="gray.600" fontWeight="medium" ml={1}>
-                      {new Date(selectedSeed?.matchResultRecordedAt).toLocaleDateString("en-GB")}
+                      {new Date(
+                        selectedSeed?.matchResultRecordedAt
+                      ).toLocaleDateString("en-GB")}
                     </Text>
                   </Text>
                 </Box>
@@ -223,7 +327,12 @@ const TournamentPage = ( {params} ) => {
                 <Box>
                   <Text fontSize="md" fontWeight="semibold" color="gray.700">
                     Forfeited:
-                    <Text as="span" color={selectedSeed?.forfeited ? "red.500" : "black"} ml={1} fontWeight="bold">
+                    <Text
+                      as="span"
+                      color={selectedSeed?.forfeited ? "red.500" : "black"}
+                      ml={1}
+                      fontWeight="bold"
+                    >
                       {selectedSeed?.forfeited ? "Yes" : "No"}
                     </Text>
                   </Text>
@@ -233,7 +342,6 @@ const TournamentPage = ( {params} ) => {
           </ModalContent>
         </Modal>
       )}
-
     </Box>
   );
 };

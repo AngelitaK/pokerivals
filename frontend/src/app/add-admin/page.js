@@ -22,7 +22,7 @@ import { AddIcon, EmailIcon } from "@chakra-ui/icons";
 
 export default function AddAdmin() {
   const { isAuthenticated, user, loading } = useAuth("ADMIN");
-  console.log(isAuthenticated, user, loading);
+  // console.log(isAuthenticated, user, loading);
 
   const toast = useToast();
   const router = useRouter();

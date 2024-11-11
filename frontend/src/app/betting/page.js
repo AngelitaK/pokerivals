@@ -1,9 +1,12 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { Box, Flex, Button, Text, useToast } from "@chakra-ui/react";
 import axios from "../../../config/axiosInstance";
 import BettingComponent from "@/components/bettingComponent";
 import { useRouter } from "next/navigation";
+import useAuth from "../../../config/useAuth";
+import LoadingOverlay from "../../components/loadingOverlay";
 
 const limit = 5;
 const start = new Date().toISOString();
@@ -20,6 +23,10 @@ const BettingPage = () => {
     const [count, setCount] = useState(0);
 
     const toast = useToast();
+
+    // Check authentication
+   const { isAuthenticated, user, loading } = useAuth("PLAYER");
+   console.log(isAuthenticated, user, loading);
 
     useEffect(() => {
         const fetchMatches = async () => {
@@ -50,6 +57,9 @@ const BettingPage = () => {
     }, [page]);
 
     const totalPages = Math.ceil(count / limit);
+
+    if (loading) return <LoadingOverlay />;
+    if (!isAuthenticated) return null;
 
     return (
         <Box p={[4, 6, 8]} minH="100vh" backgroundImage="url('/PokeRivalsBackgroundBetting.jpg')" backgroundSize="cover" backgroundPosition="center" bgopacity="0.8">

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
     Heading,
     Box,
@@ -15,11 +15,20 @@ import {
     Tabs,
     Text,
     VStack,
+    useDisclosure,
+    AlertDialog,
+    AlertDialogOverlay,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogBody,
+    AlertDialogFooter,
 } from '@chakra-ui/react';
 import { FaArrowCircleLeft, FaInfo } from "react-icons/fa";
 import { useRouter } from 'next/navigation';
 import axios from '../../../config/axiosInstance';
 import MatchInfoModal from '@/components/matchInfoModal';
+import useAuth from "../../../config/useAuth";
+import LoadingOverlay from "../../components/loadingOverlay";
 
 const limit = 5;
 
@@ -75,6 +84,8 @@ const ListComponent = ({ data, type, maxProfitMargin = null, minProfitMargin = n
 
 const ManageBetting = () => {
     const router = useRouter();
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const cancelRef = useRef();
 
     const [isEditingMin, setIsEditingMin] = useState(false);
     const [isEditingMax, setIsEditingMax] = useState(false);
@@ -90,9 +101,13 @@ const ManageBetting = () => {
     const [futureBets, setFutureBets] = useState([]);
     const [pastPageCount, setPastPageCount] = useState(0);
     const [futurePageCount, setFuturePageCount] = useState(0);
+    const [loading, setLoading] = useState(false);
+
+    // session lock
+    const { isAuthenticated, user } = useAuth("ADMIN");
 
     const handleBackNavigation = () => {
-        router.push("/admin-home");
+        router.push("/admin/home");
     };
 
     const handleEditClick = (field) => {
@@ -105,7 +120,7 @@ const ManageBetting = () => {
         }
     };
 
-    const handleSaveClick = async (field) => {
+    const handleConfirmClick = async (field) => {
         try {
             const response = await axios.patch('/transaction/admin/configuration', {
                 name: field === 'min' ? "MINIMUM_PROFIT_MARGIN_PERCENTAGE" : "MAXIMUM_PROFIT_MARGIN_PERCENTAGE",
@@ -119,7 +134,12 @@ const ManageBetting = () => {
         } catch (error) {
             console.error("Error updating data: ", error);
         }
+        onClose();
     };
+
+    const handleSaveClick = () => {
+        onOpen();
+    }
 
     const handleCancelClick = (field) => {
         if (field === 'min') {
@@ -188,6 +208,9 @@ const ManageBetting = () => {
 
     const totalPastPages = Math.ceil(pastPageCount / limit);
     const totalFuturePages = Math.ceil(futurePageCount / limit);
+
+    if (loading) return <LoadingOverlay />;
+    if (!isAuthenticated) return null;
 
     return (
         <Box p="4" backgroundColor="gray.100" minH="100vh">
@@ -330,6 +353,22 @@ const ManageBetting = () => {
                     </Tabs>
                 </Box>
             </Flex>
+
+            {/* Confirmation Modal */}
+            <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
+                <AlertDialogOverlay>
+                    <AlertDialogContent>
+                        <AlertDialogHeader fontSize="lg" fontWeight="bold">Confirm Result</AlertDialogHeader>
+                        <AlertDialogBody>
+                            Are you sure you want to set the { isEditingMin ? <b>minimum</b> : <b>maximum</b>} profit margin to be <b>{ isEditingMin ? minProfitMargin : maxProfitMargin}</b>%?
+                        </AlertDialogBody>
+                        <AlertDialogFooter>
+                            <Button colorScheme="red" ref={cancelRef} onClick={onClose}>Cancel</Button>
+                            <Button colorScheme="green" onClick={() => handleConfirmClick(isEditingMin ? "min" : "max")} ml={3}>Confirm</Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialogOverlay>
+            </AlertDialog>
         </Box>
     );
 };

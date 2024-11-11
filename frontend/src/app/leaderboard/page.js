@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import LoadingOverlay from "@/components/loadingOverlay";
 import axios from "../../../config/axiosInstance";
 import useAuth from "../../../config/useAuth";
@@ -27,7 +27,8 @@ const LeaderBoard = () => {
   const [friendsList, setFriendsList] = useState([]);
 
   // Check authentication
-  const { isAuthenticated, user, loading } = useAuth("PLAYER");
+  const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
+  const { isAuthenticated, user } = useAuth(roles);
   // console.log(isAuthenticated, user, loading);
 
   //pagination

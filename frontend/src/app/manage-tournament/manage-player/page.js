@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "../../../../config/axiosInstance";
-import { Suspense } from "react";
+import useAuth from "../../../../config/useAuth";
+import LoadingOverlay from "../../../components/loadingOverlay";
 import {
   Tabs,
   TabList,
@@ -17,10 +18,13 @@ import {
   Divider,
   useToast,
   Heading,
+  Container,
+  VStack,
+  List,
+  ListItem
 } from "@chakra-ui/react";
 import { FaArrowCircleLeft } from "react-icons/fa";
 import TournamentForm from "@/components/tournamentForm";
-// // import test_data from "./test_data";
 import { useDisclosure } from "@chakra-ui/react";
 import PlayerProfileModal from "@/components/playerProfileModal";
 
@@ -42,30 +46,11 @@ function formatDate(dateString) {
 
 const date = new Date().toISOString();
 
-const ListComponent = ({ details, registrationEnd }) => {
-  const router = useRouter();
+const ListComponent = ({ details, registrationEnd, onKick }) => {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const handleKick = async () => {
-    try {
-      const response = await axios.delete(
-        `/admin/tournament/${details.tournament.id}/team/player/${details.playerUsername}`
-      );
-      if (response.status !== 200) {
-        throw new Error("Failed to kick player");
-      }
-    } catch (error) {
-      console.error("Error kicking Player:", error);
-      toast({
-        title: "Error",
-        description: "Failed to kick player.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
+  const handleKick = () => onKick(details)
 
   return (
     <Flex
@@ -114,15 +99,17 @@ const ListComponent = ({ details, registrationEnd }) => {
 
 const ManageTeamPage = () => {
   const router = useRouter();
-  const [page, setPage] = useState(0);
+
+  const [reload, setReload] = useState(false);
   const [tournament, setTournament] = useState(null);
   const [teams, setTeams] = useState([]);
-  const [count, setCount] = useState(0);
   const toast = useToast();
   const [inviteUsername, setInviteUsername] = useState("");
 
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
+
+  const { isAuthenticated, user, loading } = useAuth("ADMIN");
 
   const handleInputChange = (e) => {
     setInviteUsername(e.target.value);
@@ -153,7 +140,7 @@ const ManageTeamPage = () => {
     }
   };
 
-  const sendInvite = async () => {
+  const handleInvite = async () => {
     try {
       const response = await axios.post(
         `/admin/tournament/closed/${id}/invitation`,
@@ -161,11 +148,22 @@ const ManageTeamPage = () => {
           usernames: inviteUsername.split(","),
         }
       );
+
       if (response.status !== 200) {
         throw new Error("Failed to invite players");
+      } else {
+        toast({
+          title: "Success!",
+          description: "Invited player successfully",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        setInviteUsername("")
       }
 
-      console.log('Success!')
+      setReload(!reload)
+
     } catch (error) {
       console.error("Error inviting players:", error);
       toast({
@@ -178,25 +176,71 @@ const ManageTeamPage = () => {
     }
   };
 
-  useEffect(() => {
-    const tournaments = JSON.parse(sessionStorage.getItem("tournaments"));
-    for (var t of tournaments) {
-      if (t.id == id) {
-        setTournament(t);
+  const handleKick = async (detail) => {
+    try {
+      const response = await axios.delete(
+        `/admin/tournament/${detail.tournament.id}/team/player/${detail.playerUsername}`
+      );
+      if (response.status !== 200) {
+        throw new Error("Failed to kick player");
       }
+
+      setReload(!reload)
+
+    } catch (error) {
+      console.error("Error kicking Player:", error);
+      toast({
+        title: "Error",
+        description: "Failed to kick player.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     }
+  };
+
+
+  useEffect(() => {
     const fetchTeams = async () => {
+      const page = sessionStorage.getItem("page");
+      const pageSize = sessionStorage.getItem("pageSize");
+
       try {
         const response = await axios.get(
-          `/admin/tournament/${id}/team?page=${page}&limit=${pageSize}`
+          `/admin/tournament/me?page=${page}&limit=${pageSize}`
         );
-        // var test_response = test_data;
+
+        if (response.status !== 200) {
+          throw new Error("Failed to fetch teams");
+        }
+        const data = response.data;
+
+        for (var t of data.tournaments) {
+          if (t.id == id) {
+            setTournament(t);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching Teams:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load teams.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+
+      try {
+        const response = await axios.get(
+          `/admin/tournament/${id}/team?page=${0}&limit=${100}`
+        );
+        
         if (response.status !== 200) {
           throw new Error("Failed to fetch teams");
         }
         const data = response.data;
         setTeams(data.teams);
-        setCount(data.count);
       } catch (error) {
         console.error("Error fetching Teams:", error);
         toast({
@@ -209,9 +253,11 @@ const ManageTeamPage = () => {
       }
     };
     fetchTeams();
-  }, [page]);
 
-  const totalPages = Math.ceil(count / pageSize);
+  }, [reload]);
+
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Box p="1%" backgroundColor="gray.100" minH="100vh">
@@ -265,6 +311,9 @@ const ManageTeamPage = () => {
       >
         <TabList mb="1em">
           <Tab fontWeight="bold">Edit Tournament Details</Tab>
+          {tournament?.['@type'] !== 'open' &&
+            <Tab fontWeight="bold">Players Invited</Tab>
+          }
           <Tab fontWeight="bold">Start Tournament</Tab>
         </TabList>
 
@@ -272,19 +321,52 @@ const ManageTeamPage = () => {
           <TabPanel>
             <TournamentForm tournament={tournament} isEdited={true} />
           </TabPanel>
+          {tournament?.['@type'] !== 'open' &&
+            <TabPanel>
+              <Flex minH="90vh" bg="white">
+                <Container maxW="container.2xl" my={10} mx={{ lg: 8, xl: "10%" }}>
+                  <VStack spacing={8} align="stretch" color="black">
+                    <Box bg="white" shadow="md" borderRadius="lg" p={6}>
+                      <Heading size="lg" mb={4}>
+                        Invite Players
+                      </Heading>
+                      <Text mb={5}>Please enter the username below. <i>When inviting multiple players, separate the usernames with a comma without space (e.g. John Doe,Jane Doe)</i></Text>
+
+                      {/* form to invite admin */}
+                      <Flex mt="4">
+                        <Input
+                          placeholder="Enter username(s) here"
+                          value={inviteUsername}
+                          onChange={handleInputChange}
+                        />
+                        <Button ml="2" colorScheme="blue" onClick={handleInvite}>
+                          Invite
+                        </Button>
+                      </Flex>
+                    </Box>
+
+                    {/* List of Invited Admins */}
+                    <Box bg="white" shadow="md" borderRadius="lg" p={6}>
+                      <Heading size="lg" mb={4}>
+                        People I Invited
+                      </Heading>
+
+                      <List spacing={5}>
+                        {tournament?.invited_players.map((person) => (
+                          <ListItem mb={8}>
+                            <Text fontWeight="bold">{person}</Text>
+                          </ListItem>
+                        ))}
+                      </List>
+
+                    </Box>
+                  </VStack>
+                </Container>
+              </Flex>
+            </TabPanel>}
           <TabPanel>
             <Box>
               <Heading size="md">Players Registered</Heading>
-              <Flex mt="4" hidden={tournament?.["@type"] === "open"}>
-                <Input
-                  placeholder="Enter usernames"
-                  value={inviteUsername}
-                  onChange={handleInputChange}
-                />
-                <Button ml="2" colorScheme="blue" onClick={sendInvite}>
-                  Invite
-                </Button>
-              </Flex>
               <Divider mb="4" />
               <Box height="60vh" overflowY="auto">
                 {teams.map((team) => (
@@ -294,6 +376,7 @@ const ManageTeamPage = () => {
                     registrationEnd={
                       tournament?.registrationPeriod.registrationEnd
                     }
+                    onKick={handleKick}
                   />
                 ))}
               </Box>

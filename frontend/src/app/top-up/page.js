@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Flex,
@@ -19,11 +20,16 @@ import {
 } from "@chakra-ui/react";
 import { InfoIcon } from "@chakra-ui/icons";
 import axios from "../../../config/axiosInstance";
+import useAuth from "../../../config/useAuth";
+import LoadingOverlay from "../../components/loadingOverlay";
 import TermsAndConditionsModal from "../../components/termsconditionModal";
-import { useRouter } from "next/navigation";
 import TransactionItem from "@/components/transactionItem";
 
 const TopUpPage = () => {
+  //authentication
+  const { isAuthenticated, user, loading } = useAuth("PLAYER");
+  //  console.log(isAuthenticated, user, loading);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [page, setPage] = useState(0);
@@ -232,6 +238,9 @@ const TopUpPage = () => {
   const handleNextOngoingBetsPage = () => setOngoingBetsPage((prevPage) => prevPage + 1);
   const handlePrevOngoingBetsPage = () => setOngoingBetsPage((prevPage) => (prevPage > 0 ? prevPage - 1 : 0));
 
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
+  
   return (
     <Stack minH={"100vh"} bgImage="/TopupBG.png" bgSize="cover" bgPosition="center">
       <Flex p="50px" justify="center">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Flex,
   Box,
@@ -15,9 +15,11 @@ import { FcCalendar } from "react-icons/fc";
 import { useRouter } from 'next/navigation'; 
 import Link from 'next/link';
 import TournamentItem from '../../components/tournamentItem';
-import axios from '../../../config/axiosInstance';
+import axios from "../../../config/axiosInstance";
 import SearchBar from "@/components/searchBar";
 import RegisteredItem from './../../components/registeredItem';
+import useAuth from "../../../config/useAuth";
+import LoadingOverlay from "../../components/loadingOverlay";
 
 const FindTournamentPage = () => {  
   const [tournaments, setTournaments] = useState([]); 
@@ -34,6 +36,9 @@ const FindTournamentPage = () => {
   const tournamentLimit = 4;
   const router = useRouter();
   const toast = useToast();
+
+  const roles = useMemo(() => ["PLAYER", "ADMIN"], []); // Memoize roles array
+  const { isAuthenticated, user } = useAuth(roles);
 
   useEffect(() => {
     // This runs only on the client
@@ -160,6 +165,9 @@ const FindTournamentPage = () => {
   const handleTournamentClick = (tournamentId) => {
     router.push(`/tournament-details/${tournamentId}`);
   };
+
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Stack minH={"100vh"} bgImage="/TournamentBG.jpg" bgSize="cover" bgPosition="center">

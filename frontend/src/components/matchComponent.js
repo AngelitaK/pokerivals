@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   VStack,
@@ -17,16 +18,17 @@ import {
 } from '@chakra-ui/react';
 import axios from '../../config/axiosInstance';
 
-const MatchComponent = ({ seed, toast }) => {
+const MatchComponent = ({ seed, toast, onReload }) => {
+  const router = useRouter()
   const [proposedTime, setProposedTime] = useState(seed.timeMatchOccurs || '');
-  const [selectedWinner, setSelectedWinner] = useState(seed.matchResult || '');
+  const [enteredTime, setEnteredTime] = useState("")
+  const [selectedPlayer, setSelectedPlayer] = useState(seed.matchResult || '');
+  const [selectedPlayerType, setSelectedPlayerType] = useState("")
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef();
 
-  const bothPlayersAccepted = seed.team_a_agree_timing === 'ACCEPTED' && seed.team_b_agree_timing === 'ACCEPTED';
-
   const handleProposeTime = () => {
-    if (!proposedTime) {
+    if (!enteredTime) {
       toast({
         title: 'Invalid Time',
         description: 'Please enter a valid proposed time.',
@@ -37,13 +39,13 @@ const MatchComponent = ({ seed, toast }) => {
       return;
     }
 
-    axios.post('http://localhost:8080/tournament/match/timing', {
+    axios.post('/tournament/match/timing', {
       matchId: {
         tournamentId: seed.tournament_id,
         depth: seed.depth,
         index: seed.index,
       },
-      matchTiming: new Date(proposedTime).toISOString(),
+      matchTiming: new Date(enteredTime).toISOString(),
     })
       .then(() => {
         toast({
@@ -55,41 +57,70 @@ const MatchComponent = ({ seed, toast }) => {
         });
       })
       .catch(error => console.error('Error proposing time:', error));
+
+    onReload();
   };
 
   const handleConfirmResult = () => {
-    axios.patch('http://localhost:8080/tournament/match/result', {
-      matchId: {
-        tournamentId: seed.tournament_id,
-        depth: seed.depth,
-        index: seed.index,
-      },
-      matchResult: (selectedWinner === seed.teams[0].id ? "TEAM_A" : "TEAM_B"),
-    })
-      .then(() => {
-        toast({
-          title: 'Result Updated',
-          description: `Result for match ${seed.index + 1} has been updated.`,
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-        onClose();
+
+    if (selectedPlayerType == "winner") {
+      axios.patch('/tournament/match/result', {
+        matchId: {
+          tournamentId: seed.tournament_id,
+          depth: seed.depth,
+          index: seed.index,
+        },
+        matchResult: (selectedPlayer === seed.teams[0].id ? "TEAM_A" : "TEAM_B"),
       })
-      .catch(error => console.error('Error updating result:', error));
+        .then(() => {
+          toast({
+            title: 'Result Updated',
+            description: `Result for match ${seed.index + 1} has been updated.`,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+          onClose();
+        })
+        .catch(error => console.error('Error updating result:', error));
+    } else {
+      axios.delete('/tournament/match/forfeit', {
+        data: {
+          matchId: {
+            tournamentId: seed.tournament_id,
+            depth: seed.depth,
+            index: seed.index,
+          },
+          forfeitTeamA: (selectedPlayer === seed.teams[0].id ? true : false),
+        }
+      })
+        .then(() => {
+          toast({
+            title: 'Result Updated',
+            description: `Result for match ${seed.index + 1} has been updated.`,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+          onClose();
+        })
+        .catch(error => console.error('Error updating result:', error));
+    }
+    router.refresh()
   };
 
-  const handleSubmitClick = () => {
-    if (!selectedWinner) {
+  const handleSubmitClick = (type) => {
+    if (!selectedPlayer) {
       toast({
-        title: 'No Winner Selected',
-        description: 'Please select a winner before submitting.',
+        title: 'No Winner/Forfeited player Selected',
+        description: 'Please select a winner/Forfeited player before submitting.',
         status: 'error',
         duration: 3000,
         isClosable: true,
       });
       return;
     }
+    setSelectedPlayerType(type)
     onOpen();
   };
 
@@ -110,24 +141,23 @@ const MatchComponent = ({ seed, toast }) => {
           <Text>Proposed Time: {proposedTime ? new Date(proposedTime).toLocaleString() : 'Not Set'}</Text>
           <Text>{seed.teams[0].id} Status: {seed.team_a_agree_timing}</Text>
           <Text>{seed.teams[1].id} Status: {seed.team_b_agree_timing}</Text>
-          <Text>Overall Status: {seed.both_agree_timing}</Text>
+          <Text>{seed.matchResult == "PENDING" ? "Overall Status" : "WINNER"}: {seed.matchResult == "PENDING" ? seed.both_agree_timing : seed.matchResult}</Text>
         </VStack>
 
         {/* Right Column */}
         <VStack align="start" spacing={2} width={{ base: '100%', md: '50%' }}>
-          <fieldset disabled={seed.both_agree_timing !== "REJECTED"}>
+          <fieldset disabled={seed.both_agree_timing === "ACCEPTED" || (seed.both_agree_timing !== "REJECTED" && seed.timeMatchOccurs !== null) || seed.matchResult != "PENDING"}>
             <HStack width="100%">
 
               <Input
-                value={proposedTime}
-                onChange={(e) => setProposedTime(e.target.value)}
+                value={enteredTime}
+                onChange={(e) => setEnteredTime(e.target.value)}
                 size="sm"
                 type="datetime-local"
               />
               <Button
                 colorScheme="blue"
                 onClick={handleProposeTime}
-                isDisabled={bothPlayersAccepted}
                 width="fit-content"
                 minWidth="120px"
                 padding="0.5rem 1rem"
@@ -141,22 +171,32 @@ const MatchComponent = ({ seed, toast }) => {
           <Select
             placeholder={seed.can_set_result ? "Select Winner" : seed.matchResult}
             size="sm"
-            value={selectedWinner}
-            onChange={(e) => setSelectedWinner(e.target.value)}
+            value={selectedPlayer}
+            onChange={(e) => setSelectedPlayer(e.target.value)}
             isDisabled={!seed.can_set_result}
           >
             <option value={seed.teams[0].id}>{seed.teams[0].id}</option>
             <option value={seed.teams[1].id}>{seed.teams[1].id}</option>
           </Select>
-          <Button
-            colorScheme="green"
-            onClick={handleSubmitClick}
-            isDisabled={!seed.can_set_result}
-            mt={2}
-            alignSelf="flex-end"
-          >
-            Submit
-          </Button>
+          <HStack alignSelf="flex-end">
+            <Button
+              colorScheme="red"
+              onClick={() => handleSubmitClick("forfeit")}
+              isDisabled={!seed.can_set_result}
+              mt={2}
+            >
+              Forfeit Player
+            </Button>
+            <Button
+              colorScheme="green"
+              onClick={() => handleSubmitClick("winner")}
+              isDisabled={!seed.can_set_result}
+              mt={2}
+            >
+              Submit Winner
+            </Button>
+          </HStack>
+
         </VStack>
       </HStack>
 
@@ -166,7 +206,7 @@ const MatchComponent = ({ seed, toast }) => {
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">Confirm Result</AlertDialogHeader>
             <AlertDialogBody>
-              Are you sure you want to submit the result with <b>{selectedWinner}</b> as the winner?
+              Are you sure you want to {selectedPlayerType == "forfeit" ? "FORFEIT" : "submit the result with"} <b>{selectedPlayer}</b> {selectedPlayerType == "winner" && "as the WINNER"}?
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button colorScheme="red" ref={cancelRef} onClick={onClose}>Cancel</Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "../../../../config/axiosInstance";
 import useAuth from "../../../../config/useAuth";
@@ -49,12 +49,17 @@ function formatDate(dateString) {
 const TournamentDetails = ({ params }) => {
   const router = useRouter();
   const toast = useToast();
+  const [loading, setLoading] = useState(false);
   const [tournament, setTournament] = useState(null);
   const [tournamentData, setTournamentData] = useState(null);
   const [teamData, setTeamData] = useState([]);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isLoadingTeam, setIsLoadingTeam] = useState(false);
-
+ 
+  //authentication
+  const roles = useMemo(() => ["PLAYER", "ADMIN"], []);
+  const { isAuthenticated, user } = useAuth(roles);
+  
   const { tournamentId } = params;
 
   // Fetch tournament data on page load
@@ -133,6 +138,8 @@ const TournamentDetails = ({ params }) => {
   };
 
   // console.log("tournamentData: ", tournamentData);
+  if (loading) return <LoadingOverlay />;
+  if (!isAuthenticated) return null;
 
   return (
     <Box minH="90vh" bg="white">
