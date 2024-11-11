@@ -1,4 +1,4 @@
-# pokerivals
-CSD 2024
+# PokeRivals
+For CSD 2024
 
-Group:
+Group: 
