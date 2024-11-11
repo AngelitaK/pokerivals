@@ -48,10 +48,6 @@ const ManageMatchesPage = () => {
     router.push("/manage-tournament");
   };
 
-  const handleReload = () =>{
-    setReload(!reload)
-  }
-
   // Fetch tournament data on page load
   useEffect(() => {
     const fetchTournamentData = async () => {
@@ -128,7 +124,7 @@ const ManageMatchesPage = () => {
                       key={seedIndex}
                       seed={seed}
                       toast={toast}
-                      onReload={handleReload}
+                      setReload={setReload}
                     />
                   ))}
               </TabPanel>

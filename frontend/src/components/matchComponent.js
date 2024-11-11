@@ -18,7 +18,7 @@ import {
 } from '@chakra-ui/react';
 import axios from '../../config/axiosInstance';
 
-const MatchComponent = ({ seed, toast, onReload }) => {
+const MatchComponent = ({ seed, toast, setReload }) => {
   const router = useRouter()
   const [proposedTime, setProposedTime] = useState(seed.timeMatchOccurs || '');
   const [enteredTime, setEnteredTime] = useState("")
@@ -55,10 +55,10 @@ const MatchComponent = ({ seed, toast, onReload }) => {
           duration: 3000,
           isClosable: true,
         });
+        setReload(prev => !prev)
       })
       .catch(error => console.error('Error proposing time:', error));
 
-    onReload();
   };
 
   const handleConfirmResult = () => {
@@ -81,6 +81,7 @@ const MatchComponent = ({ seed, toast, onReload }) => {
             isClosable: true,
           });
           onClose();
+          setReload(prev => !prev)
         })
         .catch(error => console.error('Error updating result:', error));
     } else {
@@ -103,6 +104,7 @@ const MatchComponent = ({ seed, toast, onReload }) => {
             isClosable: true,
           });
           onClose();
+          setReload(prev => !prev)
         })
         .catch(error => console.error('Error updating result:', error));
     }
@@ -141,7 +143,7 @@ const MatchComponent = ({ seed, toast, onReload }) => {
           <Text>Proposed Time: {proposedTime ? new Date(proposedTime).toLocaleString() : 'Not Set'}</Text>
           <Text>{seed.teams[0].id} Status: {seed.team_a_agree_timing}</Text>
           <Text>{seed.teams[1].id} Status: {seed.team_b_agree_timing}</Text>
-          <Text>{seed.matchResult == "PENDING" ? "Overall Status" : "WINNER"}: {seed.matchResult == "PENDING" ? seed.both_agree_timing : seed.matchResult}</Text>
+          <Text>{seed.matchResult == "PENDING" ? "Overall Status" : "WINNER"}: {seed.matchResult == "PENDING" ? seed.both_agree_timing : seed.matchResult == "TEAM_A" ? seed.teams[0].id : seed.teams[1].id}</Text>
         </VStack>
 
         {/* Right Column */}
@@ -169,9 +171,9 @@ const MatchComponent = ({ seed, toast, onReload }) => {
             </HStack>
           </fieldset>
           <Select
-            placeholder={seed.can_set_result ? "Select Winner" : seed.matchResult}
+            placeholder={seed.can_set_result ? "Select Winner" : seed.matchResult == "TEAM_A" ? seed.teams[0].id : seed.teams[1].id}
             size="sm"
-            value={selectedPlayer}
+            value={seed.matchResult != "PENDING" ? (seed.matchResult == "TEAM_A" ? seed.teams[0].id : seed.teams[1].id) : selectedPlayer}
             onChange={(e) => setSelectedPlayer(e.target.value)}
             isDisabled={!seed.can_set_result}
           >
