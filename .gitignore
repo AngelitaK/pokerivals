@@ -76,3 +76,5 @@ build/
 
 ### Environment Variables ###
 env.properties
+/frontend/.next/
+/frontend/node_modules/
