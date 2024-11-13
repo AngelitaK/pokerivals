@@ -62,8 +62,8 @@ public class Player extends User {
     private Clan clan;
 
     public void addToClan(Clan c){
-        if (this.clan != null && !clan.getName().equals(c.getName())) {
-            clan.getMembers().remove(this);
+        if (this.clan != null ) {
+            throw new IllegalArgumentException("user is already associated to a clan");
         }
         this.clan = c;
         c.getMembers().add(this);
@@ -77,23 +77,14 @@ public class Player extends User {
         return befriendedBy.size();
     }
 
-    public void changeElo(Player enemy, boolean enemyWin){
-        if (enemy instanceof DummyPlayer){
-            return;
-        }
-        if(enemyWin){
-            this.points += 10.0;
-            enemy.points -= 10.0;
-        }
-    }
+    private static final int AdjustmentRating = 20;
 
-    private static final class DummyPlayer extends Player{
-        private String Username = "dummy";
-        private final double rating = 0.0;
-
-        @Override
-        public void changeElo(Player enemy, boolean enemyWin){
-            return;
-        }
+    /**
+     * Change the elo of only THIS PLAYER
+     * @param winProbability probability of THIS PLAYER winning
+     * @param win whether THIS PLAYER won
+     */
+    public void changeElo(double winProbability, boolean win){
+        this.points+= AdjustmentRating * ((win ? 1: 0) - winProbability );
     }
 }

@@ -1,11 +1,14 @@
 package com.smu.csd.pokerivals.pokemon.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
@@ -14,27 +17,22 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor
 public class Move {
-    public Move(){}
 
     @Id
     @Column(length = 100)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private String move_name;
+    @EqualsAndHashCode.Include
+    private String name;
 
-    @Override
-    public boolean equals(Object other){
-        if (other instanceof Move o){
-            return move_name.equals(o.getMove_name());
-        }
-        return false;
-    }
-
+    @JsonIgnore
     @ManyToMany(mappedBy = "moves")
     private Set <Pokemon> learntBy = new HashSet<>();
 
-    public Move (String move_name){
-        this.move_name = move_name;
+    public Move (String name){
+        this.name = name;
     }
 
     public void addPokemon(Pokemon pokemon){
@@ -47,7 +45,7 @@ public class Move {
     @Override
     public String toString() {
         return "Move{" +
-                "move_name='" + move_name + '\'' +
+                "name='" + name + '\'' +
                 '}';
     }
 }

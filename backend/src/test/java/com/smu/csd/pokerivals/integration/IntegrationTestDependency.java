@@ -18,10 +18,15 @@ public class IntegrationTestDependency {
     public static Map<String,String> tokenMap = new HashMap<>();
 
     static {
+        // admin - exists
         tokenMap.put("abc", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYmMiLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImVtYWlsIjoiam9obi5kb2VAc211LmVkdS5zZyJ9.uyC522RGd2NZYu_KqdCLXfmgWzm4CcHmMuUBAqv2AzM");
+        // player - exists
         tokenMap.put("def","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZWYiLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImVtYWlsIjoiam9obi5kb2VAc211LmVkdS5zZyJ9.tO_J1JgR-VergmA62v7YiBY8JWEh7lrjLoe5sIEs54Y");
+        // new player
         tokenMap.put("ghi","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnaGkiLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImVtYWlsIjoiam9obi5kb2VAc211LmVkdS5zZyJ9.Vn2yaAR0wP0aBjR4SYgfPHn7FkePOKt-CSLZ4O-h2ZI");
+        // new admin
         tokenMap.put("jkl","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqa2wiLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImVtYWlsIjoiam9obi5kb2VAc211LmVkdS5zZyJ9.mheXvwnYgUFjCE67SalHZp99lD5yvul9MiSRFH2QVkA");
+        // nobody
         tokenMap.put("mno","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtbm8iLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsImVtYWlsIjoiam9obi5kb2VAc211LmVkdS5zZyJ9.KxAQE-igTklU9GMOqV16XrAAW4ZwcALiTzzScYRg6Q8");
     }
 
@@ -35,6 +40,7 @@ public class IntegrationTestDependency {
      */
     public static String storeCookie(ResponseEntity<AuthenticationController.WhoAmI> response){
         String username = response.getBody().username();
+        log.info("Cookie header {}",response.getHeaders().getFirst(HttpHeaders.SET_COOKIE));
         String cookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE).split(";")[0];
         cookies.put(username,cookie);
 
@@ -54,7 +60,7 @@ public class IntegrationTestDependency {
         headers.set(HttpHeaders.COOKIE,cookies.get(username));
         HttpEntity<T> request;
         if (body == null) {
-             request = new HttpEntity<>(headers);
+            request = new HttpEntity<>(headers);
         } else {
             request = new HttpEntity<>(body,headers);
         }

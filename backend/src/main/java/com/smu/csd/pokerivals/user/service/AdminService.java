@@ -7,7 +7,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.smu.csd.pokerivals.exception.MacInvalidException;
 import com.smu.csd.pokerivals.user.entity.Admin;
 import com.smu.csd.pokerivals.user.repository.AdminRepository;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.SdkBytes;
@@ -54,12 +54,12 @@ public class AdminService {
     private ObjectMapper jacksonObjectMapper;
 
     @Autowired
-     public AdminService(AdminRepository repo, KmsClient kmsClient, LambdaAsyncClient lambdaClient, GoogleIdTokenVerifier verifier)  {
-         this.adminRepo = repo;
-         this.kmsClient = kmsClient;
-         this.lambdaClient = lambdaClient;
-         this.verifier = verifier;
-     }
+    public AdminService(AdminRepository repo, KmsClient kmsClient, LambdaAsyncClient lambdaClient, GoogleIdTokenVerifier verifier)  {
+        this.adminRepo = repo;
+        this.kmsClient = kmsClient;
+        this.lambdaClient = lambdaClient;
+        this.verifier = verifier;
+    }
 
     /**
      * Register a new Admin object into the system AND send and email (refer to {@link AdminService#sendLinkEmail(String)}
@@ -70,19 +70,19 @@ public class AdminService {
      * @throws ExecutionException issue with {@link Future#get()}
      * @throws InterruptedException issue with {@link Future#get()}
      */
-     @RolesAllowed("ROLE_ADMIN")
-     @Transactional
-     public void register(String inviterUsername, Admin admin) throws JsonProcessingException, ExecutionException, InterruptedException{
-         admin = adminRepo.save(admin);
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Transactional
+    public void register(String inviterUsername, Admin admin) throws JsonProcessingException, ExecutionException, InterruptedException{
+        admin = adminRepo.save(admin);
 
-         Admin inviter = adminRepo.findById(inviterUsername).orElseThrow();
-         inviter.addInvitee(admin);
-         adminRepo.save(inviter);
+        Admin inviter = adminRepo.findById(inviterUsername).orElseThrow();
+        inviter.addInvitee(admin);
+        adminRepo.save(inviter);
 
-         sendLinkEmail(admin.getUsername());
-     }
+        sendLinkEmail(admin.getUsername());
+    }
 
-     private record LambdaEmailDTO(String username, String email){};
+    private record LambdaEmailDTO(String username, String email){};
 
     /**
      * Send Link Email to the email of the admin with given username
@@ -95,24 +95,24 @@ public class AdminService {
      * @throws ExecutionException issue with {@link Future#get()}
      * @throws InterruptedException issue with {@link Future#get()}
      */
-     @RolesAllowed("ROLE_ADMIN")
-     public void sendLinkEmail(String username) throws JsonProcessingException, ExecutionException, InterruptedException {
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void sendLinkEmail(String username) throws JsonProcessingException, ExecutionException, InterruptedException {
         Admin admin = adminRepo.findById(username).orElseThrow(()-> new NoSuchElementException("Admin does not exist!"));
 
-         byte[] json = jacksonObjectMapper.writeValueAsBytes(new LambdaEmailDTO(admin.getUsername(), admin.getEmail()));
+        byte[] json = jacksonObjectMapper.writeValueAsBytes(new LambdaEmailDTO(admin.getUsername(), admin.getEmail()));
 
-         CompletableFuture<InvokeResponse> future = lambdaClient.invoke(b -> {
-             b.functionName(lambdaArn)
-                     .invocationType(InvocationType.EVENT)
-                     .payload(SdkBytes.fromByteArray(
-                                json
-                             ));
-         });
+        CompletableFuture<InvokeResponse> future = lambdaClient.invoke(b -> {
+            b.functionName(lambdaArn)
+                    .invocationType(InvocationType.EVENT)
+                    .payload(SdkBytes.fromByteArray(
+                            json
+                    ));
+        });
 
-         future.get();
-     }
+        future.get();
+    }
 
-    @RolesAllowed("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<Admin> getInvitees(String adminUsername) {
         return adminRepo.findAdminsInvitedBy(adminUsername);
     }
@@ -122,8 +122,8 @@ public class AdminService {
      */
     @AllArgsConstructor
     @NoArgsConstructor
-     @Getter
-     public static class LinkAccountDTO {
+    @Getter
+    public static class LinkAccountDTO {
         @Getter
         private String username;
         private String email;
@@ -169,11 +169,11 @@ public class AdminService {
          * Get when the email was sent
          * @return when the email was sent
          */
-         public Date getTime(){
+        public Date getTime(){
             return new Date(time * 1000L);
-         }
+        }
 
-     }
+    }
 
     /**
      * Link Admin to a Google Account
@@ -181,26 +181,26 @@ public class AdminService {
      * @param dto data obtained from the link email
      * @exception BadCredentialsException whether the token was valid
      */
-     @SneakyThrows
-     public void linkEmail(LinkAccountDTO dto){
+    @SneakyThrows
+    public void linkEmail(LinkAccountDTO dto){
         if (! (dto.checkValidity(validitySeconds) && dto.checkMac(kmsClient, kmsKeyId) )){
             throw new MacInvalidException();
         }
 
-         Admin admin = adminRepo.findById(dto.getUsername()).orElseThrow(()-> new NoSuchElementException("Admin does not exist!"));
+        Admin admin = adminRepo.findById(dto.getUsername()).orElseThrow(()-> new NoSuchElementException("Admin does not exist!"));
 
 
-             GoogleIdToken idToken = verifier.verify( dto.getCredentials());
-             if (idToken != null) {
-                 GoogleIdToken.Payload payload = idToken.getPayload();
+        GoogleIdToken idToken = verifier.verify( dto.getCredentials());
+        if (idToken != null) {
+            GoogleIdToken.Payload payload = idToken.getPayload();
 
-                 String userId = payload.getSubject();
-                 admin.updateGoogleSub(dto.getTime(),userId);
-                 admin.setActiveSince(Date.from(Instant.now()));
-                 adminRepo.save(admin);
+            String userId = payload.getSubject();
+            admin.updateGoogleSub(dto.getTime(),userId);
+            admin.setActiveSince(Date.from(Instant.now()));
+            adminRepo.save(admin);
 
-             } else {
-                 throw new BadCredentialsException("Expired token");
-             }
-     }
+        } else {
+            throw new BadCredentialsException("Expired token");
+        }
+    }
 }

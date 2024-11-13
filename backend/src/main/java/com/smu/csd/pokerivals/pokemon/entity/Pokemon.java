@@ -1,37 +1,40 @@
 package com.smu.csd.pokerivals.pokemon.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor
 public class Pokemon {
-    public Pokemon(){}
 
     @Id
     @EqualsAndHashCode.Include
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Integer id;
 
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String name;
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String type1;
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String type2;
 
 
+    @JsonIgnore
     @ManyToMany
     private Set <Ability> abilities = new HashSet<>();
 
+    @JsonGetter("abilities")
+    private List<String> getAbilitiesAsString(){
+        return abilities.stream().map(Ability::getName).toList();
+    }
+
     @Embedded
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Stats stats;
 
     @Embeddable
@@ -62,7 +65,13 @@ public class Pokemon {
 
 
     @ManyToMany
+    @JsonIgnore
     private Set<Move> moves = new HashSet<>();
+
+    @JsonGetter("moves")
+    private List<String> getMovesAsString(){
+        return moves.stream().map(Move::getName).toList();
+    }
 
 
     public Pokemon (Integer id , String name , String type1 , String type2 , Stats stats){
@@ -98,9 +107,9 @@ public class Pokemon {
                 ", name='" + name + '\'' +
                 ", type1='" + type1 + '\'' +
                 ", type2='" + type2 + '\'' +
-                ", abilities=" + abilities +
+                ", abilities=" + getAbilitiesAsString() +
                 ", stats=" + stats +
-                ", moves=" + moves +
+                ", moves=" + getMovesAsString() +
                 '}';
     }
 }

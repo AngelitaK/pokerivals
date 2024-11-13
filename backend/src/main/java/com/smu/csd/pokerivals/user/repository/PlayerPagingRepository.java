@@ -12,4 +12,12 @@ public interface PlayerPagingRepository extends PagingAndSortingRepository<Playe
     @Query("select p from Player p join p.befriendedBy bB join p.friendsWith fW " +
             "where bB.username = :username and fW.username = :username")
     List<Player> findFriendsOfPlayer(@Param("username") String username, Pageable pageable);
+
+    @Query("SELECT x FROM Player x WHERE  x not in (select p from Player p join p.befriendedBy bB join p.friendsWith fW " +
+            "where bB.username = :username and fW.username = :username)")
+    List<Player> findNotFriendsOfPlayer(@Param("username") String username, Pageable pageable);
+
+    List<Player> findByUsernameContainingIgnoreCase(String query, Pageable pageable);
+
+    List<Player> findByClan_NameIgnoreCaseOrderByPointsDesc(String clanName, Pageable pageable);
 }
