@@ -23,7 +23,7 @@ public class PlayerBettingController {
     }
 
     @GetMapping("/placed")
-    @Operation(summary = "Get all of the user's bets either those who are active and those who aren't")
+    @Operation(summary = "Get all of the user's bets either those who are active and those who aren't. Active means the match is not cancelled/have forfeit on either side")
     public TransactionPageDTO getPlaceBetTransactions(
             @AuthenticationPrincipal UserDetails userDetails,
             @Parameter(description = "page of transaction to get (start from zero)") @RequestParam("page") Integer page,

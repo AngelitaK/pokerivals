@@ -26,14 +26,14 @@ public class PokemonController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary="Get One Pokemon", description="Registers an admin for an account")
+    @Operation(summary="Get One Pokemon")
     public Pokemon getOnePokemon(
             @PathVariable Integer id)  {
         return pokemonService.getPokemonById(id);
     }
 
     @GetMapping("/nature")
-    @Operation(summary="Get Pokemon Nature", description="Registers an admin for an account")
+    @Operation(summary="Get Pokemon Nature")
     public List<String> pokemonNatures()  {
         return pokemonService.getPokemonNatures();
     }

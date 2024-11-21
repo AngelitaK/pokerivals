@@ -12,6 +12,7 @@ import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.ApiResource;
 import com.stripe.net.Webhook;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,7 @@ public class DepositController {
     }
 
     @PostMapping("/start/embedded")
+    @Operation(summary = "initiate deposit money via embedded form")
     public DepositService.EmbeddedPaymentDTO depositViaEmbeddedForm(
             @AuthenticationPrincipal UserDetails userDetails
     ) throws StripeException
@@ -44,6 +46,7 @@ public class DepositController {
     }
 
     @PostMapping("/start/hosted")
+    @Operation(summary = "initiate deposit money via hosted page")
     public DepositService.HostedPaymentDTO depositViaHostedForm(
             @AuthenticationPrincipal UserDetails userDetails
     ) throws StripeException
@@ -52,6 +55,7 @@ public class DepositController {
     }
 
     @PostMapping("/webhook")
+    @Operation(summary = "webhook to be called by Stripe")
     public void listenWebhook(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String sigHeader,

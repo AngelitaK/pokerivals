@@ -41,6 +41,7 @@ public class MatchController {
     }
 
     @PatchMapping("/result")
+    @Operation(summary = "set match result to either TEAM A win, TEAM B win, or match CANCELLED")
     public Message setMatchResult(@RequestBody @Valid MatchService.SetMatchResultDTO dto,@AuthenticationPrincipal UserDetails userDetails){
         matchService.setMatchResult(dto, userDetails.getUsername());
         return new Message("Result set");
@@ -57,14 +58,14 @@ public class MatchController {
     @Operation(summary = "Approve/Reject timing given by admin to players", description = "If forfeitTeamA is false, team A is forfeited o/w team B. You cannot forfeit when that team is not finalised")
     public Message approveOrRejectMatchTiming(@RequestBody @Valid MatchService.ApproveRejectMatchTimingDTO dto,@AuthenticationPrincipal UserDetails userDetail){
         matchService.approveOrRejectMatchTiming(dto,userDetail.getUsername());
-        return new Message("Result set");
+        return new Message("Changes successful");
     }
 
     @PostMapping("/timing")
     @Operation(summary = "Suggest timing for a match by admin", description = "This will reset the approvals given by the players")
     public Message suggestMatchTiming(@RequestBody @Valid MatchService.ApproveRejectMatchTimingDTO dto,@AuthenticationPrincipal UserDetails userDetail){
         matchService.approveOrRejectMatchTiming(dto,userDetail.getUsername());
-        return new Message("Result set");
+        return new Message("Timing set");
     }
 
     @GetMapping("/me/admin")
